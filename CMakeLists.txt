@@ -12,7 +12,7 @@ juce_add_plugin(DiatonyDawApplication
     PLUGIN_CODE Dda1                            # A unique four-character plugin id with exactly one upper-case character
                                                 # GarageBand 10.3 requires the first letter to be upper-case, and the remaining letters to be lower-case
     FORMATS AU VST3 Standalone                  # The formats to build. Other valid formats are: AAX Unity VST AU AUv3
-    PRODUCT_NAME "DiatonyDawApplication")        # The name of the final executable, which can differ from the target name
+    PRODUCT_NAME "DiatonyDawApplication")       # The name of the final executable, which can differ from the target name
 
 juce_generate_juce_header(DiatonyDawApplication)
 
@@ -20,10 +20,9 @@ target_sources(DiatonyDawApplication
     PRIVATE
         src/PluginEditor.cpp
         src/PluginProcessor.cpp
-#        Midiprocessor.h
 )
 
-target_link_directories(DiatonyDawApplication PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_directories(DiatonyDawApplication PRIVATE "${CMAKE_SOURCE_DIR}/src")
 
 target_compile_definitions(DiatonyDawApplication
     PUBLIC
@@ -50,28 +49,25 @@ set(GECODE_LIBRARY_DIR "${GECODE_ROOT}/lib")
 # --- Tell CMake where to find Gecode headers ---
 include_directories(${GECODE_INCLUDE_DIR})
 
-find_library(GECODE_KERNEL_LIB NAMES gecodekernel PATHS ${GECODE_LIBRARY_DIR} REQUIRED)
-message(STATUS "Gecode Kernel Library found at: ${GECODE_KERNEL_LIB}")
+find_library(GECODE_KERNEL_LIB      NAMES gecodekernel      PATHS ${GECODE_LIBRARY_DIR} REQUIRED)
+find_library(GECODE_DRIVER_LIB      NAMES gecodedriver      PATHS ${GECODE_LIBRARY_DIR} REQUIRED)
+find_library(GECODE_FLATZINC_LIB    NAMES gecodeflatzinc    PATHS ${GECODE_LIBRARY_DIR} REQUIRED)
+find_library(GECODE_FLOAT_LIB       NAMES gecodefloat       PATHS ${GECODE_LIBRARY_DIR} REQUIRED)
+find_library(GECODE_INT_LIB         NAMES gecodeint         PATHS ${GECODE_LIBRARY_DIR} REQUIRED)
+find_library(GECODE_MINIMODEL_LIB   NAMES gecodeminimodel   PATHS ${GECODE_LIBRARY_DIR} REQUIRED)
+find_library(GECODE_SEARCH_LIB      NAMES gecodesearch      PATHS ${GECODE_LIBRARY_DIR} REQUIRED)
+find_library(GECODE_SET_LIB         NAMES gecodeset         PATHS ${GECODE_LIBRARY_DIR} REQUIRED)
+find_library(GECODE_SUPPORT_LIB     NAMES gecodesupport     PATHS ${GECODE_LIBRARY_DIR} REQUIRED)
 
 target_link_libraries(DiatonyDawApplication
         PRIVATE
         ${GECODE_KERNEL_LIB}
+        ${GECODE_DRIVER_LIB}
+        ${GECODE_FLATZINC_LIB}
+        ${GECODE_FLOAT_LIB}
+        ${GECODE_INT_LIB}
+        ${GECODE_MINIMODEL_LIB}
+        ${GECODE_SEARCH_LIB}
+        ${GECODE_SET_LIB}
+        ${GECODE_SUPPORT_LIB}
 )
-# Ajout des chemins d'inclusion et des bibliothèques de Gecode
-#include_directories(/opt/homebrew/opt/gecode/include)
-#link_directories(/opt/homebrew/opt/gecode/lib)
-#
-### Lien des bibliothèques Gecode
-##target_link_libraries(DiatonyDawApplication
-##        PRIVATE
-##        libgecodekernel
-##        libgecodesupport
-##        libgecodesearch
-##        libgecodeminimodel
-##        libgecodeint
-##        libgecodeset
-##)
-##
-##target_link_options(DiatonyDawApplication PRIVATE -L/opt/homebrew/opt/gecode/lib)
-#
-#find_package(PkgConfig REQUIRED)
