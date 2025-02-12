@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include <juce_audio_processors/juce_audio_processors.h>
-// #include <juce_audio_basics/midi/juce_MidiMessage.h>
 #include "JuceHeader.h"
 
 class MidiProcessor
