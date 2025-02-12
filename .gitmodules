@@ -1,3 +1,6 @@
 [submodule "modules/JUCE"]
 	path = modules/JUCE
 	url = https://github.com/juce-framework/JUCE.git
+[submodule "Diatony"]
+	path = Diatony
+	url = https://github.com/cedricniyi/Diatony.git
