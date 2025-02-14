@@ -71,3 +71,10 @@ target_link_libraries(DiatonyDawApplication
         ${GECODE_SET_LIB}
         ${GECODE_SUPPORT_LIB}
 )
+
+add_custom_target(build_external_make
+        COMMAND make -C ${CMAKE_SOURCE_DIR}/Diatony/c++/ compile
+        COMMENT "Compile Diatony Solver via Makefile"
+)
+
+add_dependencies(DiatonyDawApplication build_external_make)
