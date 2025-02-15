@@ -1,0 +1,78 @@
+{
+    "version": 3,
+    "cmakeMinimumRequired": {
+      "major": 3,
+      "minor": 20
+    },
+    "configurePresets": [
+      {
+        "name": "debug",
+        "generator": "Ninja",
+        "binaryDir": "${sourceDir}/cmake-build-debug",
+        "cacheVariables": {
+          "CMAKE_BUILD_TYPE": "Debug",
+          "CMAKE_MAKE_PROGRAM": "/opt/homebrew/bin/ninja",
+          "CMAKE_C_COMPILER": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc",
+          "CMAKE_CXX_COMPILER": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++",
+          "CMAKE_OSX_ARCHITECTURES": "arm64",
+          "CMAKE_OSX_DEPLOYMENT_TARGET": "14.5",
+          "CMAKE_AR": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ar",
+          "CMAKE_COLOR_DIAGNOSTICS": "ON",
+          "CMAKE_CXX_FLAGS_DEBUG": "-g",
+          "CMAKE_CXX_FLAGS_MINSIZEREL" :"-Os -DNDEBUG",
+          "CMAKE_CXX_FLAGS_RELEASE" :	"-O3 -DNDEBUG",
+          "CMAKE_CXX_FLAGS_RELWITHDEBINFO":	"-O2 -g -DNDEBUG",
+          "CMAKE_C_FLAGS_DEBUG": "-g",
+          "CMAKE_C_FLAGS_MINSIZEREL": "-Os -DNDEBUG",
+          "CMAKE_C_FLAGS_RELEASE": "-O3 -DNDEBUG",
+          "CMAKE_C_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+          "CMAKE_DLLTOOL": "CMAKE_DLLTOOL-NOTFOUND",
+          "CMAKE_INSTALL_NAME_TOOL": "/usr/bin/install_name_tool",
+          "CMAKE_INSTALL_PREFIX": "/usr/local",
+          "CMAKE_LINKER": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld",
+          "CMAKE_NM": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/nm",
+          "CMAKE_OBJCOPY": "CMAKE_OBJCOPY-NOTFOUND",
+          "CMAKE_OBJDUMP": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/objdump",
+          "CMAKE_OSX_SYSROOT": "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk",
+          "CMAKE_RANLIB": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ranlib",
+          "CMAKE_READELF": "CMAKE_READELF-NOTFOUND",
+          "CMAKE_STRIP": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/strip",
+          "CMAKE_TAPI": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/tapi",
+          "CMAKE_VERBOSE_MAKEFILE": "FALSE",
+          "JUCE_BUILD_EXAMPLES": "OFF",
+          "JUCE_BUILD_EXTRAS": "OFF",
+          "JUCE_COPY_PLUGIN_AFTER_BUILD": "OFF",
+          "JUCE_ENABLE_MODULE_SOURCE_GROUPS": "OFF",
+          "JUCE_INSTALL_DESTINATION": "lib/cmake/JUCE-8.0.3",
+          "JUCE_MODULES_ONLY": "OFF",
+          "JUCE_TOOL_INSTALL_DIR": "bin/JUCE-8.0.3",
+          "JUCE_WEBVIEW2_PACKAGE_LOCATION": "OFF",
+          "juce_found_AVFoundation": "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/System/Library/Frameworks/AVFoundation.framework",
+          "juce_found_AVKit": "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/System/Library/Frameworks/AVKit.framework",
+          "juce_found_Accelerate": "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/System/Library/Frameworks/Accelerate.framework",
+          "juce_found_AudioToolbox": "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/System/Library/Frameworks/AudioToolbox.framework",
+          "juce_found_AudioUnit": "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/System/Library/Frameworks/AudioUnit.framework",
+          "juce_found_Cocoa": "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/System/Library/Frameworks/Cocoa.framework",
+          "juce_found_CoreAudio": "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/System/Library/Frameworks/CoreAudio.framework",
+          "juce_found_CoreAudioKit": "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/System/Library/Frameworks/CoreAudioKit.framework",
+          "juce_found_CoreMIDI": "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/System/Library/Frameworks/CoreMIDI.framework",
+          "juce_found_CoreMedia": "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/System/Library/Frameworks/CoreMedia.framework",
+          "juce_found_DiscRecording": "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/System/Library/Frameworks/DiscRecording.framework",
+          "juce_found_Foundation": "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/System/Library/Frameworks/Foundation.framework",
+          "juce_found_IOKit": "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/System/Library/Frameworks/IOKit.framework",
+          "juce_found_OpenGL": "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/System/Library/Frameworks/OpenGL.framework",
+          "juce_found_QuartzCore": "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/System/Library/Frameworks/QuartzCore.framework",
+          "juce_found_Security": "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/System/Library/Frameworks/Security.framework",
+          "juce_found_WebKit": "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/System/Library/Frameworks/WebKit.framework"
+        }
+      }
+    ],
+    "buildPresets": [
+      {
+        "name": "debug",
+        "configurePreset": "debug",
+        "jobs":6
+      }
+    ]
+  }
+  
