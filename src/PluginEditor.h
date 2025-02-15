@@ -16,7 +16,10 @@ public:
 
 private:
     // Declare the button
-    juce::TextButton myButton { "Click Me!" };
+    juce::TextButton incrementButton;
+    juce::TextButton decrementButton;
+    juce::Label counterLabel;
+    int counter = 0;
 
     // Callback for button clicks
     void buttonClicked(juce::Button* button) override;

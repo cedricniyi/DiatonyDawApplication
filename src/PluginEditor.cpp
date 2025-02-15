@@ -5,11 +5,20 @@
 AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAudioProcessor& p)
     : AudioProcessorEditor (&p), processorRef (p)
 {
-    // Make the button clickable and visible
-    addAndMakeVisible (myButton);
-
-    // Register 'this' class as the listener for the button
-    myButton.addListener(this);
+    // Configuration des boutons
+    addAndMakeVisible(incrementButton);
+    incrementButton.setButtonText("+");
+    incrementButton.addListener(this);
+    
+    addAndMakeVisible(decrementButton);
+    decrementButton.setButtonText("-");
+    decrementButton.addListener(this);
+    
+    // Configuration du label
+    addAndMakeVisible(counterLabel);
+    counterLabel.setText("0", juce::dontSendNotification);
+    counterLabel.setFont(juce::Font(juce::FontOptions().withHeight(24.0f)));
+    counterLabel.setJustificationType(juce::Justification::centred);
 
     // juce::ignoreUnused (processorRef);
     // Make sure that before the constructor has finished, you've set the
@@ -20,7 +29,8 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
 AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
 {
     // It's good practice to remove listeners in the destructor
-    myButton.removeListener(this);
+    incrementButton.removeListener(this);
+    decrementButton.removeListener(this);
 }
 
 //==============================================================================
@@ -28,26 +38,29 @@ void AudioPluginAudioProcessorEditor::paint (juce::Graphics& g)
 {
     // (Our component is opaque, so we must completely fill the background with a solid colour)
     g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
-
-    g.setColour (juce::Colours::white);
-    g.setFont (15.0f);
-    g.drawFittedText ("Hello World! V2", getLocalBounds(), juce::Justification::centred, 1);
 }
 
 void AudioPluginAudioProcessorEditor::resized()
 {
-    // Position the button.
-    // x = 20, y = 20, width = 100, height = 30
-    myButton.setBounds (20, 20, 100, 30);
+    // Positionnement des éléments
+    auto area = getLocalBounds().reduced(20);
+    
+    auto buttonRow = area.removeFromTop(50);
+    decrementButton.setBounds(buttonRow.removeFromLeft(100));
+    incrementButton.setBounds(buttonRow.removeFromRight(100));
+    
+    counterLabel.setBounds(area);
 }
 
 //==============================================================================
 void AudioPluginAudioProcessorEditor::buttonClicked (juce::Button* button)
 {
-    if (button == &myButton)
-    {
-        // Handle what happens when your button is clicked
-        // For a simple example, log to the debug output:
-        DBG("The button was clicked!");
+    if (button == &incrementButton) {
+        counter++;
     }
+    else if (button == &decrementButton) {
+        counter--;
+    }
+    
+    counterLabel.setText(juce::String(counter), juce::dontSendNotification);
 }
