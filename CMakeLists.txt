@@ -5,7 +5,7 @@ project(DiatonyDawApplication VERSION 0.0.1)
 add_subdirectory("${CMAKE_SOURCE_DIR}/modules/JUCE" JUCE)
 
 juce_add_plugin(DiatonyDawApplication
-    COMPANY_NAME "cedricniyikza"                # Specify the name of the plugin's author
+    COMPANY_NAME "64492300_CN_UCL"                # Specify the name of the plugin's author
     NEEDS_MIDI_INPUT TRUE                       # Does the plugin need midi input?
     NEEDS_MIDI_OUTPUT TRUE                      # Does the plugin need midi output?
     PLUGIN_MANUFACTURER_CODE Juce               # A four-character manufacturer id with at least one upper-case character
