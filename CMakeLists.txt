@@ -29,7 +29,9 @@ target_compile_definitions(DiatonyDawApplication
         # JUCE_WEB_BROWSER and JUCE_USE_CURL would be on by default, but you might not need them.
         JUCE_WEB_BROWSER=0  # If you remove this, add `NEEDS_WEB_BROWSER TRUE` to the `juce_add_plugin` call
         JUCE_USE_CURL=0     # If you remove this, add `NEEDS_CURL TRUE` to the `juce_add_plugin` call
-        JUCE_VST3_CAN_REPLACE_VST2=0)
+        JUCE_VST3_CAN_REPLACE_VST2=0
+        JUCE_STRINGS_ARE_UNICODE=1
+        JUCE_USE_UTF8_FILESYSTEM=1)
 
 target_link_libraries(DiatonyDawApplication
     PRIVATE
@@ -72,9 +74,34 @@ target_link_libraries(DiatonyDawApplication
         ${GECODE_SUPPORT_LIB}
 )
 
-add_custom_target(build_external_make
-        COMMAND make -C ${CMAKE_SOURCE_DIR}/Diatony/c++/ compile
-        COMMENT "Compile Diatony Solver via Makefile"
+# Déclare une commande personnalisée pour générer diatony.dylib.
+# OUTPUT : indique le chemin du fichier généré.
+# COMMAND : exécute le makefile externe pour compiler la bibliothèque dynamique.
+add_custom_command(
+    OUTPUT ${CMAKE_SOURCE_DIR}/Diatony/out/diatony.dylib
+    COMMAND make -C ${CMAKE_SOURCE_DIR}/Diatony/c++/ compile dylib
+    COMMENT "Compile Diatony Solver via Makefile"
 )
 
+# Crée une cible custom 'build_external_make' qui dépend du fichier diatony.dylib.
+# Cela permet à CMake de connaître le fichier externe généré.
+add_custom_target(build_external_make ALL
+    DEPENDS ${CMAKE_SOURCE_DIR}/Diatony/out/diatony.dylib
+)
+
+# Assure que la cible principale du plug-in dépend de la construction de la bibliothèque externe.
+# Le plug-in ne sera compilé qu'après la génération de diatony.dylib.
 add_dependencies(DiatonyDawApplication build_external_make)
+
+# Lie la bibliothèque dynamique générée au plug-in pour résoudre les symboles manquants.
+target_link_libraries(DiatonyDawApplication
+    PRIVATE
+        ${CMAKE_SOURCE_DIR}/Diatony/out/diatony.dylib
+)
+
+# Définit le rpath du binaire final.
+# Cela indique au chargeur dynamique de rechercher les bibliothèques dans le dossier '../out'
+# relatif au chemin de l'exécutable lors de l'exécution.
+set_target_properties(DiatonyDawApplication PROPERTIES
+    INSTALL_RPATH "@executable_path/../out"
+)
