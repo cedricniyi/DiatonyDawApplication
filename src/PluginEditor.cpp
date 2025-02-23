@@ -5,32 +5,26 @@
 AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAudioProcessor& p)
     : AudioProcessorEditor (&p), processorRef (p)
 {
-    // Configuration des boutons
-    addAndMakeVisible(incrementButton);
-    incrementButton.setButtonText("+");
-    incrementButton.addListener(this);
+    // Configuration du bouton
+    addAndMakeVisible(generateButton);
+    generateButton.setButtonText(juce::String::fromUTF8("Générer"));
+    generateButton.addListener(this);
     
-    addAndMakeVisible(decrementButton);
-    decrementButton.setButtonText("-");
-    decrementButton.addListener(this);
-    
-    // Configuration du label
-    addAndMakeVisible(counterLabel);
-    counterLabel.setText("0", juce::dontSendNotification);
-    counterLabel.setFont(juce::Font(juce::FontOptions().withHeight(24.0f)));
-    counterLabel.setJustificationType(juce::Justification::centred);
+    // Style personnalisé
+    generateButton.setColour(juce::TextButton::buttonColourId, juce::Colours::blue);
+    generateButton.setColour(juce::TextButton::textColourOnId, juce::Colours::white);
+    generateButton.setColour(juce::TextButton::textColourOffId, juce::Colours::white);
 
     // juce::ignoreUnused (processorRef);
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
-    setSize (400, 300);
+    setSize (300, 150); // Taille adaptée au bouton
 }
 
 AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
 {
     // It's good practice to remove listeners in the destructor
-    incrementButton.removeListener(this);
-    decrementButton.removeListener(this);
+    generateButton.removeListener(this);
 }
 
 //==============================================================================
@@ -42,25 +36,24 @@ void AudioPluginAudioProcessorEditor::paint (juce::Graphics& g)
 
 void AudioPluginAudioProcessorEditor::resized()
 {
-    // Positionnement des éléments
-    auto area = getLocalBounds().reduced(20);
-    
-    auto buttonRow = area.removeFromTop(50);
-    decrementButton.setBounds(buttonRow.removeFromLeft(100));
-    incrementButton.setBounds(buttonRow.removeFromRight(100));
-    
-    counterLabel.setBounds(area);
+    generateButton.setBounds(getLocalBounds().reduced(20)); // Bouton centré avec marge
 }
 
 //==============================================================================
 void AudioPluginAudioProcessorEditor::buttonClicked (juce::Button* button)
 {
-    if (button == &incrementButton) {
-        counter++;
+    if (button == &generateButton) {
+        processorRef.generateMidiSolution(); // Appel de la nouvelle méthode
+        juce::Logger::writeToLog("MIDI généré avec succès !");
+        
+        // Optionnel : notification visuelle
+        generateButton.setButtonText(juce::String::fromUTF8("Générer!!"));
+        startTimer(2000); // Réinitialise après 2 secondes  
     }
-    else if (button == &decrementButton) {
-        counter--;
-    }
-    
-    counterLabel.setText(juce::String(counter), juce::dontSendNotification);
+}
+
+//==============================================================================
+void AudioPluginAudioProcessorEditor::timerCallback(){
+    generateButton.setButtonText(juce::String::fromUTF8("Générer"));
+    stopTimer();
 }

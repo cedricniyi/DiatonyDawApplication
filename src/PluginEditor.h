@@ -3,8 +3,7 @@
 #include "PluginProcessor.h"
 
 //==============================================================================
-class AudioPluginAudioProcessorEditor final : public juce::AudioProcessorEditor,
-private juce::Button::Listener
+class AudioPluginAudioProcessorEditor final : public juce::AudioProcessorEditor, private juce::Button::Listener, public juce::Timer
 {
 public:
     explicit AudioPluginAudioProcessorEditor (AudioPluginAudioProcessor&);
@@ -13,16 +12,16 @@ public:
     //==============================================================================
     void paint (juce::Graphics&) override;
     void resized() override;
+    void generateMidiSolution();
 
 private:
     // Declare the button
-    juce::TextButton incrementButton;
-    juce::TextButton decrementButton;
-    juce::Label counterLabel;
-    int counter = 0;
+    juce::TextButton generateButton;
 
     // Callback for button clicks
     void buttonClicked(juce::Button* button) override;
+
+    void timerCallback() override;
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
     AudioPluginAudioProcessor& processorRef;
