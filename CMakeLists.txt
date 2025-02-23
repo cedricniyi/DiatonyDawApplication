@@ -103,5 +103,6 @@ target_link_libraries(DiatonyDawApplication
 # Cela indique au chargeur dynamique de rechercher les bibliothèques dans le dossier '../out'
 # relatif au chemin de l'exécutable lors de l'exécution.
 set_target_properties(DiatonyDawApplication PROPERTIES
+    BUILD_WITH_INSTALL_RPATH TRUE
     INSTALL_RPATH "@executable_path/../out"
 )
