@@ -3,6 +3,9 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 
 #include "./utils/Midiprocessor.h"
+#include "../Diatony/c++/headers/aux/Tonality.hpp"
+#include "../Diatony/c++/headers/aux/MidiFileGeneration.hpp"
+#include "../Diatony/c++/headers/diatony/SolveDiatony.hpp"
 
 //==============================================================================
 class AudioPluginAudioProcessor final : public juce::AudioProcessor
@@ -43,6 +46,9 @@ public:
     //==============================================================================
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
+
+    //==============================================================================
+    void generateMidiSolution();
 
 private:
     MidiProcessor midiProcessor;

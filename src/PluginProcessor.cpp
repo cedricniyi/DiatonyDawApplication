@@ -164,3 +164,69 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
     return new AudioPluginAudioProcessor();
 }
+
+void AudioPluginAudioProcessor::generateMidiSolution()
+{
+    // 1. Déterminer le chemin racine du projet
+    // À partir du chemin actuel du fichier source (__FILE__)
+    juce::File projectDir = juce::File(__FILE__) // Chemin de ce fichier .cpp
+                          .getParentDirectory()  // Remonte à src/
+                          .getParentDirectory()  // Remonte au dossier racine du projet
+                          .getChildFile("out")
+                          .getChildFile("MidiFiles");
+    
+    // 2. Créer l'arborescence de dossiers
+    if (!projectDir.exists()) {
+        projectDir.createDirectory(); // Crée out/MidiFiles
+    }
+
+    // 3. Chemin complet avec nom de fichier
+    juce::String fullPath = projectDir.getFullPathName() 
+                          + juce::File::getSeparatorString() 
+                          + "solfromjuce";
+    
+    DBG("(PluginProcessor.cpp) Dossier MIDI du projet: " + projectDir.getFullPathName());
+    
+    // Configuration identique au main.cpp
+    Tonality* tonality = new MajorTonality(C);
+    
+    vector<int> chords = {FIRST_DEGREE, SIXTH_DEGREE, FIVE_OF_FIVE, 
+                         FIFTH_DEGREE_APPOGIATURA, FIFTH_DEGREE, FIRST_DEGREE};
+    
+    vector<int> chords_qualities;
+    for(int chord : chords)
+        chords_qualities.push_back(tonality->get_chord_quality(chord));
+    
+    chords_qualities[1] = MINOR_SEVENTH_CHORD;
+    chords_qualities[2] = MINOR_NINTH_DOMINANT_CHORD;
+    chords_qualities[4] = DIMINISHED_SEVENTH_CHORD;
+    
+    vector<int> states = {FUNDAMENTAL_STATE, FUNDAMENTAL_STATE, FIRST_INVERSION, 
+                          SECOND_INVERSION, FUNDAMENTAL_STATE, FUNDAMENTAL_STATE};
+    
+    int size = chords.size();
+    
+    vector<FourVoiceTexture*> sols;
+
+    // Génération de la solution
+    FourVoiceTexture* bestSol = solve_diatony_problem_optimal(size, tonality, 
+                                                            chords, chords_qualities, states);
+    
+    sols.push_back(bestSol);
+    
+    if(!sols.empty()){
+        for(int i = 0; i < sols.size(); i++){
+            juce::String finalPath = fullPath + "_" + juce::String(i) + ".mid";
+
+            writeSolToMIDIFile(size, finalPath.toStdString(), sols[i]);
+
+            DBG("(PluginProcessor.cpp) MIDI saved to: " + finalPath);
+        }
+    }
+ 
+        delete static_cast<MajorTonality*>(tonality); // Cast explicite vers le type concret
+
+    for (auto* sol : sols) // ✓ Libère chaque élément du vector
+        delete sol;
+    sols.clear();
+}
