@@ -3,3 +3,5 @@
 .vscode/
 Icon
 /build/
+/out
+Diatony/c++/out
