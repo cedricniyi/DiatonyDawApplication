@@ -5,3 +5,5 @@ Icon
 /build/
 /out
 Diatony/c++/out
+diatony.dylib
+.DS_Store
