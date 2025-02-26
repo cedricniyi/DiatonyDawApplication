@@ -16,6 +16,7 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
 
 AudioPluginAudioProcessor::~AudioPluginAudioProcessor()
 {
+    releaseResources();
 }
 
 //==============================================================================
@@ -188,7 +189,7 @@ void AudioPluginAudioProcessor::generateMidiSolution()
     DBG("(PluginProcessor.cpp) Dossier MIDI du projet: " + projectDir.getFullPathName());
     
     // Configuration identique au main.cpp
-    Tonality* tonality = new MajorTonality(C);
+    std::unique_ptr<MajorTonality> tonality(new MajorTonality(C));
     
     vector<int> chords = {FIRST_DEGREE, SIXTH_DEGREE, FIVE_OF_FIVE, 
                          FIFTH_DEGREE_APPOGIATURA, FIFTH_DEGREE, FIRST_DEGREE};
@@ -206,27 +207,25 @@ void AudioPluginAudioProcessor::generateMidiSolution()
     
     int size = chords.size();
     
-    vector<FourVoiceTexture*> sols;
-
-    // Génération de la solution
-    FourVoiceTexture* bestSol = solve_diatony_problem_optimal(size, tonality, 
-                                                            chords, chords_qualities, states);
-    
-    sols.push_back(bestSol);
-    
-    if(!sols.empty()){
-        for(int i = 0; i < sols.size(); i++){
-            juce::String finalPath = fullPath + "_" + juce::String(i) + ".mid";
-
-            writeSolToMIDIFile(size, finalPath.toStdString(), sols[i]);
-
-            DBG("(PluginProcessor.cpp) MIDI saved to: " + finalPath);
+    // vector<FourVoiceTexture*> sols;
+    try {
+        // Obtention de la solution
+        FourVoiceTexture* bestSol = solve_diatony_problem_optimal(
+            size, tonality.get(), chords, chords_qualities, states, false);
+            
+        if (bestSol != nullptr) {
+            // Écriture du fichier MIDI
+            juce::String finalPath = fullPath + "_0.mid";
+            DBG("Écriture du fichier MIDI : " + finalPath);
+            writeSolToMIDIFile(size, finalPath.toStdString(), bestSol);
+            DBG("MIDI sauvegardé : " + finalPath);
+            
+            // Nettoyage
+            delete bestSol;
+        } else {
+            DBG("Aucune solution trouvée");
         }
+    }catch (const std::exception& e) {
+        DBG("Exception pendant la génération : " + juce::String(e.what()));
     }
- 
-        delete static_cast<MajorTonality*>(tonality); // Cast explicite vers le type concret
-
-    for (auto* sol : sols) // ✓ Libère chaque élément du vector
-        delete sol;
-    sols.clear();
 }
