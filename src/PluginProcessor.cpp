@@ -128,8 +128,6 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     // clear any input
     buffer.clear();
     // midiMessages.clear();
-    midiProcessor.process(midiMessages);
-
 }
 
 //==============================================================================
