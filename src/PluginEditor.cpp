@@ -44,7 +44,7 @@ void AudioPluginAudioProcessorEditor::buttonClicked (juce::Button* button)
 {
     if (button == &generateButton) {
         processorRef.generateMidiSolution(); // Appel de la nouvelle méthode
-        juce::Logger::writeToLog("MIDI généré avec succès !");
+        juce::Logger::writeToLog(juce::String::fromUTF8("MIDI généré avec succès !"));
         
         // Optionnel : notification visuelle
         generateButton.setButtonText(juce::String::fromUTF8("Générer!!"));
