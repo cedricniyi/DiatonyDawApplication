@@ -1,0 +1,119 @@
+JUCE v8.0.6
+=================================================================
+==2038==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x61a000037190 at pc 0x000103194290 bp 0x00016fc86670 sp 0x00016fc86668
+WRITE of size 4 at 0x61a000037190 thread T18
+2025-03-01 16:22:05.334 DiatonyDawApplication[2038:2882641] +[IMKClient subclass]: chose IMKClient_Modern
+2025-03-01 16:22:05.334 DiatonyDawApplication[2038:2882641] +[IMKInputSession subclass]: chose IMKInputSession_Modern
+    #0 0x10319428c in juce::CoreAudioClasses::CoreAudioInternal::audioCallback(AudioTimeStamp const*, AudioTimeStamp const*, AudioBufferList const*, AudioBufferList*) juce_CoreAudio_mac.cpp:795
+    #1 0x10319360c in juce::CoreAudioClasses::CoreAudioInternal::audioIOProc(unsigned int, AudioTimeStamp const*, AudioBufferList const*, AudioTimeStamp const*, AudioBufferList*, AudioTimeStamp const*, void*) juce_CoreAudio_mac.cpp:1146
+    #2 0x18d1a1b4c in HALC_ProxyIOContext::IOWorkLoop()+0x2b38 (CoreAudio:arm64e+0x1f3b4c)
+    #3 0x18d19e894 in invocation function for block in HALC_ProxyIOContext::HALC_ProxyIOContext(unsigned int, unsigned int)+0xac (CoreAudio:arm64e+0x1f0894)
+    #4 0x18d34f75c in HALC_IOThread::Entry(void*)+0x54 (CoreAudio:arm64e+0x3a175c)
+    #5 0x1071a5858 in asan_thread_start(void*)+0x40 (libclang_rt.asan_osx_dynamic.dylib:arm64e+0x51858)
+    #6 0x18a6642e0 in _pthread_start+0x84 (libsystem_pthread.dylib:arm64e+0x72e0)
+    #7 0x18a65f0f8 in thread_start+0x4 (libsystem_pthread.dylib:arm64e+0x20f8)
+
+0x61a000037190 is located 0 bytes after 1296-byte region [0x61a000036c80,0x61a000037190)
+allocated by thread T0 here:
+    #0 0x1071a8fd0 in calloc+0x9c (libclang_rt.asan_osx_dynamic.dylib:arm64e+0x54fd0)
+    #1 0x10318d05c in juce::HeapBlock<float, false>::callocWrapper(unsigned long, unsigned long)::'lambda'()::operator()() const juce_HeapBlock.h:359
+    #2 0x10318cf98 in float* juce::HeapBlock<float, false>::wrapper<juce::HeapBlock<float, false>::callocWrapper(unsigned long, unsigned long)::'lambda'()>(unsigned long, juce::HeapBlock<float, false>::callocWrapper(unsigned long, unsigned long)::'lambda'()&&) juce_HeapBlock.h:341
+    #3 0x10318ceb8 in juce::HeapBlock<float, false>::callocWrapper(unsigned long, unsigned long) juce_HeapBlock.h:359
+    #4 0x10318c8d0 in void juce::HeapBlock<float, false>::calloc<int>(int, unsigned long) juce_HeapBlock.h:274
+    #5 0x1031730fc in juce::CoreAudioClasses::CoreAudioInternal::allocateTempBuffers() juce_CoreAudio_mac.cpp:361
+    #6 0x10316f434 in juce::CoreAudioClasses::CoreAudioInternal::updateDetailsFromDevice(juce::BigInteger const&, juce::BigInteger const&) juce_CoreAudio_mac.cpp:512
+    #7 0x103191750 in juce::CoreAudioClasses::CoreAudioInternal::reopen(juce::BigInteger const&, juce::BigInteger const&, double, int) juce_CoreAudio_mac.cpp:673
+    #8 0x10315ec20 in juce::CoreAudioClasses::CoreAudioIODevice::open(juce::BigInteger const&, juce::BigInteger const&, double, int) juce_CoreAudio_mac.cpp:1307
+    #9 0x1031b9754 in juce::CoreAudioClasses::AudioIODeviceCombiner::DeviceWrapper::open(juce::BigInteger const&, juce::BigInteger const&, double, int) const juce_CoreAudio_mac.cpp:2017
+    #10 0x10319858c in juce::CoreAudioClasses::AudioIODeviceCombiner::open(juce::BigInteger const&, juce::BigInteger const&, double, int) juce_CoreAudio_mac.cpp:1559
+    #11 0x1031bb844 in juce::CoreAudioClasses::AudioIODeviceCombiner::restart(juce::AudioIODeviceCallback*) juce_CoreAudio_mac.cpp:1632
+    #12 0x10319a1a0 in juce::CoreAudioClasses::AudioIODeviceCombiner::timerCallback() juce_CoreAudio_mac.cpp:1732
+    #13 0x1028329d4 in juce::Timer::TimerThread::callTimers() juce_Timer.cpp:170
+    #14 0x102832424 in juce::Timer::TimerThread::CallTimersMessage::messageCallback() juce_Timer.cpp:271
+    #15 0x102863f88 in juce::MessageQueue::deliverNextMessage() juce_MessageQueue_mac.h:93
+    #16 0x102863d24 in juce::MessageQueue::runLoopCallback() juce_MessageQueue_mac.h:104
+    #17 0x102863618 in juce::MessageQueue::runLoopSourceCallback(void*) juce_MessageQueue_mac.h:112
+    #18 0x18a74c8a0 in __CFRUNLOOP_IS_CALLING_OUT_TO_A_SOURCE0_PERFORM_FUNCTION__+0x18 (CoreFoundation:arm64e+0x7d8a0)
+    #19 0x18a74c834 in __CFRunLoopDoSource0+0xac (CoreFoundation:arm64e+0x7d834)
+    #20 0x18a74c598 in __CFRunLoopDoSources0+0xf0 (CoreFoundation:arm64e+0x7d598)
+    #21 0x18a74b134 in __CFRunLoopRun+0x344 (CoreFoundation:arm64e+0x7c134)
+    #22 0x18a74a730 in CFRunLoopRunSpecific+0x248 (CoreFoundation:arm64e+0x7b730)
+    #23 0x195cb952c in RunCurrentEventLoopInMode+0x120 (HIToolbox:arm64e+0x10b52c)
+    #24 0x195cbf178 in ReceiveNextEventCommon+0xd4 (HIToolbox:arm64e+0x111178)
+    #25 0x195cbf504 in _BlockUntilNextEventMatchingListInModeWithFilter+0x48 (HIToolbox:arm64e+0x111504)
+    #26 0x18e2c2844 in _DPSNextEvent+0x290 (AppKit:arm64e+0x3b844)
+    #27 0x18ec28c20 in -[NSApplication(NSEventRouting) _nextEventMatchingEventMask:untilDate:inMode:dequeue:]+0x2ac (AppKit:arm64e+0x9a1c20)
+    #28 0x18e2b5870 in -[NSApplication run]+0x1dc (AppKit:arm64e+0x2e870)
+    #29 0x1027e84b8 in juce::MessageManager::runDispatchLoop() juce_MessageManager_mac.mm:347
+
+Thread T18 created by T0 here:
+    #0 0x1071a01c8 in pthread_create+0x5c (libclang_rt.asan_osx_dynamic.dylib:arm64e+0x4c1c8)
+    #1 0x18d31be14 in HALB_IOThread::DispatchPThread(void* (*)(void*), void*)+0x3a0 (CoreAudio:arm64e+0x36de14)
+    #2 0x18d31c784 in HALB_IOThread::StartAndWaitForState(unsigned int)+0x228 (CoreAudio:arm64e+0x36e784)
+    #3 0x18d1a6a28 in HALC_ProxyIOContext::_StartIO(HALC_ProxyIOContext::StartIO_RetryMethod)+0xa4 (CoreAudio:arm64e+0x1f8a28)
+    #4 0x18d1a6578 in HALC_ProxyIOContext::StartIOProc(int (*)(unsigned int, AudioTimeStamp const*, AudioBufferList const*, AudioTimeStamp const*, AudioBufferList*, AudioTimeStamp const*, void*))+0xd0 (CoreAudio:arm64e+0x1f8578)
+    #5 0x18d163144 in HAL_HardwarePlugIn_DeviceStart(AudioHardwarePlugInInterface**, unsigned int, int (*)(unsigned int, AudioTimeStamp const*, AudioBufferList const*, AudioTimeStamp const*, AudioBufferList*, AudioTimeStamp const*, void*))+0x31c (CoreAudio:arm64e+0x1b5144)
+    #6 0x18d239cb8 in AudioDeviceStart_mac_imp+0xec (CoreAudio:arm64e+0x28bcb8)
+    #7 0x1031938b4 in juce::CoreAudioClasses::CoreAudioInternal::start(juce::AudioIODeviceCallback*)::'lambda'()::operator()() juce_CoreAudio_mac.cpp:721
+    #8 0x1031932dc in juce::CoreAudioClasses::CoreAudioInternal::start(juce::AudioIODeviceCallback*) juce_CoreAudio_mac.cpp:704
+    #9 0x10315efdc in juce::CoreAudioClasses::CoreAudioIODevice::start(juce::AudioIODeviceCallback*) juce_CoreAudio_mac.cpp:1330
+    #10 0x1031ba05c in juce::CoreAudioClasses::AudioIODeviceCombiner::DeviceWrapper::start(juce::AudioIODeviceCallback*) const juce_CoreAudio_mac.cpp:2010
+    #11 0x1031992a4 in juce::CoreAudioClasses::AudioIODeviceCombiner::start(juce::AudioIODeviceCallback*) juce_CoreAudio_mac.cpp:1682
+    #12 0x1031bb85c in juce::CoreAudioClasses::AudioIODeviceCombiner::restart(juce::AudioIODeviceCallback*) juce_CoreAudio_mac.cpp:1634
+    #13 0x10319a1a0 in juce::CoreAudioClasses::AudioIODeviceCombiner::timerCallback() juce_CoreAudio_mac.cpp:1732
+    #14 0x1028329d4 in juce::Timer::TimerThread::callTimers() juce_Timer.cpp:170
+    #15 0x102832424 in juce::Timer::TimerThread::CallTimersMessage::messageCallback() juce_Timer.cpp:271
+    #16 0x102863f88 in juce::MessageQueue::deliverNextMessage() juce_MessageQueue_mac.h:93
+    #17 0x102863d24 in juce::MessageQueue::runLoopCallback() juce_MessageQueue_mac.h:104
+    #18 0x102863618 in juce::MessageQueue::runLoopSourceCallback(void*) juce_MessageQueue_mac.h:112
+    #19 0x18a74c8a0 in __CFRUNLOOP_IS_CALLING_OUT_TO_A_SOURCE0_PERFORM_FUNCTION__+0x18 (CoreFoundation:arm64e+0x7d8a0)
+    #20 0x18a74c834 in __CFRunLoopDoSource0+0xac (CoreFoundation:arm64e+0x7d834)
+    #21 0x18a74c598 in __CFRunLoopDoSources0+0xf0 (CoreFoundation:arm64e+0x7d598)
+    #22 0x18a74b134 in __CFRunLoopRun+0x344 (CoreFoundation:arm64e+0x7c134)
+    #23 0x18a74a730 in CFRunLoopRunSpecific+0x248 (CoreFoundation:arm64e+0x7b730)
+    #24 0x195cb952c in RunCurrentEventLoopInMode+0x120 (HIToolbox:arm64e+0x10b52c)
+    #25 0x195cbf178 in ReceiveNextEventCommon+0xd4 (HIToolbox:arm64e+0x111178)
+    #26 0x195cbf504 in _BlockUntilNextEventMatchingListInModeWithFilter+0x48 (HIToolbox:arm64e+0x111504)
+    #27 0x18e2c2844 in _DPSNextEvent+0x290 (AppKit:arm64e+0x3b844)
+    #28 0x18ec28c20 in -[NSApplication(NSEventRouting) _nextEventMatchingEventMask:untilDate:inMode:dequeue:]+0x2ac (AppKit:arm64e+0x9a1c20)
+    #29 0x18e2b5870 in -[NSApplication run]+0x1dc (AppKit:arm64e+0x2e870)
+    #30 0x1027e84b8 in juce::MessageManager::runDispatchLoop() juce_MessageManager_mac.mm:347
+    #31 0x1027e81e0 in juce::JUCEApplicationBase::main() juce_ApplicationBase.cpp:277
+    #32 0x1027e7e34 in juce::JUCEApplicationBase::main(int, char const**) juce_ApplicationBase.cpp:255
+    #33 0x10089c5ec in main juce_audio_plugin_client_Standalone.cpp:234
+    #34 0x18a2e4270  (<unknown module>)
+
+SUMMARY: AddressSanitizer: heap-buffer-overflow juce_CoreAudio_mac.cpp:795 in juce::CoreAudioClasses::CoreAudioInternal::audioCallback(AudioTimeStamp const*, AudioTimeStamp const*, AudioBufferList const*, AudioBufferList*)
+Shadow bytes around the buggy address:
+  0x61a000036f00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x61a000036f80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x61a000037000: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x61a000037080: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x61a000037100: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+=>0x61a000037180: 00 00[fa]fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x61a000037200: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x61a000037280: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
+  0x61a000037300: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
+  0x61a000037380: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
+  0x61a000037400: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==2038==ABORTING
+zsh: abort 
