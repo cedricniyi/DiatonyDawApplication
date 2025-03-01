@@ -65,14 +65,26 @@
           "juce_found_Security": "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/System/Library/Frameworks/Security.framework",
           "juce_found_WebKit": "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/System/Library/Frameworks/WebKit.framework"
         }
-      }
+      },
+      {
+        "name": "debug-asan",
+        "inherits": "debug",
+        "cacheVariables": {
+            "ENABLE_ASAN": "ON"
+        }
+    }
     ],
     "buildPresets": [
       {
         "name": "debug",
         "configurePreset": "debug",
         "jobs":6
-      }
+      },
+      {
+        "name": "debug-asan",
+        "configurePreset": "debug-asan",
+        "jobs": 6
+    }
     ]
   }
   

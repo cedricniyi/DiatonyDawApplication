@@ -2,6 +2,15 @@ cmake_minimum_required(VERSION 3.22)
 
 project(DiatonyDawApplication VERSION 0.0.1)
 
+option(ENABLE_ASAN "Enable Address Sanitizer" OFF)
+
+if(ENABLE_ASAN)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address")
+    set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -fsanitize=address")
+endif()
+
 add_subdirectory("${CMAKE_SOURCE_DIR}/modules/JUCE" JUCE)
 
 juce_add_plugin(DiatonyDawApplication
