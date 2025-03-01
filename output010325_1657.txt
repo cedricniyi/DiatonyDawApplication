@@ -1,0 +1,213 @@
+JUCE v8.0.6
+=================================================================
+==7449==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x61a000019190 at pc 0x0001052a0110 bp 0x00016d94a670 sp 0x00016d94a668
+WRITE of size 4 at 0x61a000019190 thread T9
+    #0 0x1052a010c in juce::CoreAudioClasses::CoreAudioInternal::audioCallback(AudioTimeStamp const*, AudioTimeStamp const*, AudioBufferList const*, AudioBufferList*) juce_CoreAudio_mac.cpp:795
+    #1 0x10529f48c in juce::CoreAudioClasses::CoreAudioInternal::audioIOProc(unsigned int, AudioTimeStamp const*, AudioBufferList const*, AudioTimeStamp const*, AudioBufferList*, AudioTimeStamp const*, void*) juce_CoreAudio_mac.cpp:1146
+    #2 0x18d1a1b4c in HALC_ProxyIOContext::IOWorkLoop()+0x2b38 (CoreAudio:arm64e+0x1f3b4c)
+    #3 0x18d19e894 in invocation function for block in HALC_ProxyIOContext::HALC_ProxyIOContext(unsigned int, unsigned int)+0xac (CoreAudio:arm64e+0x1f0894)
+    #4 0x18d34f75c in HALC_IOThread::Entry(void*)+0x54 (CoreAudio:arm64e+0x3a175c)
+    #5 0x1092dd858 in asan_thread_start(void*)+0x40 (libclang_rt.asan_osx_dynamic.dylib:arm64e+0x51858)
+    #6 0x18a6642e0 in _pthread_start+0x84 (libsystem_pthread.dylib:arm64e+0x72e0)
+    #7 0x18a65f0f8 in thread_start+0x4 (libsystem_pthread.dylib:arm64e+0x20f8)
+
+0x61a000019190 is located 0 bytes after 1296-byte region [0x61a000018c80,0x61a000019190)
+allocated by thread T0 here:
+    #0 0x1092e0fd0 in calloc+0x9c (libclang_rt.asan_osx_dynamic.dylib:arm64e+0x54fd0)
+    #1 0x105298edc in juce::HeapBlock<float, false>::callocWrapper(unsigned long, unsigned long)::'lambda'()::operator()() const juce_HeapBlock.h:359
+    #2 0x105298e18 in float* juce::HeapBlock<float, false>::wrapper<juce::HeapBlock<float, false>::callocWrapper(unsigned long, unsigned long)::'lambda'()>(unsigned long, juce::HeapBlock<float, false>::callocWrapper(unsigned long, unsigned long)::'lambda'()&&) juce_HeapBlock.h:341
+    #3 0x105298d38 in juce::HeapBlock<float, false>::callocWrapper(unsigned long, unsigned long) juce_HeapBlock.h:359
+    #4 0x105298750 in void juce::HeapBlock<float, false>::calloc<int>(int, unsigned long) juce_HeapBlock.h:274
+    #5 0x10527ef7c in juce::CoreAudioClasses::CoreAudioInternal::allocateTempBuffers() juce_CoreAudio_mac.cpp:361
+    #6 0x10527b2b4 in juce::CoreAudioClasses::CoreAudioInternal::updateDetailsFromDevice(juce::BigInteger const&, juce::BigInteger const&) juce_CoreAudio_mac.cpp:512
+    #7 0x10529d5d0 in juce::CoreAudioClasses::CoreAudioInternal::reopen(juce::BigInteger const&, juce::BigInteger const&, double, int) juce_CoreAudio_mac.cpp:673
+    #8 0x10526aaa0 in juce::CoreAudioClasses::CoreAudioIODevice::open(juce::BigInteger const&, juce::BigInteger const&, double, int) juce_CoreAudio_mac.cpp:1307
+    #9 0x1052c55d4 in juce::CoreAudioClasses::AudioIODeviceCombiner::DeviceWrapper::open(juce::BigInteger const&, juce::BigInteger const&, double, int) const juce_CoreAudio_mac.cpp:2017
+    #10 0x1052a440c in juce::CoreAudioClasses::AudioIODeviceCombiner::open(juce::BigInteger const&, juce::BigInteger const&, double, int) juce_CoreAudio_mac.cpp:1559
+    #11 0x10521aca4 in juce::AudioDeviceManager::setAudioDeviceSetup(juce::AudioDeviceManager::AudioDeviceSetup const&, bool) juce_AudioDeviceManager.cpp:808
+    #12 0x10521656c in juce::AudioDeviceManager::initialiseDefault(juce::String const&, juce::AudioDeviceManager::AudioDeviceSetup const*) juce_AudioDeviceManager.cpp:400
+    #13 0x1052188fc in juce::AudioDeviceManager::initialise(int, int, juce::XmlElement const*, bool, juce::String const&, juce::AudioDeviceManager::AudioDeviceSetup const*) juce_AudioDeviceManager.cpp:322
+    #14 0x105215ac8 in juce::AudioDeviceManager::initialiseFromXML(juce::XmlElement const&, bool, juce::String const&, juce::AudioDeviceManager::AudioDeviceSetup const*) juce_AudioDeviceManager.cpp:449
+    #15 0x1052188e4 in juce::AudioDeviceManager::initialise(int, int, juce::XmlElement const*, bool, juce::String const&, juce::AudioDeviceManager::AudioDeviceSetup const*) juce_AudioDeviceManager.cpp:319
+    #16 0x1029f891c in juce::StandalonePluginHolder::reloadAudioDeviceState(bool, juce::String const&, juce::AudioDeviceManager::AudioDeviceSetup const*) juce_StandaloneFilterWindow.h:357
+    #17 0x1029f7c58 in juce::StandalonePluginHolder::setupAudioDevices(bool, juce::String const&, juce::AudioDeviceManager::AudioDeviceSetup const*) juce_StandaloneFilterWindow.h:688
+    #18 0x1029db1f8 in juce::StandalonePluginHolder::init(bool, juce::String const&) juce_StandaloneFilterWindow.h:121
+    #19 0x1029da4e4 in juce::StandalonePluginHolder::StandalonePluginHolder(juce::PropertySet*, bool, juce::String const&, juce::AudioDeviceManager::AudioDeviceSetup const*, juce::Array<juce::StandalonePluginHolder::PluginInOuts, juce::DummyCriticalSection, 0> const&, bool) juce_StandaloneFilterWindow.h:116
+    #20 0x1029d9ab8 in juce::StandalonePluginHolder::StandalonePluginHolder(juce::PropertySet*, bool, juce::String const&, juce::AudioDeviceManager::AudioDeviceSetup const*, juce::Array<juce::StandalonePluginHolder::PluginInOuts, juce::DummyCriticalSection, 0> const&, bool) juce_StandaloneFilterWindow.h:93
+    #21 0x1029d980c in std::__1::__unique_if<juce::StandalonePluginHolder>::__unique_single std::__1::make_unique[abi:ne180100]<juce::StandalonePluginHolder, juce::PropertiesFile*, bool, juce::String, std::nullptr_t, juce::Array<juce::StandalonePluginHolder::PluginInOuts, juce::DummyCriticalSection, 0> const&, bool const&>(juce::PropertiesFile*&&, bool&&, juce::String&&, std::nullptr_t&&, juce::Array<juce::StandalonePluginHolder::PluginInOuts, juce::DummyCriticalSection, 0> const&, bool const&) unique_ptr.h:597
+    #22 0x1029a9c6c in juce::StandaloneFilterApp::createPluginHolder() juce_audio_plugin_client_Standalone.cpp:121
+    #23 0x1029a964c in juce::StandaloneFilterApp::createWindow() juce_audio_plugin_client_Standalone.cpp:101
+    #24 0x1029a8da8 in juce::StandaloneFilterApp::initialise(juce::String const&) juce_audio_plugin_client_Standalone.cpp:132
+    #25 0x1048f46ac in juce::JUCEApplicationBase::initialiseApp() juce_ApplicationBase.cpp:312
+    #26 0x102f4c290 in juce::JUCEApplication::initialiseApp() juce_Application.cpp:97
+    #27 0x1048f4010 in juce::JUCEApplicationBase::main() juce_ApplicationBase.cpp:271
+    #28 0x1048f3cb4 in juce::JUCEApplicationBase::main(int, char const**) juce_ApplicationBase.cpp:255
+    #29 0x1029a7e74 in main juce_audio_plugin_client_Standalone.cpp:234
+
+Thread T9 created by T0 here:
+    #0 0x1092d81c8 in pthread_create+0x5c (libclang_rt.asan_osx_dynamic.dylib:arm64e+0x4c1c8)
+    #1 0x18d31be14 in HALB_IOThread::DispatchPThread(void* (*)(void*), void*)+0x3a0 (CoreAudio:arm64e+0x36de14)
+    #2 0x18d31c784 in HALB_IOThread::StartAndWaitForState(unsigned int)+0x228 (CoreAudio:arm64e+0x36e784)
+    #3 0x18d1a6a28 in HALC_ProxyIOContext::_StartIO(HALC_ProxyIOContext::StartIO_RetryMethod)+0xa4 (CoreAudio:arm64e+0x1f8a28)
+    #4 0x18d1a6578 in HALC_ProxyIOContext::StartIOProc(int (*)(unsigned int, AudioTimeStamp const*, AudioBufferList const*, AudioTimeStamp const*, AudioBufferList*, AudioTimeStamp const*, void*))+0xd0 (CoreAudio:arm64e+0x1f8578)
+    #5 0x18d163144 in HAL_HardwarePlugIn_DeviceStart(AudioHardwarePlugInInterface**, unsigned int, int (*)(unsigned int, AudioTimeStamp const*, AudioBufferList const*, AudioTimeStamp const*, AudioBufferList*, AudioTimeStamp const*, void*))+0x31c (CoreAudio:arm64e+0x1b5144)
+    #6 0x18d239cb8 in AudioDeviceStart_mac_imp+0xec (CoreAudio:arm64e+0x28bcb8)
+    #7 0x10529f734 in juce::CoreAudioClasses::CoreAudioInternal::start(juce::AudioIODeviceCallback*)::'lambda'()::operator()() juce_CoreAudio_mac.cpp:721
+    #8 0x10529f15c in juce::CoreAudioClasses::CoreAudioInternal::start(juce::AudioIODeviceCallback*) juce_CoreAudio_mac.cpp:704
+    #9 0x10526ae5c in juce::CoreAudioClasses::CoreAudioIODevice::start(juce::AudioIODeviceCallback*) juce_CoreAudio_mac.cpp:1330
+    #10 0x1052c5edc in juce::CoreAudioClasses::AudioIODeviceCombiner::DeviceWrapper::start(juce::AudioIODeviceCallback*) const juce_CoreAudio_mac.cpp:2010
+    #11 0x1052a5124 in juce::CoreAudioClasses::AudioIODeviceCombiner::start(juce::AudioIODeviceCallback*) juce_CoreAudio_mac.cpp:1682
+    #12 0x10521ada8 in juce::AudioDeviceManager::setAudioDeviceSetup(juce::AudioDeviceManager::AudioDeviceSetup const&, bool) juce_AudioDeviceManager.cpp:817
+    #13 0x10521656c in juce::AudioDeviceManager::initialiseDefault(juce::String const&, juce::AudioDeviceManager::AudioDeviceSetup const*) juce_AudioDeviceManager.cpp:400
+    #14 0x1052188fc in juce::AudioDeviceManager::initialise(int, int, juce::XmlElement const*, bool, juce::String const&, juce::AudioDeviceManager::AudioDeviceSetup const*) juce_AudioDeviceManager.cpp:322
+    #15 0x105215ac8 in juce::AudioDeviceManager::initialiseFromXML(juce::XmlElement const&, bool, juce::String const&, juce::AudioDeviceManager::AudioDeviceSetup const*) juce_AudioDeviceManager.cpp:449
+    #16 0x1052188e4 in juce::AudioDeviceManager::initialise(int, int, juce::XmlElement const*, bool, juce::String const&, juce::AudioDeviceManager::AudioDeviceSetup const*) juce_AudioDeviceManager.cpp:319
+    #17 0x1029f891c in juce::StandalonePluginHolder::reloadAudioDeviceState(bool, juce::String const&, juce::AudioDeviceManager::AudioDeviceSetup const*) juce_StandaloneFilterWindow.h:357
+    #18 0x1029f7c58 in juce::StandalonePluginHolder::setupAudioDevices(bool, juce::String const&, juce::AudioDeviceManager::AudioDeviceSetup const*) juce_StandaloneFilterWindow.h:688
+    #19 0x1029db1f8 in juce::StandalonePluginHolder::init(bool, juce::String const&) juce_StandaloneFilterWindow.h:121
+    #20 0x1029da4e4 in juce::StandalonePluginHolder::StandalonePluginHolder(juce::PropertySet*, bool, juce::String const&, juce::AudioDeviceManager::AudioDeviceSetup const*, juce::Array<juce::StandalonePluginHolder::PluginInOuts, juce::DummyCriticalSection, 0> const&, bool) juce_StandaloneFilterWindow.h:116
+    #21 0x1029d9ab8 in juce::StandalonePluginHolder::StandalonePluginHolder(juce::PropertySet*, bool, juce::String const&, juce::AudioDeviceManager::AudioDeviceSetup const*, juce::Array<juce::StandalonePluginHolder::PluginInOuts, juce::DummyCriticalSection, 0> const&, bool) juce_StandaloneFilterWindow.h:93
+    #22 0x1029d980c in std::__1::__unique_if<juce::StandalonePluginHolder>::__unique_single std::__1::make_unique[abi:ne180100]<juce::StandalonePluginHolder, juce::PropertiesFile*, bool, juce::String, std::nullptr_t, juce::Array<juce::StandalonePluginHolder::PluginInOuts, juce::DummyCriticalSection, 0> const&, bool const&>(juce::PropertiesFile*&&, bool&&, juce::String&&, std::nullptr_t&&, juce::Array<juce::StandalonePluginHolder::PluginInOuts, juce::DummyCriticalSection, 0> const&, bool const&) unique_ptr.h:597
+    #23 0x1029a9c6c in juce::StandaloneFilterApp::createPluginHolder() juce_audio_plugin_client_Standalone.cpp:121
+    #24 0x1029a964c in juce::StandaloneFilterApp::createWindow() juce_audio_plugin_client_Standalone.cpp:101
+    #25 0x1029a8da8 in juce::StandaloneFilterApp::initialise(juce::String const&) juce_audio_plugin_client_Standalone.cpp:132
+    #26 0x1048f46ac in juce::JUCEApplicationBase::initialiseApp() juce_ApplicationBase.cpp:312
+    #27 0x102f4c290 in juce::JUCEApplication::initialiseApp() juce_Application.cpp:97
+    #28 0x1048f4010 in juce::JUCEApplicationBase::main() juce_ApplicationBase.cpp:271
+    #29 0x1048f3cb4 in juce::JUCEApplicationBase::main(int, char const**) juce_ApplicationBase.cpp:255
+    #30 0x1029a7e74 in main juce_audio_plugin_client_Standalone.cpp:234
+    #31 0x18a2e4270  (<unknown module>)
+
+SUMMARY: AddressSanitizer: heap-buffer-overflow juce_CoreAudio_mac.cpp:795 in juce::CoreAudioClasses::CoreAudioInternal::audioCallback(AudioTimeStamp const*, AudioTimeStamp const*, AudioBufferList const*, AudioBufferList*)
+Shadow bytes around the buggy address:
+  0x61a000018f00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x61a000018f80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x61a000019000: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x61a000019080: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x61a000019100: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+=>0x61a000019180: 00 00[fa]fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x61a000019200: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x61a000019280: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x61a000019300: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x61a000019380: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x61a000019400: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+JUCE v8.0.6
+2025-03-01 16:54:00.304843+0100 DiatonyDawApplication[12051:2965944] [plugin] AddInstanceForFactory: No factory registered for id <CFUUID 0x603000048be0> F8BB1C28-BAE8-11D6-9C31-00039315CD46
+2025-03-01 16:54:00.346255+0100 DiatonyDawApplication[12051:2965944]   HALC_ProxyObjectMap.cpp:173    HALC_ProxyObjectMap::_CopyObjectByObjectID: failed to create the local object
+2025-03-01 16:54:00.346358+0100 DiatonyDawApplication[12051:2965944]      HALC_ShellDevice.cpp:2670   HALC_ShellDevice::RebuildControlList: couldn't find the control object
+=================================================================
+==12051==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x61a000019190 at pc 0x000102903e90 bp 0x0001701ce670 sp 0x0001701ce668
+WRITE of size 4 at 0x61a000019190 thread T8
+=== Audio Setup Changed ===
+Sample Rate: 16000
+Block Size: 512
+Num Input Channels: 2
+Num Output Channels: 2
+    #0 0x102903e8c in juce::CoreAudioClasses::CoreAudioInternal::audioCallback(AudioTimeStamp const*, AudioTimeStamp const*, AudioBufferList const*, AudioBufferList*) juce_CoreAudio_mac.cpp:795
+    #1 0x10290320c in juce::CoreAudioClasses::CoreAudioInternal::audioIOProc(unsigned int, AudioTimeStamp const*, AudioBufferList const*, AudioTimeStamp const*, AudioBufferList*, AudioTimeStamp const*, void*) juce_CoreAudio_mac.cpp:1146
+    #2 0x18d1a1b4c in HALC_ProxyIOContext::IOWorkLoop()+0x2b38 (CoreAudio:arm64e+0x1f3b4c)
+    #3 0x18d19e894 in invocation function for block in HALC_ProxyIOContext::HALC_ProxyIOContext(unsigned int, unsigned int)+0xac (CoreAudio:arm64e+0x1f0894)
+    #4 0x18d34f75c in HALC_IOThread::Entry(void*)+0x54 (CoreAudio:arm64e+0x3a175c)
+    #5 0x1068b1858 in asan_thread_start(void*)+0x40 (libclang_rt.asan_osx_dynamic.dylib:arm64e+0x51858)
+    #6 0x18a6642e0 in _pthread_start+0x84 (libsystem_pthread.dylib:arm64e+0x72e0)
+    #7 0x18a65f0f8 in thread_start+0x4 (libsystem_pthread.dylib:arm64e+0x20f8)
+
+0x61a000019190 is located 0 bytes after 1296-byte region [0x61a000018c80,0x61a000019190)
+allocated by thread T0 here:
+    #0 0x1068b4fd0 in calloc+0x9c (libclang_rt.asan_osx_dynamic.dylib:arm64e+0x54fd0)
+    #1 0x1028fcc5c in juce::HeapBlock<float, false>::callocWrapper(unsigned long, unsigned long)::'lambda'()::operator()() const juce_HeapBlock.h:359
+    #2 0x1028fcb98 in float* juce::HeapBlock<float, false>::wrapper<juce::HeapBlock<float, false>::callocWrapper(unsigned long, unsigned long)::'lambda'()>(unsigned long, juce::HeapBlock<float, false>::callocWrapper(unsigned long, unsigned long)::'lambda'()&&) juce_HeapBlock.h:341
+    #3 0x1028fcab8 in juce::HeapBlock<float, false>::callocWrapper(unsigned long, unsigned long) juce_HeapBlock.h:359
+    #4 0x1028fc4d0 in void juce::HeapBlock<float, false>::calloc<int>(int, unsigned long) juce_HeapBlock.h:274
+    #5 0x1028e2cfc in juce::CoreAudioClasses::CoreAudioInternal::allocateTempBuffers() juce_CoreAudio_mac.cpp:361
+    #6 0x1028df034 in juce::CoreAudioClasses::CoreAudioInternal::updateDetailsFromDevice(juce::BigInteger const&, juce::BigInteger const&) juce_CoreAudio_mac.cpp:512
+    #7 0x102901350 in juce::CoreAudioClasses::CoreAudioInternal::reopen(juce::BigInteger const&, juce::BigInteger const&, double, int) juce_CoreAudio_mac.cpp:673
+    #8 0x1028ce820 in juce::CoreAudioClasses::CoreAudioIODevice::open(juce::BigInteger const&, juce::BigInteger const&, double, int) juce_CoreAudio_mac.cpp:1307
+    #9 0x102929354 in juce::CoreAudioClasses::AudioIODeviceCombiner::DeviceWrapper::open(juce::BigInteger const&, juce::BigInteger const&, double, int) const juce_CoreAudio_mac.cpp:2017
+    #10 0x10290818c in juce::CoreAudioClasses::AudioIODeviceCombiner::open(juce::BigInteger const&, juce::BigInteger const&, double, int) juce_CoreAudio_mac.cpp:1559
+    #11 0x10287ea24 in juce::AudioDeviceManager::setAudioDeviceSetup(juce::AudioDeviceManager::AudioDeviceSetup const&, bool) juce_AudioDeviceManager.cpp:808
+    #12 0x10287a2ec in juce::AudioDeviceManager::initialiseDefault(juce::String const&, juce::AudioDeviceManager::AudioDeviceSetup const*) juce_AudioDeviceManager.cpp:400
+    #13 0x10287c67c in juce::AudioDeviceManager::initialise(int, int, juce::XmlElement const*, bool, juce::String const&, juce::AudioDeviceManager::AudioDeviceSetup const*) juce_AudioDeviceManager.cpp:322
+    #14 0x102879848 in juce::AudioDeviceManager::initialiseFromXML(juce::XmlElement const&, bool, juce::String const&, juce::AudioDeviceManager::AudioDeviceSetup const*) juce_AudioDeviceManager.cpp:449
+    #15 0x10287c664 in juce::AudioDeviceManager::initialise(int, int, juce::XmlElement const*, bool, juce::String const&, juce::AudioDeviceManager::AudioDeviceSetup const*) juce_AudioDeviceManager.cpp:319
+    #16 0x10005beb0 in juce::StandalonePluginHolder::reloadAudioDeviceState(bool, juce::String const&, juce::AudioDeviceManager::AudioDeviceSetup const*) juce_StandaloneFilterWindow.h:357
+    #17 0x10005b1ec in juce::StandalonePluginHolder::setupAudioDevices(bool, juce::String const&, juce::AudioDeviceManager::AudioDeviceSetup const*) juce_StandaloneFilterWindow.h:688
+    #18 0x10003e78c in juce::StandalonePluginHolder::init(bool, juce::String const&) juce_StandaloneFilterWindow.h:121
+    #19 0x10003da78 in juce::StandalonePluginHolder::StandalonePluginHolder(juce::PropertySet*, bool, juce::String const&, juce::AudioDeviceManager::AudioDeviceSetup const*, juce::Array<juce::StandalonePluginHolder::PluginInOuts, juce::DummyCriticalSection, 0> const&, bool) juce_StandaloneFilterWindow.h:116
+    #20 0x10003d04c in juce::StandalonePluginHolder::StandalonePluginHolder(juce::PropertySet*, bool, juce::String const&, juce::AudioDeviceManager::AudioDeviceSetup const*, juce::Array<juce::StandalonePluginHolder::PluginInOuts, juce::DummyCriticalSection, 0> const&, bool) juce_StandaloneFilterWindow.h:93
+    #21 0x10003cda0 in std::__1::__unique_if<juce::StandalonePluginHolder>::__unique_single std::__1::make_unique[abi:ne180100]<juce::StandalonePluginHolder, juce::PropertiesFile*, bool, juce::String, std::nullptr_t, juce::Array<juce::StandalonePluginHolder::PluginInOuts, juce::DummyCriticalSection, 0> const&, bool const&>(juce::PropertiesFile*&&, bool&&, juce::String&&, std::nullptr_t&&, juce::Array<juce::StandalonePluginHolder::PluginInOuts, juce::DummyCriticalSection, 0> const&, bool const&) unique_ptr.h:597
+    #22 0x10000d200 in juce::StandaloneFilterApp::createPluginHolder() juce_audio_plugin_client_Standalone.cpp:121
+    #23 0x10000cbe0 in juce::StandaloneFilterApp::createWindow() juce_audio_plugin_client_Standalone.cpp:101
+    #24 0x10000c33c in juce::StandaloneFilterApp::initialise(juce::String const&) juce_audio_plugin_client_Standalone.cpp:132
+    #25 0x101f5842c in juce::JUCEApplicationBase::initialiseApp() juce_ApplicationBase.cpp:312
+    #26 0x1005b0010 in juce::JUCEApplication::initialiseApp() juce_Application.cpp:97
+    #27 0x101f57d90 in juce::JUCEApplicationBase::main() juce_ApplicationBase.cpp:271
+    #28 0x101f57a34 in juce::JUCEApplicationBase::main(int, char const**) juce_ApplicationBase.cpp:255
+    #29 0x10000b408 in main juce_audio_plugin_client_Standalone.cpp:234
+
+Thread T8 created by T7 here:
+    #0 0x1068ac1c8 in pthread_create+0x5c (libclang_rt.asan_osx_dynamic.dylib:arm64e+0x4c1c8)
+    #1 0x18d31be14 in HALB_IOThread::DispatchPThread(void* (*)(void*), void*)+0x3a0 (CoreAudio:arm64e+0x36de14)
+    #2 0x18d31c784 in HALB_IOThread::StartAndWaitForState(unsigned int)+0x228 (CoreAudio:arm64e+0x36e784)
+    #3 0x18d1a6a28 in HALC_ProxyIOContext::_StartIO(HALC_ProxyIOContext::StartIO_RetryMethod)+0xa4 (CoreAudio:arm64e+0x1f8a28)
+    #4 0x18d1a7c14 in HALC_ProxyIOContext::ResumeIO(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>)+0x18c (CoreAudio:arm64e+0x1f9c14)
+    #5 0x18d1a7dac in void applesauce::dispatch::v1::async<HALC_ProxyIOContext::EnqueueResumeIO(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>, bool)::$_0&>(dispatch_queue_s*, HALC_ProxyIOContext::EnqueueResumeIO(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>, bool)::$_0&)::'lambda'(void*)::__invoke(void*)+0x54 (CoreAudio:arm64e+0x1f9dac)
+    #6 0x1068b326c in asan_dispatch_call_block_and_release+0xe0 (libclang_rt.asan_osx_dynamic.dylib:arm64e+0x5326c)
+    #7 0x18a4b15b0 in _dispatch_client_callout+0x10 (libdispatch.dylib:arm64e+0x45b0)
+    #8 0x18a4b8bd4 in _dispatch_lane_serial_drain+0x2fc (libdispatch.dylib:arm64e+0xbbd4)
+    #9 0x18a4b9760 in _dispatch_lane_invoke+0x1ac (libdispatch.dylib:arm64e+0xc760)
+    #10 0x18a4babc8 in _dispatch_workloop_invoke+0x6cc (libdispatch.dylib:arm64e+0xdbc8)
+    #11 0x18a4c499c in _dispatch_root_queue_drain_deferred_wlh+0x11c (libdispatch.dylib:arm64e+0x1799c)
+    #12 0x18a4c41e8 in _dispatch_workloop_worker_thread+0x218 (libdispatch.dylib:arm64e+0x171e8)
+    #13 0x18a6603d4 in _pthread_wqthread+0x11c (libsystem_pthread.dylib:arm64e+0x33d4)
+    #14 0x18a65f0ec in start_wqthread+0x4 (libsystem_pthread.dylib:arm64e+0x20ec)
+
+Thread T7 created by T0 here:
+    <empty stack>
+
+SUMMARY: AddressSanitizer: heap-buffer-overflow juce_CoreAudio_mac.cpp:795 in juce::CoreAudioClasses::CoreAudioInternal::audioCallback(AudioTimeStamp const*, AudioTimeStamp const*, AudioBufferList const*, AudioBufferList*)
+Shadow bytes around the buggy address:
+  0x61a000018f00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x61a000018f80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x61a000019000: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x61a000019080: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x61a000019100: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+=>0x61a000019180: 00 00[fa]fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x61a000019200: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x61a000019280: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x61a000019300: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x61a000019380: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x61a000019400: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==12051==ABORTING
