@@ -208,18 +208,15 @@ void AudioPluginAudioProcessor::generateMidiSolution()
     // vector<FourVoiceTexture*> sols;
     try {
         // Obtention de la solution
-        FourVoiceTexture* bestSol = solve_diatony_problem_optimal(
-            size, tonality.get(), chords, chords_qualities, states, false);
-            
-        if (bestSol != nullptr) {
+        auto newSolutions = solve_diatony_problem(size, tonality.get(), chords, 
+                                                chords_qualities, states, false);
+
+        if (!newSolutions.empty()) {
             // Écriture du fichier MIDI
             juce::String finalPath = fullPath + "_0.mid";
-            DBG("Écriture du fichier MIDI : " + finalPath);
-            writeSolToMIDIFile(size, finalPath.toStdString(), bestSol);
-            DBG("MIDI sauvegardé : " + finalPath);
-            
-            // Nettoyage
-            delete bestSol;
+            DBG(juce::String(juce::CharPointer_UTF8("Écriture du fichier MIDI : ")) + finalPath);
+            writeSolToMIDIFile(size, finalPath.toStdString(), newSolutions.back());
+            DBG(juce::String(juce::CharPointer_UTF8("MIDI sauvegardé : ")) + finalPath);
         } else {
             DBG("Aucune solution trouvée");
         }
