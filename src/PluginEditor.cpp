@@ -29,7 +29,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
 
     // Configuration du label
     addAndMakeVisible(*statusLabel);
-    statusLabel->setText(TRANS("Prêt à générer"), juce::dontSendNotification);
+    statusLabel->setText(juce::String::fromUTF8("Prêt à générer"), juce::dontSendNotification);
     statusLabel->setJustificationType(juce::Justification::centred);
 
     setSize (400, 200);
@@ -95,6 +95,6 @@ void AudioPluginAudioProcessorEditor::buttonClicked (juce::Button* button)
 
 //==============================================================================
 void AudioPluginAudioProcessorEditor::timerCallback(){
-    generateButton->setButtonText(TRANS("Générer"));
+    generateButton->setButtonText(juce::String::fromUTF8("Générer"));
     stopTimer();
 }
