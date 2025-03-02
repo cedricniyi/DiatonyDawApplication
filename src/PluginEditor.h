@@ -15,8 +15,13 @@ public:
     void generateMidiSolution();
 
 private:
-    // Declare the button
-    juce::TextButton generateButton;
+    // Utilisation de std::unique_ptr pour une meilleure gestion de la mémoire
+    std::unique_ptr<juce::TextButton> generateButton;
+    std::unique_ptr<juce::TextButton> playButton;
+    std::unique_ptr<juce::Label> statusLabel;
+
+    // État 
+    bool midiFileGenerated = false;
 
     // Callback for button clicks
     void buttonClicked(juce::Button* button) override;
