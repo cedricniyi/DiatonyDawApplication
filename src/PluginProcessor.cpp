@@ -170,6 +170,15 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, j
         // Faire jouer le synthétiseur avec ces événements MIDI
         synth.renderNextBlock(buffer, previewMidiBuffer, 0, numSamples);
 
+        // Ajouter un limiteur simple
+        for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
+        {
+            float* channelData = buffer.getWritePointer(channel);
+            for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
+            {
+                channelData[sample] = std::clamp(channelData[sample], -0.95f, 0.95f);
+            }
+        }
         // Mise à jour de la position
         currentMidiPosition = endTick;
         
