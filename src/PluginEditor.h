@@ -12,7 +12,6 @@ public:
     //==============================================================================
     void paint (juce::Graphics&) override;
     void resized() override;
-    void generateMidiSolution();
 
 private:
     // Utilisation de std::unique_ptr pour une meilleure gestion de la mémoire
