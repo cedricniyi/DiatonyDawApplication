@@ -268,6 +268,7 @@ juce::String AudioPluginAudioProcessor::generateMidiSolution()
             writeSolToMIDIFile(size, finalPath.toStdString(), newSolutions.back());
             DBG(juce::String::fromUTF8("MIDI sauvegardé : ") + finalPath);
             
+            currentMidiFilePath = finalPath;
             return finalPath;
         } else {
             DBG("Aucune solution trouvée");
