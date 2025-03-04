@@ -69,25 +69,33 @@ void AudioPluginAudioProcessorEditor::resized()
 void AudioPluginAudioProcessorEditor::buttonClicked (juce::Button* button)
 {
     if (button == generateButton.get()) {
+        // Désactiver le bouton pendant la génération
+        generateButton->setEnabled(false);
         statusLabel->setText(juce::String::fromUTF8("Génération en cours..."), juce::dontSendNotification);
-        processorRef.generateMidiSolution();
-        midiFileGenerated = true;
-        DBG(juce::String::fromUTF8("MIDI généré avec succès !"));
-        playButton->setEnabled(true);
-        generateButton->setButtonText(juce::String::fromUTF8("Générer!!"));
-        startTimer(2000);
+        
+        if (!processorRef.generateMidiSolution().isEmpty()) {
+            statusLabel->setText(juce::String::fromUTF8("Génération réussie !"), juce::dontSendNotification);
+            playButton->setEnabled(true);
+        } else {
+            statusLabel->setText(juce::String::fromUTF8("Échec de la génération"), juce::dontSendNotification);
+            playButton->setEnabled(false);
+        }
+        
+        generateButton->setEnabled(true);
+        startTimer(2000); // Le timer réinitialisera le message après 2 secondes
     }
     else if (button == playButton.get()) {
         if (processorRef.isPlayingMidi()) {
             processorRef.stopMidiPlayback();
             playButton->setButtonText(juce::String::fromUTF8("Écouter"));
-            statusLabel->setText(juce::String::fromUTF8("Lecture arrêtée"), juce::dontSendNotification);
+            statusLabel->setText(juce::String::fromUTF8("Prêt à jouer"), juce::dontSendNotification);
         } else {
             if (processorRef.startMidiPlayback()) {
                 playButton->setButtonText(juce::String::fromUTF8("Arrêter"));
                 statusLabel->setText(juce::String::fromUTF8("Lecture en cours..."), juce::dontSendNotification);
             } else {
-                statusLabel->setText(juce::String::fromUTF8("Impossible de lire le fichier MIDI"), juce::dontSendNotification);
+                statusLabel->setText(juce::String::fromUTF8("Erreur de lecture"), juce::dontSendNotification);
+                playButton->setEnabled(false);
             }
         }
     }
@@ -95,6 +103,6 @@ void AudioPluginAudioProcessorEditor::buttonClicked (juce::Button* button)
 
 //==============================================================================
 void AudioPluginAudioProcessorEditor::timerCallback(){
-    generateButton->setButtonText(juce::String::fromUTF8("Générer"));
+    statusLabel->setText(juce::String::fromUTF8("Prêt à générer"), juce::dontSendNotification);
     stopTimer();
 }
