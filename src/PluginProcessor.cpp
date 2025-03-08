@@ -185,6 +185,9 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, j
         // Vérifier si nous avons atteint la fin
         if (currentMidiPosition >= midiSequence->getEndTime()) {
             stopMidiPlayback();
+            // Notifier que la lecture est terminée
+            if (auto* editor = dynamic_cast<AudioPluginAudioProcessorEditor*>(getActiveEditor()))
+                editor->handlePlaybackFinished();
         }
     }
 }

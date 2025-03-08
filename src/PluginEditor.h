@@ -12,12 +12,15 @@ public:
     //==============================================================================
     void paint (juce::Graphics&) override;
     void resized() override;
+    void handlePlaybackFinished();
 
 private:
     // Utilisation de std::unique_ptr pour une meilleure gestion de la mémoire
     std::unique_ptr<juce::TextButton> generateButton;
     std::unique_ptr<juce::TextButton> playButton;
-    std::unique_ptr<juce::Label> statusLabel;
+    
+    std::unique_ptr<juce::Label> generationStatusLabel;  // Label pour l'état de génération
+    std::unique_ptr<juce::Label> playbackStatusLabel;    // Label pour l'état de lecture
 
     // État 
     bool midiFileGenerated = false;
