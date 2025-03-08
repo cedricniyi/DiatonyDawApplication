@@ -1,6 +1,7 @@
 #pragma once
 
 #include <juce_audio_processors/juce_audio_processors.h>
+#include <juce_audio_basics/juce_audio_basics.h>
 
 #include "../Diatony/c++/headers/aux/Tonality.hpp"
 #include "../Diatony/c++/headers/aux/MidiFileGeneration.hpp"
@@ -47,9 +48,23 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
 
     //==============================================================================
-    void generateMidiSolution();
+    juce::String generateMidiSolution();
+    
+    // Méthodes pour la prévisualisation MIDI
+    bool startMidiPlayback();
+    void stopMidiPlayback();
+    bool isPlayingMidi() const;
 
 private:
+
+    // Pour la prévisualisation MIDI
+    juce::String currentMidiFilePath;
+    std::unique_ptr<juce::MidiFile> midiFile;
+    std::unique_ptr<juce::MidiMessageSequence> midiSequence;
+    int currentMidiPosition = 0;
+    bool midiPlaying = false;
+
+    juce::Synthesiser synth;
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessor)
 };
