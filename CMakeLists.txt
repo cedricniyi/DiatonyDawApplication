@@ -40,7 +40,8 @@ target_compile_definitions(DiatonyDawApplication
         JUCE_USE_CURL=0     # If you remove this, add `NEEDS_CURL TRUE` to the `juce_add_plugin` call
         JUCE_VST3_CAN_REPLACE_VST2=0
         JUCE_STRINGS_ARE_UNICODE=1
-        JUCE_USE_UTF8_FILESYSTEM=1)
+        JUCE_USE_UTF8_FILESYSTEM=1
+        JucePlugin_Name="DiatonyDawApplication")
 
 target_link_libraries(DiatonyDawApplication
     PRIVATE

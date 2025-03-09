@@ -3,6 +3,10 @@
 #include "SimpleVoice.h"
 #include "SimpleSound.h"
 
+#ifndef  JucePlugin_Name
+ #define JucePlugin_Name                   "DiatonyDawApplication"
+#endif
+
 //==============================================================================
 AudioPluginAudioProcessor::AudioPluginAudioProcessor()
      : AudioProcessor (BusesProperties()
