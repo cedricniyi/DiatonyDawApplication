@@ -135,49 +135,46 @@ bool AudioPluginAudioProcessor::isBusesLayoutSupported (const BusesLayout& layou
 
 void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
-    // Efface tout l'audio d'entrée
     buffer.clear();
 
-    // Si nous sommes en train de jouer un fichier MIDI
     if (midiPlaying && midiSequence != nullptr) {
         // Buffer MIDI temporaire pour la prévisualisation interne
         juce::MidiBuffer previewMidiBuffer;
-
-        // Durée du buffer actuel en ticks MIDI
-        double samplesPerTick = getSampleRate() / (midiFile->getTimeFormat() * 2.0); // Facteur 2.0 pour ajuster la vitesse
         int numSamples = buffer.getNumSamples();
+
+        // Utiliser un tempo fixe (ici 120 BPM) - à adapter si vous récupérez le tempo dynamiquement
+        double bpm = 120.0; // Assurez-vous d'utiliser le BPM correct
+        double secondsPerQuarterNote = 60.0 / bpm;
+        double samplesPerQuarterNote = getSampleRate() * secondsPerQuarterNote;
+        double samplesPerTick = samplesPerQuarterNote / midiFile->getTimeFormat();
+
         double startTick = currentMidiPosition;
         double endTick = startTick + (numSamples / samplesPerTick);
-        
-        // Ajouter tous les messages MIDI qui tombent dans cette plage
+        DBG("Time Format: " << midiFile->getTimeFormat());
+        DBG("Sample Rate: " << getSampleRate());
+        DBG("Samples per Tick: " << samplesPerTick);
+        // DBG("Current MIDI Position: " << currentMidiPosition);
+
         for (int i = 0; i < midiSequence->getNumEvents(); ++i) {
             auto* midiEvent = midiSequence->getEventPointer(i);
             double eventTick = midiEvent->message.getTimeStamp();
             
             if (eventTick >= startTick && eventTick < endTick) {
-                // Calculer la position précise dans le buffer
-                int samplePosition = (int)((eventTick - startTick) * samplesPerTick);
-                if (samplePosition < 0) samplePosition = 0;
-                if (samplePosition >= numSamples) samplePosition = numSamples - 1;
-                
-                // Pour la prévisualisation interne
-                previewMidiBuffer.addEvent(midiEvent->message, samplePosition);
+                int samplePosition = static_cast<int>((eventTick - startTick) * samplesPerTick);
+                samplePosition = std::clamp(samplePosition, 0, numSamples - 1);
 
+                previewMidiBuffer.addEvent(midiEvent->message, samplePosition);
                 midiMessages.addEvent(midiEvent->message, samplePosition);
             }
         }
-        
-        // Faire jouer le synthétiseur avec ces événements MIDI
+
         synth.renderNextBlock(buffer, previewMidiBuffer, 0, numSamples);
 
-        // Ajouter un limiteur simple
         for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
         {
             float* channelData = buffer.getWritePointer(channel);
-            for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
-            {
+            for (int sample = 0; sample < numSamples; ++sample)
                 channelData[sample] = std::clamp(channelData[sample], -0.95f, 0.95f);
-            }
         }
         // Mise à jour de la position
         currentMidiPosition = endTick;
