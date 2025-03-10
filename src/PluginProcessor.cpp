@@ -252,8 +252,18 @@ juce::String AudioPluginAudioProcessor::generateMidiSolution()
     
     DBG("(PluginProcessor.cpp) Dossier MIDI du projet: " + projectDir.getFullPathName());
     
-    // Configuration identique au main.cpp
-    std::unique_ptr<MajorTonality> tonality(new MajorTonality(currentTonality));
+    // Au lieu d'utiliser un unique_ptr<Tonality>, utiliser un unique_ptr du type concret
+    std::unique_ptr<MajorTonality> majorTonality;
+    std::unique_ptr<MinorTonality> minorTonality;
+    Tonality* tonality = nullptr;
+    
+    if (isMajorMode) {
+        majorTonality = std::make_unique<MajorTonality>(currentTonality);
+        tonality = majorTonality.get();
+    } else {
+        minorTonality = std::make_unique<MinorTonality>(currentTonality);
+        tonality = minorTonality.get();
+    }
     
     vector<int> chords = {FIRST_DEGREE, SIXTH_DEGREE, FIVE_OF_FIVE, 
                          FIFTH_DEGREE_APPOGIATURA, FIFTH_DEGREE, FIRST_DEGREE};
@@ -274,7 +284,7 @@ juce::String AudioPluginAudioProcessor::generateMidiSolution()
     // vector<FourVoiceTexture*> sols;
     try {
         // Obtention de la solution
-        auto newSolutions = solve_diatony_problem(size, tonality.get(), chords, 
+        auto newSolutions = solve_diatony_problem(size, tonality, chords, 
                                                 chords_qualities, states, false);
 
         if (!newSolutions.empty()) {
@@ -351,3 +361,11 @@ void AudioPluginAudioProcessor::setTonality(int noteValue)
     currentTonality = noteValue;
     DBG("Tonality set to: " + juce::String(DiatonyConstants::getNoteName(currentTonality)));
 }
+
+//==============================================================================
+void AudioPluginAudioProcessor::setMode(bool isMajor)
+{
+    isMajorMode = isMajor;
+    DBG("Mode set to: " + juce::String(isMajor ? "Major" : "Minor"));
+}
+

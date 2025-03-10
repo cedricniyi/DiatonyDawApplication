@@ -4,6 +4,7 @@
 #include <juce_audio_basics/juce_audio_basics.h>
 
 #include "../Diatony/c++/headers/aux/Tonality.hpp"
+#include "../Diatony/c++/headers/aux/Utilities.hpp"
 #include "../Diatony/c++/headers/aux/MidiFileGeneration.hpp"
 #include "../Diatony/c++/headers/diatony/SolveDiatony.hpp"
 
@@ -55,7 +56,8 @@ public:
     void stopMidiPlayback();
     bool isPlayingMidi() const;
     void setTonality(int noteValue);
-
+    void setMode(bool isMajor);
+    
 private:
 
     // Pour la prévisualisation MIDI
@@ -65,6 +67,8 @@ private:
     int currentMidiPosition = 0;
     bool midiPlaying = false;
     int currentTonality = C; // Valeur par défaut
+    bool isMajorMode = true;  
+
 
     juce::Synthesiser synth;
     //==============================================================================
