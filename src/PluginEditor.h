@@ -22,6 +22,9 @@ private:
     std::unique_ptr<juce::Label> generationStatusLabel;  // Label pour l'état de génération
     std::unique_ptr<juce::Label> playbackStatusLabel;    // Label pour l'état de lecture
 
+    std::unique_ptr<juce::ComboBox> tonalityComboBox;
+    std::unique_ptr<juce::Label> tonalityLabel;  // Nouveau label pour le ComboBox
+
     // État 
     bool midiFileGenerated = false;
 
@@ -29,6 +32,7 @@ private:
     void buttonClicked(juce::Button* button) override;
 
     void timerCallback() override;
+    void setupTonalityComboBox();
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
     AudioPluginAudioProcessor& processorRef;

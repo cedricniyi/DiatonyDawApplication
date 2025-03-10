@@ -1,10 +1,21 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include "utils/DiatonyConstants.h"
 
 //==============================================================================
 AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAudioProcessor& p)
     : AudioProcessorEditor (&p), processorRef (p)
 {
+    // Création et configuration du label de tonalité
+    tonalityLabel = std::make_unique<juce::Label>();
+    addAndMakeVisible(*tonalityLabel);
+    tonalityLabel->setText(juce::String::fromUTF8("Tonalité:"), juce::dontSendNotification);
+    tonalityLabel->setJustificationType(juce::Justification::right);
+    
+    tonalityComboBox = std::make_unique<juce::ComboBox>();
+    addAndMakeVisible(*tonalityComboBox);
+    setupTonalityComboBox();
+
     // Initialisation des composants avec std::make_unique
     generateButton = std::make_unique<juce::TextButton>();
     playButton = std::make_unique<juce::TextButton>();
@@ -12,7 +23,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     // Configuration des labels
     generationStatusLabel = std::make_unique<juce::Label>();
     playbackStatusLabel = std::make_unique<juce::Label>();
-
+    
     // Configuration du bouton générer
     addAndMakeVisible(*generateButton);
     generateButton->setButtonText(juce::String::fromUTF8("Générer"));
@@ -38,7 +49,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     generationStatusLabel->setJustificationType(juce::Justification::centred);
     playbackStatusLabel->setJustificationType(juce::Justification::centred);
 
-    setSize (400, 200);
+    setSize (400, 300);
 }
 
 AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
@@ -57,16 +68,16 @@ void AudioPluginAudioProcessorEditor::paint (juce::Graphics& g)
 
 void AudioPluginAudioProcessorEditor::resized()
 {
-    // generateButton.setBounds(getLocalBounds().reduced(20)); // Bouton centré avec marge
-
     auto area = getLocalBounds().reduced(20);
 
     auto labelArea = area.removeFromTop(60);
     generationStatusLabel->setBounds(labelArea.removeFromTop(30));
     playbackStatusLabel->setBounds(labelArea);
-    
-    // Placer le label d'état en haut
-    // statusLabel.setBounds(area.removeFromTop(30));
+
+    // Configuration de la zone tonalité
+    auto tonalityArea = area.removeFromTop(30);
+    tonalityLabel->setBounds(tonalityArea.removeFromLeft(70));  // Label à gauche
+    tonalityComboBox->setBounds(tonalityArea);  // ComboBox prend le reste
     
     // Diviser l'espace restant pour les boutons
     auto buttonArea = area.removeFromTop(50);
@@ -126,4 +137,20 @@ void AudioPluginAudioProcessorEditor::handlePlaybackFinished() {
         playbackStatusLabel->setText("", juce::dontSendNotification);
         generateButton->setEnabled(true);
     });
+}
+
+void AudioPluginAudioProcessorEditor::setupTonalityComboBox() {
+    // Utiliser les constantes de Diatony
+    for (size_t i = 0; i < DiatonyConstants::NOTES.size(); ++i) {
+        const auto& note = DiatonyConstants::NOTES[i];
+        tonalityComboBox->addItem(note.name, i + 1);
+    }
+    
+    tonalityComboBox->setSelectedId(1); // C par défaut
+    
+    tonalityComboBox->onChange = [this]() {
+        int selectedIndex = tonalityComboBox->getSelectedId() - 1;
+        int noteValue = DiatonyConstants::NOTES[selectedIndex].value;
+        processorRef.setTonality(noteValue);
+    };
 }
