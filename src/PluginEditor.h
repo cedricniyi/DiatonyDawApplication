@@ -23,6 +23,7 @@ private:
     std::unique_ptr<juce::Label> playbackStatusLabel;    // Label pour l'état de lecture
 
     std::unique_ptr<juce::ComboBox> tonalityComboBox;
+    std::unique_ptr<juce::ComboBox> modeComboBox;     // Nouveau
     std::unique_ptr<juce::Label> tonalityLabel;  // Nouveau label pour le ComboBox
 
     // État 

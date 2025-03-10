@@ -66,6 +66,8 @@ void AudioPluginAudioProcessorEditor::paint (juce::Graphics& g)
     g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
 }
 
+//==============================================================================
+
 void AudioPluginAudioProcessorEditor::resized()
 {
     auto area = getLocalBounds().reduced(20);
@@ -79,6 +81,11 @@ void AudioPluginAudioProcessorEditor::resized()
     tonalityLabel->setBounds(tonalityArea.removeFromLeft(70));  // Label à gauche
     tonalityComboBox->setBounds(tonalityArea);  // ComboBox prend le reste
     
+    // Diviser l'espace restant entre les deux ComboBox
+    auto comboBoxArea = tonalityArea;
+    tonalityComboBox->setBounds(comboBoxArea.removeFromLeft(comboBoxArea.getWidth() / 2).reduced(5, 0));
+    modeComboBox->setBounds(comboBoxArea.reduced(5, 0));
+
     // Diviser l'espace restant pour les boutons
     auto buttonArea = area.removeFromTop(50);
     generateButton->setBounds(buttonArea.removeFromLeft(buttonArea.getWidth() / 2).reduced(5));
@@ -139,6 +146,7 @@ void AudioPluginAudioProcessorEditor::handlePlaybackFinished() {
     });
 }
 
+//==============================================================================
 void AudioPluginAudioProcessorEditor::setupTonalityComboBox() {
     // Utiliser les constantes de Diatony
     for (size_t i = 0; i < DiatonyConstants::NOTES.size(); ++i) {
@@ -153,4 +161,17 @@ void AudioPluginAudioProcessorEditor::setupTonalityComboBox() {
         int noteValue = DiatonyConstants::NOTES[selectedIndex].value;
         processorRef.setTonality(noteValue);
     };
+
+    modeComboBox = std::make_unique<juce::ComboBox>();
+    addAndMakeVisible(*modeComboBox);
+    
+    modeComboBox->addItem("Majeur", 1);
+    modeComboBox->addItem("Mineur", 2);
+    modeComboBox->setSelectedId(1); // Majeur par défaut
+    
+    modeComboBox->onChange = [this]() {
+        bool isMajor = modeComboBox->getSelectedId() == 1;
+        processorRef.setMode(isMajor);
+    };
+
 }
