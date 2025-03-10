@@ -54,6 +54,7 @@ public:
     bool startMidiPlayback();
     void stopMidiPlayback();
     bool isPlayingMidi() const;
+    void setTonality(int noteValue);
 
 private:
 
@@ -63,6 +64,7 @@ private:
     std::unique_ptr<juce::MidiMessageSequence> midiSequence;
     int currentMidiPosition = 0;
     bool midiPlaying = false;
+    int currentTonality = C; // Valeur par défaut
 
     juce::Synthesiser synth;
     //==============================================================================

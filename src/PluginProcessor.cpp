@@ -2,9 +2,10 @@
 #include "PluginEditor.h"
 #include "SimpleVoice.h"
 #include "SimpleSound.h"
+#include "utils/DiatonyConstants.h"
 
 #ifndef  JucePlugin_Name
- #define JucePlugin_Name                   "DiatonyDawApplication"
+ #define JucePlugin_Name    "DiatonyDawApplication"
 #endif
 
 //==============================================================================
@@ -154,9 +155,10 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, j
 
         double startTick = currentMidiPosition;
         double endTick = startTick + (numSamples / samplesPerTick);
-        DBG("Time Format: " << midiFile->getTimeFormat());
-        DBG("Sample Rate: " << getSampleRate());
-        DBG("Samples per Tick: " << samplesPerTick);
+
+        // DBG("Time Format: " << midiFile->getTimeFormat());
+        // DBG("Sample Rate: " << getSampleRate());
+        // DBG("Samples per Tick: " << samplesPerTick);
         // DBG("Current MIDI Position: " << currentMidiPosition);
 
         for (int i = 0; i < midiSequence->getNumEvents(); ++i) {
@@ -227,6 +229,7 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
     return new AudioPluginAudioProcessor();
 }
 
+//==============================================================================
 juce::String AudioPluginAudioProcessor::generateMidiSolution()
 {
     // 1. Déterminer le chemin racine du projet
@@ -250,7 +253,7 @@ juce::String AudioPluginAudioProcessor::generateMidiSolution()
     DBG("(PluginProcessor.cpp) Dossier MIDI du projet: " + projectDir.getFullPathName());
     
     // Configuration identique au main.cpp
-    std::unique_ptr<MajorTonality> tonality(new MajorTonality(C));
+    std::unique_ptr<MajorTonality> tonality(new MajorTonality(currentTonality));
     
     vector<int> chords = {FIRST_DEGREE, SIXTH_DEGREE, FIVE_OF_FIVE, 
                          FIFTH_DEGREE_APPOGIATURA, FIFTH_DEGREE, FIRST_DEGREE};
@@ -259,9 +262,9 @@ juce::String AudioPluginAudioProcessor::generateMidiSolution()
     for(int chord : chords)
         chords_qualities.push_back(tonality->get_chord_quality(chord));
     
-    chords_qualities[1] = MINOR_SEVENTH_CHORD;
-    chords_qualities[2] = MINOR_NINTH_DOMINANT_CHORD;
-    chords_qualities[4] = DIMINISHED_SEVENTH_CHORD;
+    // chords_qualities[1] = MINOR_SEVENTH_CHORD;
+    // chords_qualities[2] = MINOR_NINTH_DOMINANT_CHORD;
+    // chords_qualities[4] = DIMINISHED_SEVENTH_CHORD;
     
     vector<int> states = {FUNDAMENTAL_STATE, FUNDAMENTAL_STATE, FIRST_INVERSION, 
                           SECOND_INVERSION, FUNDAMENTAL_STATE, FUNDAMENTAL_STATE};
@@ -293,8 +296,8 @@ juce::String AudioPluginAudioProcessor::generateMidiSolution()
     }
 }
 
+//==============================================================================
 // Ajout des nouvelles méthodes pour la prévisualisation MIDI
-
 bool AudioPluginAudioProcessor::startMidiPlayback()
 {
     stopMidiPlayback(); // Arrêter toute lecture en cours
@@ -336,7 +339,15 @@ void AudioPluginAudioProcessor::stopMidiPlayback()
     currentMidiPosition = 0;
 }
 
+//==============================================================================
 bool AudioPluginAudioProcessor::isPlayingMidi() const
 {
     return midiPlaying;
+}
+
+//==============================================================================
+void AudioPluginAudioProcessor::setTonality(int noteValue)
+{
+    currentTonality = noteValue;
+    DBG("Tonality set to: " + juce::String(DiatonyConstants::getNoteName(currentTonality)));
 }
