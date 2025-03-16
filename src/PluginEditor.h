@@ -26,6 +26,9 @@ private:
     std::unique_ptr<juce::ComboBox> modeComboBox;     // Nouveau
     std::unique_ptr<juce::Label> tonalityLabel;  // Nouveau label pour le ComboBox
 
+    std::unique_ptr<juce::TextEditor> progressionInput;
+    std::unique_ptr<juce::Label> progressionLabel;
+    
     // État 
     bool midiFileGenerated = false;
 

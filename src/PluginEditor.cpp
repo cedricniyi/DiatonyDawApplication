@@ -24,6 +24,9 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     generationStatusLabel = std::make_unique<juce::Label>();
     playbackStatusLabel = std::make_unique<juce::Label>();
     
+    progressionLabel = std::make_unique<juce::Label>();
+    progressionInput = std::make_unique<juce::TextEditor>();
+
     // Configuration du bouton générer
     addAndMakeVisible(*generateButton);
     generateButton->setButtonText(juce::String::fromUTF8("Générer"));
@@ -49,7 +52,14 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     generationStatusLabel->setJustificationType(juce::Justification::centred);
     playbackStatusLabel->setJustificationType(juce::Justification::centred);
 
-    setSize (400, 300);
+    addAndMakeVisible(*progressionLabel);
+    addAndMakeVisible(*progressionInput);
+
+    progressionLabel->setText("Progression:", juce::dontSendNotification);
+    progressionInput->setMultiLine(false);
+    progressionInput->setTextToShowWhenEmpty("Enter progression (e.g., I VI V/V Vda V I)", juce::Colours::grey);
+
+    setSize (500, 500);
 }
 
 AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
@@ -86,6 +96,11 @@ void AudioPluginAudioProcessorEditor::resized()
     tonalityComboBox->setBounds(comboBoxArea.removeFromLeft(comboBoxArea.getWidth() / 2).reduced(5, 0));
     modeComboBox->setBounds(comboBoxArea.reduced(5, 0));
 
+    // Ajouter la zone de progression
+    auto progressionArea = area.removeFromTop(30);
+    progressionLabel->setBounds(progressionArea.removeFromLeft(70));
+    progressionInput->setBounds(progressionArea);
+
     // Diviser l'espace restant pour les boutons
     auto buttonArea = area.removeFromTop(50);
     generateButton->setBounds(buttonArea.removeFromLeft(buttonArea.getWidth() / 2).reduced(5));
@@ -99,8 +114,16 @@ void AudioPluginAudioProcessorEditor::buttonClicked (juce::Button* button)
         // Désactiver les deux boutons pendant la génération
         generateButton->setEnabled(false);
         playButton->setEnabled(false);
-        generationStatusLabel->setText(juce::String::fromUTF8("Génération en cours..."), juce::dontSendNotification);
         
+        // Vérifier d'abord la progression
+        if (!processorRef.setProgressionFromString(progressionInput->getText())) {
+            generationStatusLabel->setText(juce::String::fromUTF8("Progression invalide"), juce::dontSendNotification);
+            generateButton->setEnabled(true);
+            return;
+        }
+
+        generationStatusLabel->setText(juce::String::fromUTF8("Génération en cours..."), juce::dontSendNotification);
+
         if (!processorRef.generateMidiSolution().isEmpty()) {
             generationStatusLabel->setText(juce::String::fromUTF8("Génération réussie !"), juce::dontSendNotification);
             playButton->setEnabled(true);
@@ -173,5 +196,6 @@ void AudioPluginAudioProcessorEditor::setupTonalityComboBox() {
         bool isMajor = modeComboBox->getSelectedId() == 1;
         processorRef.setMode(isMajor);
     };
+
 
 }
