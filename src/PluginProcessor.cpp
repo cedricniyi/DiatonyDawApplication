@@ -265,9 +265,23 @@ juce::String AudioPluginAudioProcessor::generateMidiSolution()
         tonality = minorTonality.get();
     }
     
-    vector<int> chords = {FIRST_DEGREE, SIXTH_DEGREE, FIVE_OF_FIVE, 
-                         FIFTH_DEGREE_APPOGIATURA, FIFTH_DEGREE, FIRST_DEGREE};
-    
+    // {FIRST_DEGREE, SIXTH_DEGREE, FIVE_OF_FIVE, FIFTH_DEGREE_APPOGIATURA, FIFTH_DEGREE, FIRST_DEGREE};
+    vector<int> chords;
+    vector<int> states;
+
+    if (currentChords.empty()) {
+        DBG("Utilisation de la progression par défaut");
+        chords = {FIRST_DEGREE, SIXTH_DEGREE, FIVE_OF_FIVE, 
+                 FIFTH_DEGREE_APPOGIATURA, FIFTH_DEGREE, FIRST_DEGREE};
+        states = {FUNDAMENTAL_STATE, FUNDAMENTAL_STATE, FIRST_INVERSION, 
+                 SECOND_INVERSION, FUNDAMENTAL_STATE, FUNDAMENTAL_STATE};
+    } else {
+        DBG("Utilisation de la progression utilisateur: " + 
+            juce::String(currentChords.size()) + " accords");
+        chords = currentChords;
+        states = currentStates;
+    }
+
     vector<int> chords_qualities;
     for(int chord : chords)
         chords_qualities.push_back(tonality->get_chord_quality(chord));
@@ -276,12 +290,8 @@ juce::String AudioPluginAudioProcessor::generateMidiSolution()
     // chords_qualities[2] = MINOR_NINTH_DOMINANT_CHORD;
     // chords_qualities[4] = DIMINISHED_SEVENTH_CHORD;
     
-    vector<int> states = {FUNDAMENTAL_STATE, FUNDAMENTAL_STATE, FIRST_INVERSION, 
-                          SECOND_INVERSION, FUNDAMENTAL_STATE, FUNDAMENTAL_STATE};
-    
     int size = chords.size();
     
-    // vector<FourVoiceTexture*> sols;
     try {
         // Obtention de la solution
         auto newSolutions = solve_diatony_problem(size, tonality, chords, 
@@ -295,6 +305,10 @@ juce::String AudioPluginAudioProcessor::generateMidiSolution()
             DBG(juce::String::fromUTF8("MIDI sauvegardé : ") + finalPath);
             
             currentMidiFilePath = finalPath;
+
+            currentChords.clear();
+            currentStates.clear();
+
             return finalPath;
         } else {
             DBG("Aucune solution trouvée");
@@ -369,3 +383,38 @@ void AudioPluginAudioProcessor::setMode(bool isMajor)
     DBG("Mode set to: " + juce::String(isMajor ? "Major" : "Minor"));
 }
 
+// ================================================
+bool AudioPluginAudioProcessor::setProgressionFromString(const juce::String& progression)
+{
+    // Vérifier si l'input est vide
+    if (progression.isEmpty()) {
+        currentChords.clear();
+        currentStates.clear();
+        return true; // On permet un input vide qui utilisera la progression par défaut
+    }
+    
+    std::vector<int> newChords;
+    auto tokens = juce::StringArray::fromTokens(progression, " -", "");
+    
+    // Vérifier si on a au moins un token
+    if (tokens.isEmpty())
+        return false;
+
+    for (const auto& token : tokens) {
+        int degreeValue = DiatonyConstants::getDegreeValue(token.toStdString());
+        if (degreeValue != -1) {
+            newChords.push_back(degreeValue);
+        } else {
+            DBG("Degré invalide trouvé: " + token); // Debug pour identifier le degré problématique
+            return false; // Degré invalide trouvé
+        }
+    }
+    
+    if (!newChords.empty()) {
+        currentChords = newChords;
+        currentStates = std::vector<int>(newChords.size(), FUNDAMENTAL_STATE);
+        return true;
+    }
+    
+    return false;
+}

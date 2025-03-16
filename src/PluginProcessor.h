@@ -57,6 +57,9 @@ public:
     bool isPlayingMidi() const;
     void setTonality(int noteValue);
     void setMode(bool isMajor);
+
+    // ================================================
+    bool setProgressionFromString(const juce::String& progression);
     
 private:
 
@@ -64,11 +67,14 @@ private:
     juce::String currentMidiFilePath;
     std::unique_ptr<juce::MidiFile> midiFile;
     std::unique_ptr<juce::MidiMessageSequence> midiSequence;
+    
     int currentMidiPosition = 0;
     bool midiPlaying = false;
     int currentTonality = C; // Valeur par défaut
     bool isMajorMode = true;  
 
+    std::vector<int> currentChords;
+    std::vector<int> currentStates;
 
     juce::Synthesiser synth;
     //==============================================================================
