@@ -27,6 +27,8 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     progressionLabel = std::make_unique<juce::Label>();
     progressionInput = std::make_unique<juce::TextEditor>();
 
+    modeLabel = std::make_unique<juce::Label>();
+
     // Configuration du bouton générer
     addAndMakeVisible(*generateButton);
     generateButton->setButtonText(juce::String::fromUTF8("Générer"));
@@ -56,10 +58,17 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     addAndMakeVisible(*progressionInput);
 
     progressionLabel->setText("Progression:", juce::dontSendNotification);
+    progressionLabel->setJustificationType(juce::Justification::right);  // Ajout de cette ligne
     progressionInput->setMultiLine(false);
     progressionInput->setTextToShowWhenEmpty("Enter progression (e.g., I VI V/V Vda V I)", juce::Colours::grey);
 
-    setSize (500, 500);
+    // Dans le constructeur, après la création du tonalityLabel
+    addAndMakeVisible(*modeLabel);
+
+    modeLabel->setText(juce::String::fromUTF8("Mode:"), juce::dontSendNotification);
+    modeLabel->setJustificationType(juce::Justification::right);
+
+    setSize (1000, 1000);
 }
 
 AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
@@ -82,27 +91,35 @@ void AudioPluginAudioProcessorEditor::resized()
 {
     auto area = getLocalBounds().reduced(20);
 
-    auto labelArea = area.removeFromTop(60);
-    generationStatusLabel->setBounds(labelArea.removeFromTop(30));
-    playbackStatusLabel->setBounds(labelArea);
+    auto labelArea = area.removeFromTop(80);
+    generationStatusLabel->setBounds(labelArea.removeFromTop(35));
+    playbackStatusLabel->setBounds(labelArea.removeFromTop(35));
+
+    area.removeFromTop(20);
 
     // Configuration de la zone tonalité
-    auto tonalityArea = area.removeFromTop(30);
-    tonalityLabel->setBounds(tonalityArea.removeFromLeft(70));  // Label à gauche
-    tonalityComboBox->setBounds(tonalityArea);  // ComboBox prend le reste
-    
-    // Diviser l'espace restant entre les deux ComboBox
-    auto comboBoxArea = tonalityArea;
-    tonalityComboBox->setBounds(comboBoxArea.removeFromLeft(comboBoxArea.getWidth() / 2).reduced(5, 0));
-    modeComboBox->setBounds(comboBoxArea.reduced(5, 0));
+    auto tonalityArea = area.removeFromTop(35);
+    tonalityLabel->setBounds(tonalityArea.removeFromLeft(90));
+    tonalityComboBox->setBounds(tonalityArea);
 
-    // Ajouter la zone de progression
-    auto progressionArea = area.removeFromTop(30);
-    progressionLabel->setBounds(progressionArea.removeFromLeft(70));
+    area.removeFromTop(20);
+
+    // Zone du mode (nouveau)
+    auto modeArea = area.removeFromTop(35);
+    modeLabel->setBounds(modeArea.removeFromLeft(90));  // Utiliser le membre modeLabel au lieu d'une nouvelle variable
+    modeComboBox->setBounds(modeArea);
+
+    area.removeFromTop(20);
+
+    // Zone de progression
+    auto progressionArea = area.removeFromTop(35);
+    progressionLabel->setBounds(progressionArea.removeFromLeft(90));
     progressionInput->setBounds(progressionArea);
 
-    // Diviser l'espace restant pour les boutons
-    auto buttonArea = area.removeFromTop(50);
+    area.removeFromTop(20);
+
+    // Zone des boutons
+    auto buttonArea = area.removeFromTop(40);
     generateButton->setBounds(buttonArea.removeFromLeft(buttonArea.getWidth() / 2).reduced(5));
     playButton->setBounds(buttonArea.reduced(5));
 }
