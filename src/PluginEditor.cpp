@@ -62,6 +62,17 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     progressionInput->setMultiLine(false);
     progressionInput->setTextToShowWhenEmpty("Enter progression (e.g., I VI V/V Vda V I) [progression separated by spaces or \"-\"]", juce::Colours::grey);
 
+    // Configuration du label et input pour les états de progression
+    progressionStateLabel = std::make_unique<juce::Label>();
+    progressionStateInput = std::make_unique<juce::TextEditor>();
+    addAndMakeVisible(*progressionStateLabel);
+    addAndMakeVisible(*progressionStateInput);
+
+    progressionStateLabel->setText(juce::String::fromUTF8("États:"), juce::dontSendNotification);
+    progressionStateLabel->setJustificationType(juce::Justification::right);
+    progressionStateInput->setMultiLine(false);
+    progressionStateInput->setTextToShowWhenEmpty("Enter states (e.g., F F I II F F) [F=fondamental, I=1ere inv, II=2e inv]", juce::Colours::grey);
+
     // Dans le constructeur, après la création du tonalityLabel
     addAndMakeVisible(*modeLabel);
 
@@ -154,6 +165,13 @@ void AudioPluginAudioProcessorEditor::resized()
     auto progressionArea = area.removeFromTop(35);
     progressionLabel->setBounds(progressionArea.removeFromLeft(90));
     progressionInput->setBounds(progressionArea);
+
+    area.removeFromTop(20);
+
+    // Zone des états de progression
+    auto progressionStateArea = area.removeFromTop(35);
+    progressionStateLabel->setBounds(progressionStateArea.removeFromLeft(90));
+    progressionStateInput->setBounds(progressionStateArea);
 
     area.removeFromTop(20);
 
