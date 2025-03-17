@@ -60,6 +60,7 @@ public:
 
     // ================================================
     bool setProgressionFromString(const juce::String& progression);
+    bool setStatesFromString(const juce::String& states);
     
 private:
 

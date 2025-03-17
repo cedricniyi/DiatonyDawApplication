@@ -71,7 +71,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     progressionStateLabel->setText(juce::String::fromUTF8("États:"), juce::dontSendNotification);
     progressionStateLabel->setJustificationType(juce::Justification::right);
     progressionStateInput->setMultiLine(false);
-    progressionStateInput->setTextToShowWhenEmpty("Enter states (e.g., F F I II F F) [F=fondamental, I=1ere inv, II=2e inv]", juce::Colours::grey);
+    progressionStateInput->setTextToShowWhenEmpty("Enter states (e.g., Fund 1st 2nd Fund Fund Fund) [states separated by spaces]", juce::Colours::grey);
 
     // Dans le constructeur, après la création du tonalityLabel
     addAndMakeVisible(*modeLabel);
@@ -196,11 +196,20 @@ void AudioPluginAudioProcessorEditor::buttonClicked (juce::Button* button)
             return;
         }
 
+        // Vérifier ensuite les états
+        if (!processorRef.setStatesFromString(progressionStateInput->getText())) {
+            generationStatusLabel->setText(juce::String::fromUTF8("États de progression invalides"), juce::dontSendNotification);
+            generateButton->setEnabled(true);
+            return;
+        }
+
         generationStatusLabel->setText(juce::String::fromUTF8("Génération en cours..."), juce::dontSendNotification);
 
         if (!processorRef.generateMidiSolution().isEmpty()) {
             generationStatusLabel->setText(juce::String::fromUTF8("Génération réussie !"), juce::dontSendNotification);
             playButton->setEnabled(true);
+            progressionInput->setText("", false);
+            progressionStateInput->setText("", false);
             startTimer(2000); // Le timer effacera le message de génération
         } else {
             generationStatusLabel->setText(juce::String::fromUTF8("Échec de la génération"), juce::dontSendNotification);

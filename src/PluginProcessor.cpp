@@ -418,3 +418,49 @@ bool AudioPluginAudioProcessor::setProgressionFromString(const juce::String& pro
     
     return false;
 }
+
+//==============================================================================
+bool AudioPluginAudioProcessor::setStatesFromString(const juce::String& states)
+{
+    // Si l'input est vide, on garde les états par défaut
+    if (states.isEmpty()) {
+        return true;
+    }
+
+    // Vérifier que nous avons une progression valide
+    if (currentChords.empty()) {
+        return false;
+    }
+
+    std::vector<int> newStates;
+    auto tokens = juce::StringArray::fromTokens(states, " -", "");
+
+    // Vérifier que le nombre d'états correspond au nombre d'accords
+    if (tokens.size() != currentChords.size()) {
+        DBG("Nombre d'états différent du nombre d'accords");
+        return false;
+    }
+
+    for (const auto& token : tokens) {
+        // Essayer d'abord comme un nombre
+        if (token.isNotEmpty() && token.containsOnly("0123")) {
+            int stateValue = token.getIntValue();
+            if (stateValue >= 0 && stateValue <= 3) {  // Valeurs valides : 0,1,2,3
+                newStates.push_back(stateValue);
+                continue;
+            }
+        }
+        
+        // Sinon essayer comme un nom d'état
+        int stateValue = DiatonyConstants::getChordStateValue(token.toStdString());
+        if (stateValue != -1) {
+            newStates.push_back(stateValue);
+        } else {
+            DBG("État invalide trouvé: " + token);
+            return false;
+        }
+    }
+
+    currentStates = newStates;
+    return true;
+}
