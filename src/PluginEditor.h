@@ -29,10 +29,6 @@ private:
     std::unique_ptr<juce::TextEditor> progressionInput;
     std::unique_ptr<juce::Label> progressionLabel;
     std::unique_ptr<juce::Label> modeLabel;
-
-    std::unique_ptr<juce::Label> generationStatusTitle;
-    std::unique_ptr<juce::Label> playbackStatusTitle;
-    
     // État 
     bool midiFileGenerated = false;
 

@@ -60,7 +60,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     progressionLabel->setText("Progression:", juce::dontSendNotification);
     progressionLabel->setJustificationType(juce::Justification::right);  // Ajout de cette ligne
     progressionInput->setMultiLine(false);
-    progressionInput->setTextToShowWhenEmpty("Enter progression (e.g., I VI V/V Vda V I)", juce::Colours::grey);
+    progressionInput->setTextToShowWhenEmpty("Enter progression (e.g., I VI V/V Vda V I) [progression separated by spaces or \"-\"]", juce::Colours::grey);
 
     // Dans le constructeur, après la création du tonalityLabel
     addAndMakeVisible(*modeLabel);
@@ -81,8 +81,39 @@ AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
 //==============================================================================
 void AudioPluginAudioProcessorEditor::paint (juce::Graphics& g)
 {
-    // (Our component is opaque, so we must completely fill the background with a solid colour)
+    // Fond principal
     g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
+    
+    auto area = getLocalBounds().reduced(20);
+    auto statusArea = area.removeFromTop(100);
+
+    // Cadre pour le statut de génération
+    auto generationArea = statusArea.removeFromTop(45);
+    // auto generationFrame = generationArea.reduced(10, 5);  // Padding horizontal de 10, vertical de 5
+    g.setColour(juce::Colours::grey.withAlpha(0.3f));
+    g.drawRoundedRectangle(generationArea.toFloat(), 5.0f, 2.0f);
+    g.setColour(juce::Colours::white.withAlpha(0.05f));
+    g.fillRoundedRectangle(generationArea.toFloat(), 5.0f);
+    
+    // Label "Statut de génération"
+    g.setColour(juce::Colours::white.withAlpha(0.7f));
+    g.setFont(12.0f);
+    g.drawText(juce::String::fromUTF8("Statut de génération"), generationArea.removeFromTop(15), juce::Justification::centredTop, false);
+
+    statusArea.removeFromTop(10);  // Espace entre les cadres
+
+    // Cadre pour le statut de lecture
+    auto playbackArea = statusArea.removeFromTop(45);
+    // auto playbackFrame = playbackArea.reduced(10, 5);  // Padding horizontal de 10, vertical de 5
+    g.setColour(juce::Colours::grey.withAlpha(0.3f));
+    g.drawRoundedRectangle(playbackArea.toFloat(), 5.0f, 2.0f);
+    g.setColour(juce::Colours::white.withAlpha(0.05f));
+    g.fillRoundedRectangle(playbackArea.toFloat(), 5.0f);
+    
+    // Label "Statut de lecture"
+    g.setColour(juce::Colours::white.withAlpha(0.7f));
+    g.setFont(12.0f);
+    g.drawText(juce::String::fromUTF8("Statut de lecture"), playbackArea.removeFromTop(15), juce::Justification::centredTop, false);
 }
 
 //==============================================================================
@@ -91,9 +122,17 @@ void AudioPluginAudioProcessorEditor::resized()
 {
     auto area = getLocalBounds().reduced(20);
 
-    auto labelArea = area.removeFromTop(80);
-    generationStatusLabel->setBounds(labelArea.removeFromTop(35));
-    playbackStatusLabel->setBounds(labelArea.removeFromTop(35));
+    // Ajuster la position des labels de statut avec padding
+    auto labelArea = area.removeFromTop(100);
+
+    // Generation label
+    auto generationLabelArea = labelArea.removeFromTop(45);
+    generationStatusLabel->setBounds(generationLabelArea.reduced(10, 5).withTrimmedTop(10));
+    
+    labelArea.removeFromTop(10);
+    
+    auto playbackLabelArea = labelArea.removeFromTop(45);
+    playbackStatusLabel->setBounds(playbackLabelArea.reduced(10, 5).withTrimmedTop(10));
 
     area.removeFromTop(20);
 
