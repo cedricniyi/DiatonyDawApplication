@@ -66,10 +66,9 @@ namespace DiatonyConstants {
     // États d'accord
     const std::vector<ChordStateInfo> CHORD_STATES = {
         {FUNDAMENTAL_STATE, stateNames[0]},
-        {FIRST_INVERSION, stateNames[1]},
-        {SECOND_INVERSION, stateNames[2]},
-        {THIRD_INVERSION, stateNames[3]},
-        {FOURTH_INVERSION, stateNames[4]}
+        {FIRST_INVERSION, "1st"},
+        {SECOND_INVERSION, "2nd"},
+        {THIRD_INVERSION, "3rd"}
     };
 
     // Fonction utilitaire pour obtenir le nom d'une note à partir de sa valeur
