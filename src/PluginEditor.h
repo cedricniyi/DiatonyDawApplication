@@ -16,6 +16,8 @@ public:
 
 private:
     // Utilisation de std::unique_ptr pour une meilleure gestion de la mémoire
+    std::unique_ptr<juce::TooltipWindow> tooltipWindow;
+
     std::unique_ptr<juce::TextButton> generateButton;
     std::unique_ptr<juce::TextButton> playButton;
     

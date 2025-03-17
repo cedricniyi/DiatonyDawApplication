@@ -6,6 +6,9 @@
 AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAudioProcessor& p)
     : AudioProcessorEditor (&p), processorRef (p)
 {
+    // Ajouter ceci au début du constructeur
+    tooltipWindow = std::make_unique<juce::TooltipWindow>(this, 700); // 700ms de délai avant l'apparition
+
     // Création et configuration du label de tonalité
     tonalityLabel = std::make_unique<juce::Label>();
     addAndMakeVisible(*tonalityLabel);
@@ -60,7 +63,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     progressionLabel->setText("Progression:", juce::dontSendNotification);
     progressionLabel->setJustificationType(juce::Justification::right);  // Ajout de cette ligne
     progressionInput->setMultiLine(false);
-    progressionInput->setTextToShowWhenEmpty("Enter progression (e.g., I VI V/V Vda V I) [progression separated by spaces or \"-\"]", juce::Colours::grey);
+    progressionInput->setTextToShowWhenEmpty(juce::String::fromUTF8("Entrez la progression (ex: I VI V/V Vda V I) [progression séparée par des espaces ou \"-\"]"), juce::Colours::grey);
 
     // Configuration du label et input pour les états de progression
     progressionStateLabel = std::make_unique<juce::Label>();
@@ -71,7 +74,14 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     progressionStateLabel->setText(juce::String::fromUTF8("États:"), juce::dontSendNotification);
     progressionStateLabel->setJustificationType(juce::Justification::right);
     progressionStateInput->setMultiLine(false);
-    progressionStateInput->setTextToShowWhenEmpty("Enter states (e.g., Fund 1st 2nd Fund Fund Fund) [states separated by spaces]", juce::Colours::grey);
+    progressionStateInput->setTextToShowWhenEmpty(juce::String::fromUTF8("Entrez les états (ex: Fund 1st 2nd Fund Fund Fund) [états séparés par des espaces]"), juce::Colours::grey);
+    
+       // Message commun pour les deux composants
+    juce::String tooltipMessage = juce::String::fromUTF8("Les états possibles sont : \n\tFund / 0 (fondamental), \n\t1st / 1 (premier renversement), "
+                                 "\n\t2nd / 2 (deuxième renversement), \n\t3rd / 3 (troisième renversement). \n\nExemple : Fund 1st 2nd Fund Fund Fund");
+    
+    progressionStateLabel->setTooltip(tooltipMessage);
+    progressionStateInput->setTooltip(tooltipMessage);
 
     // Dans le constructeur, après la création du tonalityLabel
     addAndMakeVisible(*modeLabel);
