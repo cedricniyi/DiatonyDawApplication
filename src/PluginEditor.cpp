@@ -61,9 +61,34 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     addAndMakeVisible(*progressionInput);
 
     progressionLabel->setText("Progression:", juce::dontSendNotification);
-    progressionLabel->setJustificationType(juce::Justification::right);  // Ajout de cette ligne
+    progressionLabel->setJustificationType(juce::Justification::right);
     progressionInput->setMultiLine(false);
     progressionInput->setTextToShowWhenEmpty(juce::String::fromUTF8("Entrez la progression (ex: I VI V/V Vda V I) [progression séparée par des espaces ou \"-\"]"), juce::Colours::grey);
+
+    // Ajout du tooltip pour la progression
+    juce::String progressionTooltip = juce::String::fromUTF8(
+        "Les degrés possibles sont : \n"
+        "\tI   : Premier degré\n"
+        "\tII  : Deuxième degré\n"
+        "\tIII : Troisième degré\n"
+        "\tIV  : Quatrième degré\n"
+        "\tV   : Cinquième degré\n"
+        "\tVI  : Sixième degré\n"
+        "\tVII : Septième degré\n"
+        "\tVda : Quinte diminuée avec appoggiature\n"
+        "\tV/II    : Dominante du deuxième degré\n"
+        "\tV/III   : Dominante du troisième degré\n"
+        "\tV/IV    : Dominante du quatrième degré\n"
+        "\tV/V     : Dominante du cinquième degré\n"
+        "\tV/VI    : Dominante du sixième degré\n"
+        "\tV/VII   : Dominante du septième degré\n"
+        "\tbII     : Deuxième degré abaissé\n"
+        "\t6te_aug : Sixte augmentée\n"
+        "\nExemple : I VI V/V Vda V I"
+    );
+
+    progressionLabel->setTooltip(progressionTooltip);
+    progressionInput->setTooltip(progressionTooltip);
 
     // Configuration du label et input pour les états de progression
     progressionStateLabel = std::make_unique<juce::Label>();
