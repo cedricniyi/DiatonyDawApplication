@@ -61,6 +61,7 @@ public:
     // ================================================
     bool setProgressionFromString(const juce::String& progression);
     bool setStatesFromString(const juce::String& states);
+    bool setChordQualitiesFromString(const juce::String& qualities);
     
 private:
 
@@ -76,6 +77,7 @@ private:
 
     std::vector<int> currentChords;
     std::vector<int> currentStates;
+    std::vector<int> currentChordQualities;
 
     juce::Synthesiser synth;
     //==============================================================================

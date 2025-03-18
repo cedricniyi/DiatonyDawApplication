@@ -33,6 +33,10 @@ private:
     std::unique_ptr<juce::TextEditor> progressionStateInput;  // Nouvel input pour les états
     std::unique_ptr<juce::Label> progressionStateLabel;       // Label correspondant
     std::unique_ptr<juce::Label> modeLabel;
+
+    std::unique_ptr<juce::TextEditor> chordQualitiesInput;
+    std::unique_ptr<juce::Label> chordQualitiesLabel;
+
     // État 
     bool midiFileGenerated = false;
 

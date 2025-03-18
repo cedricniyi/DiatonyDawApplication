@@ -114,6 +114,40 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     modeLabel->setText(juce::String::fromUTF8("Mode:"), juce::dontSendNotification);
     modeLabel->setJustificationType(juce::Justification::right);
 
+    // Dans le constructeur
+    chordQualitiesLabel = std::make_unique<juce::Label>();
+    chordQualitiesInput = std::make_unique<juce::TextEditor>();
+    addAndMakeVisible(*chordQualitiesLabel);
+    addAndMakeVisible(*chordQualitiesInput);
+
+    chordQualitiesLabel->setText(juce::String::fromUTF8("Qualités:"), juce::dontSendNotification);
+    chordQualitiesLabel->setJustificationType(juce::Justification::right);
+    chordQualitiesInput->setMultiLine(false);
+    chordQualitiesInput->setTextToShowWhenEmpty(juce::String::fromUTF8("Entrez les qualités (ex: - m7 9b - dim7 -) [qualités séparées par des espaces]"), juce::Colours::grey);
+
+    // Tooltip pour les qualités d'accords
+    juce::String qualityTooltip = juce::String::fromUTF8(
+        "Les qualités possibles sont : \n\n"
+        "- : Qualité par défaut\n"
+        "maj : Majeur\n"
+        "min : Mineur\n"
+        "dim : Diminué\n"
+        "aug : Augmenté\n"
+        "6+ : Sixte augmentée\n"
+        "7 : Septième de dominante\n"
+        "maj7 : Septième majeure\n"
+        "min7 : Septième mineure\n"
+        "dim7 : Septième diminuée\n"
+        "ø : Semi-diminué\n"
+        "minmaj7 : Mineur-majeur septième\n"
+        "9 : Neuvième majeure dominante\n"
+        "9b (9♭) : Neuvième mineure dominante\n"
+        "\nExemple : - m7 9 - dim7 -"
+    );
+
+    chordQualitiesLabel->setTooltip(qualityTooltip);
+    chordQualitiesInput->setTooltip(qualityTooltip);
+
     setSize (1000, 1000);
 }
 
@@ -210,6 +244,13 @@ void AudioPluginAudioProcessorEditor::resized()
 
     area.removeFromTop(20);
 
+    // Zone des qualités d'accords
+    auto qualitiesArea = area.removeFromTop(35);
+    chordQualitiesLabel->setBounds(qualitiesArea.removeFromLeft(90));
+    chordQualitiesInput->setBounds(qualitiesArea);
+
+    area.removeFromTop(20);
+
     // Zone des boutons
     auto buttonArea = area.removeFromTop(40);
     generateButton->setBounds(buttonArea.removeFromLeft(buttonArea.getWidth() / 2).reduced(5));
@@ -238,6 +279,12 @@ void AudioPluginAudioProcessorEditor::buttonClicked (juce::Button* button)
             return;
         }
 
+        if (!processorRef.setChordQualitiesFromString(chordQualitiesInput->getText())) {
+            generationStatusLabel->setText(juce::String::fromUTF8("Qualités d'accords invalides"), juce::dontSendNotification);
+            generateButton->setEnabled(true);
+            return;
+        }
+
         generationStatusLabel->setText(juce::String::fromUTF8("Génération en cours..."), juce::dontSendNotification);
 
         if (!processorRef.generateMidiSolution().isEmpty()) {
@@ -245,6 +292,7 @@ void AudioPluginAudioProcessorEditor::buttonClicked (juce::Button* button)
             playButton->setEnabled(true);
             progressionInput->setText("", false);
             progressionStateInput->setText("", false);
+            chordQualitiesInput->setText("", false);
             startTimer(2000); // Le timer effacera le message de génération
         } else {
             generationStatusLabel->setText(juce::String::fromUTF8("Échec de la génération"), juce::dontSendNotification);

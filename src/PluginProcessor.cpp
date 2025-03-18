@@ -283,8 +283,13 @@ juce::String AudioPluginAudioProcessor::generateMidiSolution()
     }
 
     vector<int> chords_qualities;
-    for(int chord : chords)
-        chords_qualities.push_back(tonality->get_chord_quality(chord));
+    for(size_t i = 0; i < chords.size(); ++i) {
+        if (i < currentChordQualities.size() && currentChordQualities[i] != -1) {
+            chords_qualities.push_back(currentChordQualities[i]);
+        } else {
+            chords_qualities.push_back(tonality->get_chord_quality(chords[i]));
+        }
+    }
     
     // chords_qualities[1] = MINOR_SEVENTH_CHORD;
     // chords_qualities[2] = MINOR_NINTH_DOMINANT_CHORD;
@@ -308,6 +313,7 @@ juce::String AudioPluginAudioProcessor::generateMidiSolution()
 
             currentChords.clear();
             currentStates.clear();
+            currentChordQualities.clear();
 
             return finalPath;
         } else {
@@ -462,5 +468,40 @@ bool AudioPluginAudioProcessor::setStatesFromString(const juce::String& states)
     }
 
     currentStates = newStates;
+    return true;
+}
+
+bool AudioPluginAudioProcessor::setChordQualitiesFromString(const juce::String& qualities) {
+    // Si l'input est vide ou pas d'accords, on utilise les qualités par défaut
+    if (qualities.isEmpty() || currentChords.empty()) {
+        currentChordQualities.clear();
+        return true; // Permet les qualités vides
+    }
+
+    auto tokens = juce::StringArray::fromTokens(qualities, " ", "");
+    
+    // Vérifier que nous n'avons pas plus de qualités que d'accords
+    if (tokens.size() != currentChords.size()) {
+        DBG("Nombre de qualités différent du nombre d'accords");
+        return false;
+    }
+
+    std::vector<int> newQualities(currentChords.size(), -1); // -1 signifie "utiliser la qualité par défaut"
+
+    int qualityIndex = 0;
+    for (const auto& token : tokens) {
+        if (token.isEmpty() || token == "-") {
+            qualityIndex++;
+            continue;
+        }
+
+        int qualityValue = DiatonyConstants::getChordQualityValue(token.toStdString());
+        if (qualityValue == -1) {
+            return false; // Qualité invalide trouvée
+        }
+        newQualities[qualityIndex++] = qualityValue;
+    }
+
+    currentChordQualities = newQualities;
     return true;
 }
