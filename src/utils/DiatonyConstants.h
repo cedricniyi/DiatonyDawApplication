@@ -10,6 +10,7 @@
 #include <vector>
 
 namespace DiatonyConstants {
+    
     // Structure pour représenter une note avec son nom et sa valeur
     struct NoteInfo {
         int value;
@@ -28,7 +29,13 @@ namespace DiatonyConstants {
         std::string name;
     };
 
-    // Vecteur qui relie les valeurs des notes à leurs noms
+    struct ChordQualityInfo {
+        int value;
+        std::string name;
+    };
+
+    // ========================================================
+        
     const std::vector<NoteInfo> NOTES = {
         {C, noteNames[0]},          // C
         {C_SHARP, noteNames[1]},    // C#/Db
@@ -63,13 +70,30 @@ namespace DiatonyConstants {
         {AUGMENTED_SIXTH, degreeNames[15]}
     };
 
-    // États d'accord
     const std::vector<ChordStateInfo> CHORD_STATES = {
         {FUNDAMENTAL_STATE, stateNames[0]},
         {FIRST_INVERSION, "1st"},
         {SECOND_INVERSION, "2nd"},
         {THIRD_INVERSION, "3rd"}
     };
+
+    const std::vector<ChordQualityInfo> CHORD_QUALITIES = {
+        {MAJOR_CHORD                , "maj"},
+        {MINOR_CHORD                , "min"},
+        {DIMINISHED_CHORD           , "dim"},
+        {AUGMENTED_CHORD            , "aug"},
+        {AUGMENTED_SIXTH_CHORD      , "6+"},
+        {DOMINANT_SEVENTH_CHORD     , "7"},
+        {MAJOR_SEVENTH_CHORD        , "maj7"},
+        {MINOR_SEVENTH_CHORD        , "min7"},
+        {DIMINISHED_SEVENTH_CHORD   , "dim7"},
+        {HALF_DIMINISHED_CHORD      , "ø"},
+        {MINOR_MAJOR_SEVENTH_CHORD  , "minmaj7"},
+        {MAJOR_NINTH_DOMINANT_CHORD , "9"},
+        {MINOR_NINTH_DOMINANT_CHORD , "9b"} // 9♭ OR 7♭9
+    };
+
+    // ========================================================
 
     // Fonction utilitaire pour obtenir le nom d'une note à partir de sa valeur
     inline std::string getNoteName(int noteValue) {
@@ -125,6 +149,24 @@ namespace DiatonyConstants {
         for (const auto& state : CHORD_STATES) {
             if (state.name == stateName) {
                 return state.value;
+            }
+        }
+        return -1;
+    }
+
+    inline std::string getChordQualityName(int qualityValue) {
+        for (const auto& quality : CHORD_QUALITIES) {
+            if (quality.value == qualityValue) {
+                return quality.name;
+            }
+        }
+        return "Unknown Chord Quality";
+    }
+
+    inline int getChordQualityValue(const std::string& qualityName) {
+        for (const auto& quality : CHORD_QUALITIES) {
+            if (quality.name == qualityName) {
+                return quality.value;
             }
         }
         return -1;
