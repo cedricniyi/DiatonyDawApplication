@@ -201,7 +201,7 @@ void AudioPluginAudioProcessorEditor::paint (juce::Graphics& g)
 
     // Cadre pour les paramètres de base
     auto basicParamsArea = area.removeFromTop(350);  // Hauteur totale
-    auto titleArea = basicParamsArea.removeFromTop(60);  // Augmenté de 30 à 40 pour plus d'espace
+    auto titleArea = basicParamsArea.removeFromTop(60);  // Augmenté pour plus d'espace
     
     // Dessiner d'abord le cadre complet
     g.setColour(juce::Colours::grey.withAlpha(0.3f));
@@ -211,8 +211,27 @@ void AudioPluginAudioProcessorEditor::paint (juce::Graphics& g)
     
     // Dessiner ensuite le titre centré dans sa zone
     g.setColour(juce::Colours::white.withAlpha(0.7f));  
-    g.setFont(14.0f);
-    g.drawText("Basic Parameters", titleArea.withTrimmedTop(10), juce::Justification::centred, false);  // Ajout de withTrimmedTop(10)
+    auto titleFont = juce::Font(juce::FontOptions(18.0f, juce::Font::bold));
+    g.setFont(titleFont);
+    g.drawText("Basic Parameters", titleArea.withTrimmedTop(10), juce::Justification::centred, false);
+
+    // Ajouter un espace entre les cadres
+    area.removeFromTop(20);
+
+    // Cadre pour les préférences harmoniques
+    auto harmonicPrefsArea = area.removeFromTop(200);  // Hauteur plus petite car seulement 3 inputs
+    auto harmonicTitleArea = harmonicPrefsArea.removeFromTop(60);  // Même hauteur que Basic Parameters
+    
+    // Dessiner le cadre des préférences harmoniques
+    g.setColour(juce::Colours::grey.withAlpha(0.3f));
+    g.drawRoundedRectangle(harmonicPrefsArea.toFloat(), 5.0f, 2.0f);
+    g.setColour(juce::Colours::white.withAlpha(0.05f));
+    g.fillRoundedRectangle(harmonicPrefsArea.toFloat(), 5.0f);
+    
+    // Dessiner le titre avec la même configuration
+    g.setColour(juce::Colours::white.withAlpha(0.7f));  
+    g.setFont(titleFont);  // Réutilisation de la même police
+    g.drawText("Harmonic Preferences", harmonicTitleArea.withTrimmedTop(10), juce::Justification::centred, false);
 }
 
 //==============================================================================
@@ -279,6 +298,13 @@ void AudioPluginAudioProcessorEditor::resized()
     chordQualitiesInput->setBounds(qualitiesArea);
 
     area.removeFromTop(20);
+
+    // Zone des préférences harmoniques
+    auto harmonicPrefsArea = area.removeFromTop(200);
+    harmonicPrefsArea.removeFromTop(40);  // Espace pour le titre
+    
+    // Ajouter un padding comme pour Basic Parameters
+    auto innerHarmonicArea = harmonicPrefsArea.reduced(25);
 
     // Zone des boutons
     auto buttonArea = area.removeFromTop(40);
