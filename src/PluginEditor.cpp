@@ -148,7 +148,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     chordQualitiesLabel->setTooltip(qualityTooltip);
     chordQualitiesInput->setTooltip(qualityTooltip);
 
-    setSize (1000, 1000);
+    setSize (1000, 1200);  // Augmentation de la hauteur de 1000 à 1200
 }
 
 AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
@@ -232,6 +232,31 @@ void AudioPluginAudioProcessorEditor::paint (juce::Graphics& g)
     g.setColour(juce::Colours::white.withAlpha(0.7f));  
     g.setFont(titleFont);  // Réutilisation de la même police
     g.drawText("Harmonic Preferences", harmonicTitleArea.withTrimmedTop(10), juce::Justification::centred, false);
+
+    // Ajouter un espace entre les cadres
+    area.removeFromTop(20);
+
+    // Cadre pour les préférences mélodiques
+    auto melodicPrefsArea = area.removeFromTop(150);  // Hauteur plus petite car seulement 2 inputs
+    auto melodicTitleArea = melodicPrefsArea.removeFromTop(60);  // Même hauteur que les autres titres
+    
+    // Dessiner le cadre des préférences mélodiques
+    g.setColour(juce::Colours::grey.withAlpha(0.3f));
+    g.drawRoundedRectangle(melodicPrefsArea.toFloat(), 5.0f, 2.0f);
+    g.setColour(juce::Colours::white.withAlpha(0.05f));
+    g.fillRoundedRectangle(melodicPrefsArea.toFloat(), 5.0f);
+    
+    // Dessiner le titre avec la même configuration
+    g.setColour(juce::Colours::white.withAlpha(0.7f));  
+    g.setFont(titleFont);  // Réutilisation de la même police
+    g.drawText("Melodic Preferences", melodicTitleArea.withTrimmedTop(10), juce::Justification::centred, false);
+
+    area.removeFromTop(30);  // Réduction de 100 à 30 pixels
+
+    // Zone des boutons (déplacée après les préférences mélodiques)
+    auto buttonArea = area.removeFromTop(40);
+    generateButton->setBounds(buttonArea.removeFromLeft(buttonArea.getWidth() / 2).reduced(5));
+    playButton->setBounds(buttonArea.reduced(5));
 }
 
 //==============================================================================
@@ -305,6 +330,17 @@ void AudioPluginAudioProcessorEditor::resized()
     
     // Ajouter un padding comme pour Basic Parameters
     auto innerHarmonicArea = harmonicPrefsArea.reduced(25);
+
+    area.removeFromTop(20);  // Espace entre les sections
+
+    // Zone des préférences mélodiques
+    auto melodicPrefsArea = area.removeFromTop(150);  // Même hauteur que dans paint()
+    melodicPrefsArea.removeFromTop(40);  // Espace pour le titre
+    
+    // Ajouter un padding comme pour les autres sections
+    auto innerMelodicArea = melodicPrefsArea.reduced(25);
+
+    area.removeFromTop(20);  // Réduction de 100 à 30 pixels
 
     // Zone des boutons
     auto buttonArea = area.removeFromTop(40);
