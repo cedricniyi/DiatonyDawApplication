@@ -169,7 +169,9 @@ void AudioPluginAudioProcessorEditor::paint (juce::Graphics& g)
 
     // Cadre pour le statut de génération
     auto generationArea = statusArea.removeFromTop(45);
-    // auto generationFrame = generationArea.reduced(10, 5);  // Padding horizontal de 10, vertical de 5
+    auto generationTitleArea = generationArea.removeFromTop(20);  // Zone pour le titre
+
+    // Dessiner le cadre de génération
     g.setColour(juce::Colours::grey.withAlpha(0.3f));
     g.drawRoundedRectangle(generationArea.toFloat(), 5.0f, 2.0f);
     g.setColour(juce::Colours::white.withAlpha(0.05f));
@@ -178,13 +180,15 @@ void AudioPluginAudioProcessorEditor::paint (juce::Graphics& g)
     // Label "Statut de génération"
     g.setColour(juce::Colours::white.withAlpha(0.7f));
     g.setFont(12.0f);
-    g.drawText(juce::String::fromUTF8("Statut de génération"), generationArea.removeFromTop(15), juce::Justification::centredTop, false);
+    g.drawText(juce::String::fromUTF8("Statut de génération"), generationTitleArea, juce::Justification::centred, false);
 
     statusArea.removeFromTop(10);  // Espace entre les cadres
 
     // Cadre pour le statut de lecture
     auto playbackArea = statusArea.removeFromTop(45);
-    // auto playbackFrame = playbackArea.reduced(10, 5);  // Padding horizontal de 10, vertical de 5
+    auto playbackTitleArea = playbackArea.removeFromTop(20);  // Zone pour le titre
+
+    // Dessiner le cadre de lecture
     g.setColour(juce::Colours::grey.withAlpha(0.3f));
     g.drawRoundedRectangle(playbackArea.toFloat(), 5.0f, 2.0f);
     g.setColour(juce::Colours::white.withAlpha(0.05f));
@@ -193,7 +197,22 @@ void AudioPluginAudioProcessorEditor::paint (juce::Graphics& g)
     // Label "Statut de lecture"
     g.setColour(juce::Colours::white.withAlpha(0.7f));
     g.setFont(12.0f);
-    g.drawText(juce::String::fromUTF8("Statut de lecture"), playbackArea.removeFromTop(15), juce::Justification::centredTop, false);
+    g.drawText(juce::String::fromUTF8("Statut de lecture"), playbackTitleArea, juce::Justification::centred, false);
+
+    // Cadre pour les paramètres de base
+    auto basicParamsArea = area.removeFromTop(350);  // Hauteur totale
+    auto titleArea = basicParamsArea.removeFromTop(60);  // Augmenté de 30 à 40 pour plus d'espace
+    
+    // Dessiner d'abord le cadre complet
+    g.setColour(juce::Colours::grey.withAlpha(0.3f));
+    g.drawRoundedRectangle(basicParamsArea.toFloat(), 5.0f, 2.0f);
+    g.setColour(juce::Colours::white.withAlpha(0.05f));
+    g.fillRoundedRectangle(basicParamsArea.toFloat(), 5.0f);
+    
+    // Dessiner ensuite le titre centré dans sa zone
+    g.setColour(juce::Colours::white.withAlpha(0.7f));  
+    g.setFont(14.0f);
+    g.drawText("Basic Parameters", titleArea.withTrimmedTop(10), juce::Justification::centred, false);  // Ajout de withTrimmedTop(10)
 }
 
 //==============================================================================
@@ -206,46 +225,56 @@ void AudioPluginAudioProcessorEditor::resized()
     auto labelArea = area.removeFromTop(100);
 
     // Generation label
-    auto generationLabelArea = labelArea.removeFromTop(45);
-    generationStatusLabel->setBounds(generationLabelArea.reduced(10, 5).withTrimmedTop(10));
+    auto generationArea = labelArea.removeFromTop(45);
+    generationArea.removeFromTop(20);  // Espace pour le titre
+    generationStatusLabel->setBounds(generationArea.reduced(10, 5));
     
     labelArea.removeFromTop(10);
     
-    auto playbackLabelArea = labelArea.removeFromTop(45);
-    playbackStatusLabel->setBounds(playbackLabelArea.reduced(10, 5).withTrimmedTop(10));
+    // Playback label
+    auto playbackArea = labelArea.removeFromTop(45);
+    playbackArea.removeFromTop(20);  // Espace pour le titre
+    playbackStatusLabel->setBounds(playbackArea.reduced(10, 5));
 
     area.removeFromTop(20);
 
+    // Zone des paramètres de base
+    auto basicParamsArea = area.removeFromTop(350);  // Même hauteur que dans paint()
+    basicParamsArea.removeFromTop(40);  // Augmenté de 30 à 40 pour correspondre à paint()
+    
+    // Ajouter un padding plus important (25 pixels) autour de tous les composants
+    auto innerArea = basicParamsArea.reduced(25);
+
     // Configuration de la zone tonalité
-    auto tonalityArea = area.removeFromTop(35);
+    auto tonalityArea = innerArea.removeFromTop(35);
     tonalityLabel->setBounds(tonalityArea.removeFromLeft(90));
     tonalityComboBox->setBounds(tonalityArea);
 
-    area.removeFromTop(20);
+    innerArea.removeFromTop(15);  // Réduire l'espace entre les composants
 
-    // Zone du mode (nouveau)
-    auto modeArea = area.removeFromTop(35);
-    modeLabel->setBounds(modeArea.removeFromLeft(90));  // Utiliser le membre modeLabel au lieu d'une nouvelle variable
+    // Zone du mode
+    auto modeArea = innerArea.removeFromTop(35);
+    modeLabel->setBounds(modeArea.removeFromLeft(90));
     modeComboBox->setBounds(modeArea);
 
-    area.removeFromTop(20);
+    innerArea.removeFromTop(15);  // Réduire l'espace entre les composants
 
     // Zone de progression
-    auto progressionArea = area.removeFromTop(35);
+    auto progressionArea = innerArea.removeFromTop(35);
     progressionLabel->setBounds(progressionArea.removeFromLeft(90));
     progressionInput->setBounds(progressionArea);
 
-    area.removeFromTop(20);
+    innerArea.removeFromTop(15);  // Réduire l'espace entre les composants
 
     // Zone des états de progression
-    auto progressionStateArea = area.removeFromTop(35);
+    auto progressionStateArea = innerArea.removeFromTop(35);
     progressionStateLabel->setBounds(progressionStateArea.removeFromLeft(90));
     progressionStateInput->setBounds(progressionStateArea);
 
-    area.removeFromTop(20);
+    innerArea.removeFromTop(15);  // Réduire l'espace entre les composants
 
     // Zone des qualités d'accords
-    auto qualitiesArea = area.removeFromTop(35);
+    auto qualitiesArea = innerArea.removeFromTop(35);
     chordQualitiesLabel->setBounds(qualitiesArea.removeFromLeft(90));
     chordQualitiesInput->setBounds(qualitiesArea);
 
