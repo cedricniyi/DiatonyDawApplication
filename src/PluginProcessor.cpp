@@ -232,6 +232,24 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 //==============================================================================
 juce::String AudioPluginAudioProcessor::generateMidiSolution()
 {
+    // Vérifications défensives (redondantes avec les setters, mais conservées par sécurité)
+    // Vérifier que nous avons les données requises
+    if (currentChords.empty() || currentStates.empty()) {
+        DBG("Erreur: La progression et les états sont obligatoires");
+        return {};
+    }
+
+    if (currentStates.size() != currentChords.size()) {
+        DBG("Erreur: Le nombre d'états ne correspond pas au nombre d'accords");
+        return {};
+    }
+
+    // Si des qualités sont spécifiées, vérifier qu'elles sont complètes
+    if (!currentChordQualities.empty() && currentChordQualities.size() != currentChords.size()) {
+        DBG("Erreur: Le nombre de qualités ne correspond pas au nombre d'accords");
+        return {};
+    }
+
     // 1. Déterminer le chemin racine du projet
     // À partir du chemin actuel du fichier source (__FILE__)
     juce::File projectDir = juce::File(__FILE__) // Chemin de ce fichier .cpp
@@ -265,22 +283,21 @@ juce::String AudioPluginAudioProcessor::generateMidiSolution()
         tonality = minorTonality.get();
     }
     
+    // * Default progression
     // {FIRST_DEGREE, SIXTH_DEGREE, FIVE_OF_FIVE, FIFTH_DEGREE_APPOGIATURA, FIFTH_DEGREE, FIRST_DEGREE};
+    // * Default states
+    // {FUNDAMENTAL_STATE, FUNDAMENTAL_STATE, FIRST_INVERSION, SECOND_INVERSION, FUNDAMENTAL_STATE, FUNDAMENTAL_STATE};
+    // * Qualities
+    // chords_qualities[1] = MINOR_SEVENTH_CHORD;
+    // chords_qualities[2] = MINOR_NINTH_DOMINANT_CHORD;
+    // chords_qualities[4] = DIMINISHED_SEVENTH_CHORD;
     vector<int> chords;
     vector<int> states;
 
-    if (currentChords.empty()) {
-        DBG("Utilisation de la progression par défaut");
-        chords = {FIRST_DEGREE, SIXTH_DEGREE, FIVE_OF_FIVE, 
-                 FIFTH_DEGREE_APPOGIATURA, FIFTH_DEGREE, FIRST_DEGREE};
-        states = {FUNDAMENTAL_STATE, FUNDAMENTAL_STATE, FIRST_INVERSION, 
-                 SECOND_INVERSION, FUNDAMENTAL_STATE, FUNDAMENTAL_STATE};
-    } else {
-        DBG("Utilisation de la progression utilisateur: " + 
-            juce::String(currentChords.size()) + " accords");
-        chords = currentChords;
-        states = currentStates;
-    }
+    DBG("Utilisation de la progression utilisateur: " + 
+        juce::String(currentChords.size()) + " accords");
+    chords = currentChords;
+    states = currentStates;
 
     vector<int> chords_qualities;
     for(size_t i = 0; i < chords.size(); ++i) {
@@ -291,10 +308,7 @@ juce::String AudioPluginAudioProcessor::generateMidiSolution()
         }
     }
     
-    // chords_qualities[1] = MINOR_SEVENTH_CHORD;
-    // chords_qualities[2] = MINOR_NINTH_DOMINANT_CHORD;
-    // chords_qualities[4] = DIMINISHED_SEVENTH_CHORD;
-    
+
     int size = chords.size();
     
     try {
@@ -394,47 +408,46 @@ bool AudioPluginAudioProcessor::setProgressionFromString(const juce::String& pro
 {
     // Vérifier si l'input est vide
     if (progression.isEmpty()) {
-        currentChords.clear();
-        currentStates.clear();
-        return true; // On permet un input vide qui utilisera la progression par défaut
+        DBG("Erreur: La progression est obligatoire");
+        return false;
     }
     
     std::vector<int> newChords;
     auto tokens = juce::StringArray::fromTokens(progression, " -", "");
     
     // Vérifier si on a au moins un token
-    if (tokens.isEmpty())
+    if (tokens.isEmpty()) {
+        DBG("Erreur: La progression est vide après tokenization");
         return false;
+    }
 
+    // 
     for (const auto& token : tokens) {
         int degreeValue = DiatonyConstants::getDegreeValue(token.toStdString());
         if (degreeValue != -1) {
             newChords.push_back(degreeValue);
         } else {
-            DBG("Degré invalide trouvé: " + token); // Debug pour identifier le degré problématique
+            DBG(juce::String::fromUTF8("Degré invalide trouvé: ") + token); // Debug pour identifier le degré problématique
             return false; // Degré invalide trouvé
         }
     }
     
-    if (!newChords.empty()) {
-        currentChords = newChords;
-        currentStates = std::vector<int>(newChords.size(), FUNDAMENTAL_STATE);
-        return true;
-    }
-    
-    return false;
+    currentChords = newChords;
+    return true;
 }
 
 //==============================================================================
 bool AudioPluginAudioProcessor::setStatesFromString(const juce::String& states)
 {
-    // Si l'input est vide, on garde les états par défaut
+    // Si l'input est vide
     if (states.isEmpty()) {
-        return true;
+        DBG("Erreur: Les états sont obligatoires");
+        return false;
     }
 
     // Vérifier que nous avons une progression valide
     if (currentChords.empty()) {
+        DBG("Erreur: Définir la progression avant les états");
         return false;
     }
 
@@ -462,7 +475,7 @@ bool AudioPluginAudioProcessor::setStatesFromString(const juce::String& states)
         if (stateValue != -1) {
             newStates.push_back(stateValue);
         } else {
-            DBG("État invalide trouvé: " + token);
+            DBG(juce::String::fromUTF8("État invalide trouvé: ") + token);
             return false;
         }
     }
@@ -473,9 +486,15 @@ bool AudioPluginAudioProcessor::setStatesFromString(const juce::String& states)
 
 bool AudioPluginAudioProcessor::setChordQualitiesFromString(const juce::String& qualities) {
     // Si l'input est vide ou pas d'accords, on utilise les qualités par défaut
-    if (qualities.isEmpty() || currentChords.empty()) {
+    if (qualities.isEmpty()) {
         currentChordQualities.clear();
         return true; // Permet les qualités vides
+    }
+
+    // Vérifier que nous avons une progression valide
+    if (currentChords.empty()) {
+        DBG("Erreur: Définir la progression avant les qualités");
+        return false;
     }
 
     auto tokens = juce::StringArray::fromTokens(qualities, " ", "");
@@ -497,7 +516,8 @@ bool AudioPluginAudioProcessor::setChordQualitiesFromString(const juce::String& 
 
         int qualityValue = DiatonyConstants::getChordQualityValue(token.toStdString());
         if (qualityValue == -1) {
-            return false; // Qualité invalide trouvée
+            DBG(juce::String::fromUTF8("Qualité invalide trouvée: ") + token);
+            return false;
         }
         newQualities[qualityIndex++] = qualityValue;
     }
