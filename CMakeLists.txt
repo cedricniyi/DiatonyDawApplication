@@ -25,13 +25,31 @@ juce_add_plugin(DiatonyDawApplication
 
 juce_generate_juce_header(DiatonyDawApplication)
 
+# Ajout de tous les fichiers sources du projet
 target_sources(DiatonyDawApplication
     PRIVATE
-        src/PluginEditor.cpp
-        src/PluginProcessor.cpp
+        # Core
+        src/core/PluginProcessor.cpp
+        
+        # UI
+        src/ui/PluginEditor.cpp
+        
+        # Fichiers header only (à inclure pour être sûr qu'ils sont pris en compte)
+        src/model/Progression.h
+        src/model/ChordSequence.h
+        src/audio/SimpleSound.h
+        src/audio/SimpleVoice.h
+        src/ui/components/TonalityPanel.h
+        src/ui/components/ProgressionPanel.h
+        src/ui/components/GenerationPanel.h
+        src/ui/LookAndFeel/DiatonyLookAndFeel.h
+        src/utils/DiatonyConstants.h
+        src/utils/Midiprocessor.h
 )
 
-target_link_directories(DiatonyDawApplication PRIVATE "${CMAKE_SOURCE_DIR}/src")
+target_include_directories(DiatonyDawApplication PRIVATE 
+    ${CMAKE_SOURCE_DIR}/src
+)
 
 target_compile_definitions(DiatonyDawApplication
     PUBLIC
