@@ -93,4 +93,4 @@ private:
     juce::ADSR adsr;
     juce::IIRFilter filter;
 
-};
+}; 

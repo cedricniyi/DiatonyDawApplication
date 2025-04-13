@@ -2,11 +2,8 @@
 
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_audio_basics/juce_audio_basics.h>
-
-#include "../Diatony/c++/headers/aux/Tonality.hpp"
-#include "../Diatony/c++/headers/aux/Utilities.hpp"
-#include "../Diatony/c++/headers/aux/MidiFileGeneration.hpp"
-#include "../Diatony/c++/headers/diatony/SolveDiatony.hpp"
+#include "../model/Progression.h"
+#include "../model/ChordSequence.h"
 
 //==============================================================================
 class AudioPluginAudioProcessor final : public juce::AudioProcessor
@@ -49,37 +46,23 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
 
     //==============================================================================
-    juce::String generateMidiSolution();
-    
-    // Méthodes pour la prévisualisation MIDI
+    // API simplifiée pour l'interface utilisateur
+    juce::String generateMidiSolution(const Progression& progression);
     bool startMidiPlayback();
     void stopMidiPlayback();
     bool isPlayingMidi() const;
     void setTonality(int noteValue);
     void setMode(bool isMajor);
-
-    // ================================================
-    bool setProgressionFromString(const juce::String& progression);
-    bool setStatesFromString(const juce::String& states);
-    bool setChordQualitiesFromString(const juce::String& qualities);
+    
+    // Notification de fin de lecture
+    void handlePlaybackFinished();
     
 private:
-
-    // Pour la prévisualisation MIDI
-    juce::String currentMidiFilePath;
-    std::unique_ptr<juce::MidiFile> midiFile;
-    std::unique_ptr<juce::MidiMessageSequence> midiSequence;
+    // Contrôleur pour les séquences d'accords
+    ChordSequence chordSequence;
     
-    int currentMidiPosition = 0;
-    bool midiPlaying = false;
-    int currentTonality = C; // Valeur par défaut
-    bool isMajorMode = true;  
-
-    std::vector<int> currentChords;
-    std::vector<int> currentStates;
-    std::vector<int> currentChordQualities;
-
+    // Synthétiseur pour la prévisualisation audio
     juce::Synthesiser synth;
-    //==============================================================================
+    
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessor)
-};
+}; 
