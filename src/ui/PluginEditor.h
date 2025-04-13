@@ -4,6 +4,7 @@
 #include "components/TonalityPanel.h"
 #include "components/ProgressionPanel.h"
 #include "components/GenerationPanel.h"
+#include "components/StatusPanel.h"
 #include "LookAndFeel/DiatonyLookAndFeel.h"
 
 //==============================================================================
@@ -26,9 +27,13 @@ private:
     std::unique_ptr<juce::TooltipWindow> tooltipWindow;
     
     // Panels
+    std::unique_ptr<StatusPanel> statusPanel;
     std::unique_ptr<TonalityPanel> tonalityPanel;
     std::unique_ptr<ProgressionPanel> progressionPanel;
     std::unique_ptr<GenerationPanel> generationPanel;
+    
+    // Zone du titre
+    juce::Rectangle<int> titleBounds;
     
     // Progression courante
     Progression currentProgression;

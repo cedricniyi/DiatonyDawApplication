@@ -2,7 +2,7 @@
 
 //==============================================================================
 AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAudioProcessor& p)
-    : AudioProcessorEditor (&p), processorRef (p)
+    : AudioProcessorEditor (&p), processorRef (p), titleBounds(0, 0, 0, 0)
 {
     // Appliquer le look and feel personnalisé
     setLookAndFeel(&diatonyLookAndFeel);
@@ -11,11 +11,13 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     tooltipWindow = std::make_unique<juce::TooltipWindow>(this, 700); // 700ms de délai avant l'apparition
     
     // Créer les panels
+    statusPanel = std::make_unique<StatusPanel>();
     tonalityPanel = std::make_unique<TonalityPanel>();
     progressionPanel = std::make_unique<ProgressionPanel>();
     generationPanel = std::make_unique<GenerationPanel>();
     
     // Ajouter les panels à l'interface
+    addAndMakeVisible(*statusPanel);
     addAndMakeVisible(*tonalityPanel);
     addAndMakeVisible(*progressionPanel);
     addAndMakeVisible(*generationPanel);
@@ -39,11 +41,12 @@ void AudioPluginAudioProcessorEditor::paint (juce::Graphics& g)
     // Dessiner le fond
     g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
     
-    // Dessiner le titre
-    g.setColour(juce::Colours::white);
-    // g.setFont(juce::Font(24.0f, juce::Font::bold));
-    g.setFont(juce::Font(juce::FontOptions(18.0f, juce::Font::bold)));
-    g.drawText("Diatony DAW Application", getLocalBounds().removeFromTop(60), juce::Justification::centred, true);
+    // Dessiner le titre aligné avec le StatusPanel
+    if (titleBounds.getWidth() > 0) {
+        g.setColour(juce::Colours::white);
+        g.setFont(juce::Font(juce::FontOptions(24.0f, juce::Font::bold)));
+        g.drawText("Diatony DAW Application", titleBounds, juce::Justification::centred, false);
+    }
 }
 
 //==============================================================================
@@ -52,18 +55,30 @@ void AudioPluginAudioProcessorEditor::resized()
     auto area = getLocalBounds().reduced(20);
     
     // Réserver de l'espace pour le titre
-    area.removeFromTop(60);
+    auto titleArea = area.removeFromTop(40);
+    
+    // Panel de statuts - hauteur augmentée pour afficher les deux zones
+    auto statusBounds = area.removeFromTop(130);
+    statusPanel->setBounds(statusBounds);
+    area.removeFromTop(5); // Espace minimal entre les panels
     
     // Panel de tonalité
     tonalityPanel->setBounds(area.removeFromTop(120));
-    area.removeFromTop(20); // Espace entre les panels
+    area.removeFromTop(5); // Espace minimal entre les panels
     
     // Panel de progression
     progressionPanel->setBounds(area.removeFromTop(160));
-    area.removeFromTop(20); // Espace entre les panels
+    area.removeFromTop(5); // Espace minimal entre les panels
     
-    // Panel de génération et contrôle
-    generationPanel->setBounds(area);
+    // Panel de génération (boutons)
+    generationPanel->setBounds(area.removeFromTop(50)); // Hauteur réduite pour les boutons
+    
+    // Stocker les coordonnées pour le titre aligné avec le StatusPanel
+    titleBounds = juce::Rectangle<int>(statusBounds.getX(), titleArea.getY(), 
+                                       statusBounds.getWidth(), titleArea.getHeight());
+    
+    // Force le redessin pour que le titre apparaisse
+    repaint();
 }
 
 //==============================================================================
@@ -108,24 +123,24 @@ void AudioPluginAudioProcessorEditor::handleGenerateButtonClicked()
     
     if (!currentProgression.isValid()) {
         DBG("Progression invalide, génération annulée");
-        generationPanel->setGenerationStatus(juce::String("Progression invalide"));
+        statusPanel->setGenerationStatus(juce::String("Progression invalide"));
         generationPanel->setGenerateButtonEnabled(true);
         return;
     }
     
     DBG("Progression valide, génération en cours...");
-    generationPanel->setGenerationStatus(juce::String::fromUTF8("Génération en cours..."));
+    statusPanel->setGenerationStatus(juce::String::fromUTF8("Génération en cours..."));
     
     // Générer la solution MIDI
     juce::String midiPath = processorRef.generateMidiSolution(currentProgression);
     
     if (!midiPath.isEmpty()) {
-        generationPanel->setGenerationStatus(juce::String::fromUTF8("Génération réussie !"));
+        statusPanel->setGenerationStatus(juce::String::fromUTF8("Génération réussie !"));
         generationPanel->setPlayButtonEnabled(true);
         progressionPanel->clearInputs();
         currentProgression.clear(); // Réinitialiser la progression
     } else {
-        generationPanel->setGenerationStatus(juce::String::fromUTF8("Échec de la génération"));
+        statusPanel->setGenerationStatus(juce::String::fromUTF8("Échec de la génération"));
         generationPanel->setPlayButtonEnabled(false);
     }
     
@@ -138,15 +153,15 @@ void AudioPluginAudioProcessorEditor::handlePlayButtonClicked()
     if (processorRef.isPlayingMidi()) {
         processorRef.stopMidiPlayback();
         generationPanel->setPlayButtonText(juce::String::fromUTF8("Écouter"));
-        generationPanel->setPlaybackStatus(juce::String::fromUTF8("Lecture en pause"));
+        statusPanel->setPlaybackStatus(juce::String::fromUTF8("Lecture en pause"));
         generationPanel->setGenerateButtonEnabled(true);
     } else {
         if (processorRef.startMidiPlayback()) {
             generationPanel->setPlayButtonText(juce::String::fromUTF8("Arrêter"));
-            generationPanel->setPlaybackStatus(juce::String::fromUTF8("Lecture en cours..."));
+            statusPanel->setPlaybackStatus(juce::String::fromUTF8("Lecture en cours..."));
             generationPanel->setGenerateButtonEnabled(false);
         } else {
-            generationPanel->setPlaybackStatus(juce::String::fromUTF8("Erreur de lecture"));
+            statusPanel->setPlaybackStatus(juce::String::fromUTF8("Erreur de lecture"));
             generationPanel->setPlayButtonEnabled(false);
             generationPanel->setGenerateButtonEnabled(true);
         }
@@ -158,7 +173,7 @@ void AudioPluginAudioProcessorEditor::handlePlaybackFinished()
 {
     juce::MessageManager::callAsync([this]() {
         generationPanel->setPlayButtonText(juce::String::fromUTF8("Écouter"));
-        generationPanel->setPlaybackStatus("");
+        statusPanel->setPlaybackStatus("");
         generationPanel->setGenerateButtonEnabled(true);
     });
 } 
