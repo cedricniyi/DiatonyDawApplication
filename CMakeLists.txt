@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.22)
 
 project(DiatonyDawApplication VERSION 0.0.1)
 
+add_compile_definitions(APPLICATION_SUPPORT_PATH="Library/Application Support")
+
 option(ENABLE_ASAN "Enable Address Sanitizer" OFF)
 
 if(ENABLE_ASAN)
@@ -23,15 +25,36 @@ juce_add_plugin(DiatonyDawApplication
     FORMATS AU VST3 Standalone                  # The formats to build. Other valid formats are: AAX Unity VST AU AUv3
     PRODUCT_NAME "DiatonyDawApplication")       # The name of the final executable, which can differ from the target name
 
+get_target_property(TARGET_TYPE DiatonyDawApplication TYPE)
+message(STATUS "DiatonyDawApplication type: ${TARGET_TYPE}")
+
 juce_generate_juce_header(DiatonyDawApplication)
 
+# Ajout de tous les fichiers sources du projet
 target_sources(DiatonyDawApplication
     PRIVATE
-        src/PluginEditor.cpp
-        src/PluginProcessor.cpp
+        # Core
+        src/core/PluginProcessor.cpp
+        
+        # UI
+        src/ui/PluginEditor.cpp
+        
+        # Fichiers header only (à inclure pour être sûr qu'ils sont pris en compte)
+        src/model/Progression.h
+        src/model/ChordSequence.h
+        src/audio/SimpleSound.h
+        src/audio/SimpleVoice.h
+        src/ui/components/TonalityPanel.h
+        src/ui/components/ProgressionPanel.h
+        src/ui/components/GenerationPanel.h
+        src/ui/LookAndFeel/DiatonyLookAndFeel.h
+        src/utils/DiatonyConstants.h
+        src/utils/Midiprocessor.h
 )
 
-target_link_directories(DiatonyDawApplication PRIVATE "${CMAKE_SOURCE_DIR}/src")
+target_include_directories(DiatonyDawApplication PRIVATE 
+    ${CMAKE_SOURCE_DIR}/src
+)
 
 target_compile_definitions(DiatonyDawApplication
     PUBLIC
@@ -110,9 +133,72 @@ target_link_libraries(DiatonyDawApplication
 )
 
 # Définit le rpath du binaire final.
-# Cela indique au chargeur dynamique de rechercher les bibliothèques dans le dossier '../out'
+# Cela indique au chargeur dynamique de rechercher les bibliothèques dans le dossier '../Frameworks'
 # relatif au chemin de l'exécutable lors de l'exécution.
-set_target_properties(DiatonyDawApplication PROPERTIES
+# Votre configuration RPATH existante
+set_target_properties(DiatonyDawApplication_Standalone PROPERTIES
     BUILD_WITH_INSTALL_RPATH TRUE
-    INSTALL_RPATH "@executable_path/../out"
+    INSTALL_RPATH "@executable_path/../Frameworks"
 )
+
+# Copie la bibliothèque dynamique diatony.dylib dans le bundle de l'application.
+# Cette étape est nécessaire pour que l'application puisse trouver et charger la bibliothèque à l'exécution.
+# La bibliothèque est copiée dans le dossier Frameworks du bundle.
+add_custom_command(TARGET DiatonyDawApplication_Standalone POST_BUILD
+    # Debug: Afficher le chemin de l'exécutable
+    COMMAND ${CMAKE_COMMAND} -E echo "TARGET_FILE_DIR: $<TARGET_FILE_DIR:DiatonyDawApplication_Standalone>"
+    
+    # Créer le dossier Frameworks dans le bundle
+    COMMAND ${CMAKE_COMMAND} -E make_directory
+        "$<TARGET_FILE_DIR:DiatonyDawApplication_Standalone>/../Frameworks"
+    
+    # # Debug: Vérifier si le dossier a été créé
+    # COMMAND ${CMAKE_COMMAND} -E echo "Checking Frameworks directory..."
+    # COMMAND ls -la "$<TARGET_FILE_DIR:DiatonyDawApplication_Standalone>/.."
+    
+    # Copier la dylib
+    COMMAND ${CMAKE_COMMAND} -E copy
+        "${CMAKE_SOURCE_DIR}/Diatony/out/diatony.dylib"
+        "$<TARGET_FILE_DIR:DiatonyDawApplication_Standalone>/../Frameworks/diatony.dylib"
+        
+    # # Debug: Vérifier la copie
+    # COMMAND ${CMAKE_COMMAND} -E echo "Checking dylib..."
+    # COMMAND ls -la "$<TARGET_FILE_DIR:DiatonyDawApplication_Standalone>/../Frameworks"
+)
+
+# # Vérifier que le dossier source existe
+# add_custom_command(TARGET DiatonyDawApplication PRE_BUILD
+#     COMMAND ${CMAKE_COMMAND} -E echo "Checking source dylib..."
+#     COMMAND ls -la "${CMAKE_SOURCE_DIR}/Diatony/out/"
+# )
+
+# Message supplémentaire pour debug
+message("CMAKE_SOURCE_DIR: ${CMAKE_SOURCE_DIR}")
+
+# Ajout du nouveau bloc ici
+# Création d'un lien symbolique entre le dossier Solutions de l'application 
+# (dans ~/Library/Application Support) et un dossier Solutions à la racine du projet
+# pour faciliter l'accès aux solutions générées par le solveur
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(SOLUTIONS_DIR "$ENV{HOME}/Library/Application Support/DiatonyDawApplication/Solutions")
+    set(SOLUTIONS_LINK "${CMAKE_SOURCE_DIR}/Solutions")
+    
+    # Création des dossiers et du lien symbolique
+    add_custom_command(TARGET DiatonyDawApplication POST_BUILD
+        # Créer le dossier dans Library si nécessaire
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${SOLUTIONS_DIR}"
+        
+        # Supprimer le lien symbolique s'il existe (pour éviter les erreurs)
+        COMMAND ${CMAKE_COMMAND} -E remove -f "${SOLUTIONS_LINK}"
+        
+        # Créer le nouveau lien symbolique
+        COMMAND ${CMAKE_COMMAND} -E create_symlink
+            "${SOLUTIONS_DIR}"
+            "${SOLUTIONS_LINK}"
+            
+        COMMENT "Setting up Solutions directory symlink for development"
+    )
+    
+    # Message de confirmation
+    message(STATUS "Development setup: Solutions directory symlink will be created at ${SOLUTIONS_LINK}")
+endif()
