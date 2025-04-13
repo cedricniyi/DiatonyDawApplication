@@ -9,6 +9,10 @@
 #include "../../Diatony/c++/headers/aux/MinorTonality.hpp"
 #include "Progression.h"
 
+#ifndef APPLICATION_SUPPORT_PATH
+    #error "APPLICATION_SUPPORT_PATH n'est pas défini"
+#endif
+
 class ChordSequence {
 public:
     ChordSequence() : currentTonality(C), isMajorMode(true), midiPlaying(false), currentMidiPosition(0) {}
@@ -34,19 +38,20 @@ public:
         auto states = progression.getStates();
         auto customQualities = progression.getQualities();
         
-        // Déterminer le chemin pour le fichier MIDI
-        juce::File projectDir = juce::File::getSpecialLocation(juce::File::currentApplicationFile)
-                               .getParentDirectory()
-                               .getChildFile("out")
-                               .getChildFile("MidiFiles");
-    
+        // Obtenir le dossier Application Support
+        juce::File appSupportDir = juce::File::getSpecialLocation(juce::File::userHomeDirectory)
+                          .getChildFile(APPLICATION_SUPPORT_PATH)
+                          .getChildFile("DiatonyDawApplication")
+                          .getChildFile("Solutions")
+                          .getChildFile("MidiFiles");
+
         // Créer l'arborescence de dossiers si nécessaire
-        if (!projectDir.exists()) {
-            projectDir.createDirectory();
+        if (!appSupportDir.exists()) {
+            appSupportDir.createDirectory();  // createDirectory() crée aussi les dossiers parents si nécessaire
         }
 
         // Chemin complet avec nom de fichier
-        juce::String fullPath = projectDir.getFullPathName() 
+        juce::String fullPath = appSupportDir.getFullPathName() 
                               + juce::File::getSeparatorString() 
                               + "solfromjuce";
                               

@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.22)
 
 project(DiatonyDawApplication VERSION 0.0.1)
 
+add_compile_definitions(APPLICATION_SUPPORT_PATH="Library/Application Support")
+
 option(ENABLE_ASAN "Enable Address Sanitizer" OFF)
 
 if(ENABLE_ASAN)
@@ -150,25 +152,25 @@ add_custom_command(TARGET DiatonyDawApplication_Standalone POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E make_directory
         "$<TARGET_FILE_DIR:DiatonyDawApplication_Standalone>/../Frameworks"
     
-    # Debug: Vérifier si le dossier a été créé
-    COMMAND ${CMAKE_COMMAND} -E echo "Checking Frameworks directory..."
-    COMMAND ls -la "$<TARGET_FILE_DIR:DiatonyDawApplication_Standalone>/.."
+    # # Debug: Vérifier si le dossier a été créé
+    # COMMAND ${CMAKE_COMMAND} -E echo "Checking Frameworks directory..."
+    # COMMAND ls -la "$<TARGET_FILE_DIR:DiatonyDawApplication_Standalone>/.."
     
     # Copier la dylib
     COMMAND ${CMAKE_COMMAND} -E copy
         "${CMAKE_SOURCE_DIR}/Diatony/out/diatony.dylib"
         "$<TARGET_FILE_DIR:DiatonyDawApplication_Standalone>/../Frameworks/diatony.dylib"
         
-    # Debug: Vérifier la copie
-    COMMAND ${CMAKE_COMMAND} -E echo "Checking dylib..."
-    COMMAND ls -la "$<TARGET_FILE_DIR:DiatonyDawApplication_Standalone>/../Frameworks"
+    # # Debug: Vérifier la copie
+    # COMMAND ${CMAKE_COMMAND} -E echo "Checking dylib..."
+    # COMMAND ls -la "$<TARGET_FILE_DIR:DiatonyDawApplication_Standalone>/../Frameworks"
 )
 
-# Vérifier que le dossier source existe
-add_custom_command(TARGET DiatonyDawApplication PRE_BUILD
-    COMMAND ${CMAKE_COMMAND} -E echo "Checking source dylib..."
-    COMMAND ls -la "${CMAKE_SOURCE_DIR}/Diatony/out/"
-)
+# # Vérifier que le dossier source existe
+# add_custom_command(TARGET DiatonyDawApplication PRE_BUILD
+#     COMMAND ${CMAKE_COMMAND} -E echo "Checking source dylib..."
+#     COMMAND ls -la "${CMAKE_SOURCE_DIR}/Diatony/out/"
+# )
 
 # Message supplémentaire pour debug
 message("CMAKE_SOURCE_DIR: ${CMAKE_SOURCE_DIR}")
