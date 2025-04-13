@@ -8,6 +8,7 @@
 #include "../../Diatony/c++/headers/aux/MajorTonality.hpp"
 #include "../../Diatony/c++/headers/aux/MinorTonality.hpp"
 #include "Progression.h"
+#include "../utils/FileUtils.h"
 
 #ifndef APPLICATION_SUPPORT_PATH
     #error "APPLICATION_SUPPORT_PATH n'est pas défini"
@@ -86,8 +87,8 @@ public:
                                                     chordQualities, states, false);
 
             if (!newSolutions.empty()) {
-                // Écriture du fichier MIDI
-                juce::String finalPath = fullPath + "_0.mid";
+                // Utilisation de FileUtils pour générer un nom de fichier unique avec timestamp
+                juce::String finalPath = FileUtils::generateUniqueFilename(fullPath);
                 writeSolToMIDIFile(size, finalPath.toStdString(), newSolutions.back());
                 
                 currentMidiFilePath = finalPath;
