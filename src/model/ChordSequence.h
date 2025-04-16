@@ -9,6 +9,7 @@
 #include "../../Diatony/c++/headers/aux/MinorTonality.hpp"
 #include "Progression.h"
 #include "../utils/FileUtils.h"
+#include "../utils/DatabaseManagement.h"
 
 #ifndef APPLICATION_SUPPORT_PATH
     #error "APPLICATION_SUPPORT_PATH n'est pas défini"
@@ -92,6 +93,14 @@ public:
                 writeSolToMIDIFile(size, finalPath.toStdString(), newSolutions.back());
                 
                 currentMidiFilePath = finalPath;
+                
+                // Extraire le nom du fichier du chemin complet
+                juce::File file(finalPath);
+                juce::String fileName = file.getFileName();
+                
+                // Sauvegarder les métadonnées dans la base de données JSON
+                Db::addSolution(fileName, finalPath);
+                
                 return finalPath;
             } else {
                 return {};
@@ -134,6 +143,13 @@ public:
         }
         
         return false;
+    }
+    
+    
+    // Méthode pour charger une solution spécifique par son chemin
+    bool loadSolutionByPath(const juce::String& path) {
+        currentMidiFilePath = path;
+        return startMidiPlayback();
     }
     
     void stopMidiPlayback() {
