@@ -233,6 +233,12 @@ bool AudioPluginAudioProcessor::isPlayingMidi() const
     return chordSequence.isPlayingMidi();
 }
 
+bool AudioPluginAudioProcessor::loadMidiFile(const juce::String& midiFilePath)
+{
+    // Nous utilisons directement la méthode existante dans ChordSequence
+    return chordSequence.loadSolutionByPath(midiFilePath);
+}
+
 void AudioPluginAudioProcessor::setTonality(int noteValue)
 {
     chordSequence.setTonality(noteValue);
