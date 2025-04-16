@@ -65,6 +65,8 @@ target_sources(DiatonyDawApplication
         src/ui/LookAndFeel/DiatonyLookAndFeel.h
         src/utils/DiatonyConstants.h
         src/utils/Midiprocessor.h
+        src/utils/FileUtils.h
+        src/utils/DatabaseManagement.h
 )
 
 target_include_directories(DiatonyDawApplication PRIVATE 
