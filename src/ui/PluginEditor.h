@@ -55,9 +55,7 @@ private:
     void handleSolutionSelected(const SolutionHistoryItem& solution);
     
     // Méthodes de la sidebar d'origine (pour compatibilité)
-    void handleAboutClicked();
     void handleSettingsClicked();
-    void handleHelpClicked();
     
     // Référence au processeur audio
     AudioPluginAudioProcessor& processorRef;

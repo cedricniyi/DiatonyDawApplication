@@ -253,18 +253,6 @@ void AudioPluginAudioProcessorEditor::handleSolutionSelected(const SolutionHisto
     toastComponent->showMessage(message);
 }
 
-//==============================================================================
-void AudioPluginAudioProcessorEditor::handleAboutClicked()
-{
-    // Afficher une boîte de dialogue "À propos"
-    juce::AlertWindow::showMessageBoxAsync(
-        juce::MessageBoxIconType::InfoIcon,
-        "À propos de Diatony",
-        "Diatony DAW Application\nVersion 1.0\n\nUne application pour la composition musicale tonale.",
-        "Fermer"
-    );
-}
-
 void AudioPluginAudioProcessorEditor::handleSettingsClicked()
 {
     // Implémentation des paramètres (vous pourriez utiliser un DialogWindow personnalisé)
@@ -276,13 +264,3 @@ void AudioPluginAudioProcessorEditor::handleSettingsClicked()
     );
 }
 
-void AudioPluginAudioProcessorEditor::handleHelpClicked()
-{
-    // Afficher l'aide
-    juce::AlertWindow::showMessageBoxAsync(
-        juce::MessageBoxIconType::InfoIcon,
-        "Aide",
-        "Fonctionnalité d'aide à venir.",
-        "OK"
-    );
-} 
