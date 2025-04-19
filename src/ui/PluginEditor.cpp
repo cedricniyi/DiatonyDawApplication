@@ -11,16 +11,23 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     tooltipWindow = std::make_unique<juce::TooltipWindow>(this, 700); // 700ms de délai avant l'apparition
     
     // Créer les panels
+    sidebarPanel = std::make_unique<SidebarPanel>();
     statusPanel = std::make_unique<StatusPanel>();
     tonalityPanel = std::make_unique<TonalityPanel>();
     progressionPanel = std::make_unique<ProgressionPanel>();
     generationPanel = std::make_unique<GenerationPanel>();
     
+    // Créer le composant toast pour les notifications
+    toastComponent = std::make_unique<ToastComponent>();
+    toastComponent->setVisible(false);
+    
     // Ajouter les panels à l'interface
+    addAndMakeVisible(*sidebarPanel);
     addAndMakeVisible(*statusPanel);
     addAndMakeVisible(*tonalityPanel);
     addAndMakeVisible(*progressionPanel);
     addAndMakeVisible(*generationPanel);
+    addChildComponent(*toastComponent);
     
     // Configurer les callbacks et l'interactivité
     setupPanels();
@@ -52,7 +59,23 @@ void AudioPluginAudioProcessorEditor::paint (juce::Graphics& g)
 //==============================================================================
 void AudioPluginAudioProcessorEditor::resized()
 {
-    auto area = getLocalBounds().reduced(20);
+    auto bounds = getLocalBounds();
+    
+    // Positionner le toast (pleine largeur)
+    toastComponent->setBounds(bounds);
+    
+    // Largeur de la barre latérale augmentée
+    int sidebarWidth = 220; // Élargissement de la barre latérale
+    
+    // Placer la barre latérale à gauche
+    auto sidebarBounds = bounds.removeFromLeft(sidebarWidth);
+    sidebarPanel->setBounds(sidebarBounds);
+    
+    // Espacement entre la barre latérale et le contenu principal
+    bounds.removeFromLeft(10);
+    
+    // Réduire les marges du contenu principal
+    auto area = bounds.reduced(20);
     
     // Réserver de l'espace pour le titre
     auto titleArea = area.removeFromTop(40);
@@ -105,6 +128,19 @@ void AudioPluginAudioProcessorEditor::setupPanels()
     
     generationPanel->onPlayClicked = [this]() {
         handlePlayButtonClicked();
+    };
+    
+    // Configurer les callbacks pour la sidebar
+    sidebarPanel->onRefreshRequested = [this]() {
+        handleRefreshSolutions();
+    };
+    
+    sidebarPanel->onLoadRequested = [this](const SolutionHistoryItem& solution) {
+        handleLoadSolution(solution);
+    };
+    
+    sidebarPanel->onSolutionSelected = [this](const SolutionHistoryItem& solution) {
+        handleSolutionSelected(solution);
     };
 }
 
@@ -176,4 +212,55 @@ void AudioPluginAudioProcessorEditor::handlePlaybackFinished()
         statusPanel->setPlaybackStatus("");
         generationPanel->setGenerateButtonEnabled(true);
     });
-} 
+}
+
+//==============================================================================
+void AudioPluginAudioProcessorEditor::handleRefreshSolutions()
+{
+    // Charger les solutions de la base de données
+    sidebarPanel->loadSolutionsFromDb();
+    
+    // Afficher un toast de confirmation
+    toastComponent->showMessage(juce::String::fromUTF8("Historique mis à jour"));
+}
+
+void AudioPluginAudioProcessorEditor::handleLoadSolution(const SolutionHistoryItem& solution)
+{
+    // Récupérer le chemin vers le fichier MIDI
+    juce::String midiPath = solution.getPath();
+    
+    if (juce::File(midiPath).existsAsFile()) {
+        // Charger le fichier MIDI pour lecture
+        processorRef.loadMidiFile(midiPath);
+        generationPanel->setPlayButtonEnabled(true);
+        
+        // Afficher un toast de confirmation au lieu d'utiliser la zone de statut
+        juce::String message = juce::String::fromUTF8("Solution chargée: ") + solution.getName();
+        toastComponent->showMessage(message);
+    } else {
+        // Le fichier n'existe pas - afficher un toast d'erreur
+        generationPanel->setPlayButtonEnabled(false);
+        
+        juce::String errorMessage = juce::String::fromUTF8("Erreur: Fichier MIDI non trouvé");
+        toastComponent->showMessage(errorMessage);
+    }
+}
+
+void AudioPluginAudioProcessorEditor::handleSolutionSelected(const SolutionHistoryItem& solution)
+{
+    // Afficher une notification toast au lieu d'utiliser la zone de statut
+    juce::String message = juce::String::fromUTF8("Solution sélectionnée: ") + solution.getName();
+    toastComponent->showMessage(message);
+}
+
+void AudioPluginAudioProcessorEditor::handleSettingsClicked()
+{
+    // Implémentation des paramètres (vous pourriez utiliser un DialogWindow personnalisé)
+    juce::AlertWindow::showMessageBoxAsync(
+        juce::MessageBoxIconType::InfoIcon,
+        "Paramètres",
+        "Fonctionnalité à venir dans une future mise à jour.",
+        "OK"
+    );
+}
+

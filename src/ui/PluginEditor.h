@@ -5,6 +5,8 @@
 #include "components/ProgressionPanel.h"
 #include "components/GenerationPanel.h"
 #include "components/StatusPanel.h"
+#include "components/SidebarPanel.h"
+#include "components/ToastComponent.h"
 #include "LookAndFeel/DiatonyLookAndFeel.h"
 
 //==============================================================================
@@ -27,10 +29,14 @@ private:
     std::unique_ptr<juce::TooltipWindow> tooltipWindow;
     
     // Panels
+    std::unique_ptr<SidebarPanel> sidebarPanel;
     std::unique_ptr<StatusPanel> statusPanel;
     std::unique_ptr<TonalityPanel> tonalityPanel;
     std::unique_ptr<ProgressionPanel> progressionPanel;
     std::unique_ptr<GenerationPanel> generationPanel;
+    
+    // Composant toast pour les notifications temporaires
+    std::unique_ptr<ToastComponent> toastComponent;
     
     // Zone du titre
     juce::Rectangle<int> titleBounds;
@@ -42,6 +48,14 @@ private:
     void setupPanels();
     void handleGenerateButtonClicked();
     void handlePlayButtonClicked();
+    
+    // Méthodes pour gérer l'historique des solutions
+    void handleRefreshSolutions();
+    void handleLoadSolution(const SolutionHistoryItem& solution);
+    void handleSolutionSelected(const SolutionHistoryItem& solution);
+    
+    // Méthodes de la sidebar d'origine (pour compatibilité)
+    void handleSettingsClicked();
     
     // Référence au processeur audio
     AudioPluginAudioProcessor& processorRef;

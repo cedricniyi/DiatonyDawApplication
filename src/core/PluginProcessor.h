@@ -51,6 +51,7 @@ public:
     bool startMidiPlayback();
     void stopMidiPlayback();
     bool isPlayingMidi() const;
+    bool loadMidiFile(const juce::String& midiFilePath);
     void setTonality(int noteValue);
     void setMode(bool isMajor);
     

@@ -1,5 +1,20 @@
 cmake_minimum_required(VERSION 3.22)
 
+include(FetchContent)
+
+FetchContent_Declare(
+    json
+    URL https://github.com/nlohmann/json/releases/download/v3.12.0/json.tar.xz
+    URL_HASH SHA256=42f6e95cad6ec532fd372391373363b62a14af6d771056dbfc86160e6dfff7aa
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+)
+
+# Cette option désactive la compilation des tests
+set(JSON_BuildTests OFF CACHE INTERNAL "")
+
+# Rend la bibliothèque disponible
+FetchContent_MakeAvailable(json)
+
 project(DiatonyDawApplication VERSION 0.0.1)
 
 add_compile_definitions(APPLICATION_SUPPORT_PATH="Library/Application Support")
@@ -50,6 +65,8 @@ target_sources(DiatonyDawApplication
         src/ui/LookAndFeel/DiatonyLookAndFeel.h
         src/utils/DiatonyConstants.h
         src/utils/Midiprocessor.h
+        src/utils/FileUtils.h
+        src/utils/DatabaseManagement.h
 )
 
 target_include_directories(DiatonyDawApplication PRIVATE 
@@ -70,6 +87,7 @@ target_link_libraries(DiatonyDawApplication
     PRIVATE
         # AudioPluginData           # If we'd created a binary data target, we'd link to it here
         juce::juce_audio_utils
+        nlohmann_json::nlohmann_json
     PUBLIC
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags
