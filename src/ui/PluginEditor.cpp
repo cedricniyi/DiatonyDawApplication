@@ -23,17 +23,17 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     
     // Ajouter les panels à l'interface
     addAndMakeVisible(*sidebarPanel);
-    addAndMakeVisible(*statusPanel);
-    addAndMakeVisible(*tonalityPanel);
-    addAndMakeVisible(*progressionPanel);
-    addAndMakeVisible(*generationPanel);
+    // addAndMakeVisible(*statusPanel);
+    // addAndMakeVisible(*tonalityPanel);
+    // addAndMakeVisible(*progressionPanel);
+    // addAndMakeVisible(*generationPanel);
     addChildComponent(*toastComponent);
     
     // Configurer les callbacks et l'interactivité
     setupPanels();
     
     // Définir la taille de la fenêtre
-    setSize (800, 600);
+    setSize (1200, 800);
 }
 
 AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
