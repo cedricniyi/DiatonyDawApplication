@@ -22,12 +22,12 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     toastComponent->setVisible(false);
     
     // Ajouter les panels à l'interface
-    addAndMakeVisible(*sidebarPanel);
+    // addAndMakeVisible(*sidebarPanel);
     // addAndMakeVisible(*statusPanel);
     // addAndMakeVisible(*tonalityPanel);
     // addAndMakeVisible(*progressionPanel);
     // addAndMakeVisible(*generationPanel);
-    addChildComponent(*toastComponent);
+    // addChildComponent(*toastComponent);
     
     // Configurer les callbacks et l'interactivité
     setupPanels();
@@ -61,23 +61,17 @@ void AudioPluginAudioProcessorEditor::resized()
 {
     auto bounds = getLocalBounds();
     
-    // Positionner le toast (pleine largeur)
-    toastComponent->setBounds(bounds);
-    
-    // Largeur de la barre latérale augmentée
-    int sidebarWidth = 220; // Élargissement de la barre latérale
-    
-    // Placer la barre latérale à gauche
-    auto sidebarBounds = bounds.removeFromLeft(sidebarWidth);
-    sidebarPanel->setBounds(sidebarBounds);
-    
-    // Espacement entre la barre latérale et le contenu principal
-    bounds.removeFromLeft(10);
-    
-    // Réduire les marges du contenu principal
+    // Si la sidebar est visible, on ajuste les bounds en conséquence
+    if (sidebarPanel->isVisible())
+    {
+        int sidebarWidth = 220;
+        auto sidebarBounds = bounds.removeFromLeft(sidebarWidth);
+        sidebarPanel->setBounds(sidebarBounds);
+        bounds.removeFromLeft(10);
+    }
+
+    // Le reste du code...
     auto area = bounds.reduced(20);
-    
-    // Réserver de l'espace pour le titre
     auto titleArea = area.removeFromTop(40);
     
     // Panel de statuts - hauteur augmentée pour afficher les deux zones
@@ -96,9 +90,12 @@ void AudioPluginAudioProcessorEditor::resized()
     // Panel de génération (boutons)
     generationPanel->setBounds(area.removeFromTop(50)); // Hauteur réduite pour les boutons
     
-    // Stocker les coordonnées pour le titre aligné avec le StatusPanel
-    titleBounds = juce::Rectangle<int>(statusBounds.getX(), titleArea.getY(), 
-                                       statusBounds.getWidth(), titleArea.getHeight());
+    // Maintenant le titre sera correctement centré, que la sidebar soit visible ou non
+    titleBounds = juce::Rectangle<int>(area.getX(), titleArea.getY(), 
+                                     area.getWidth(), titleArea.getHeight());
+    
+    // Positionner le toast (pleine largeur)
+    toastComponent->setBounds(bounds);
     
     // Force le redessin pour que le titre apparaisse
     repaint();
