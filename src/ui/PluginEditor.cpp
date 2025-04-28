@@ -11,6 +11,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     tooltipWindow = std::make_unique<juce::TooltipWindow>(this, 700); // 700ms de délai avant l'apparition
     
     // Créer les panels
+    headerPanel = std::make_unique<HeaderPanel>();
     sidebarPanel = std::make_unique<SidebarPanel>();
     statusPanel = std::make_unique<StatusPanel>();
     tonalityPanel = std::make_unique<TonalityPanel>();
@@ -22,6 +23,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     toastComponent->setVisible(false);
     
     // Ajouter les panels à l'interface
+    addAndMakeVisible(*headerPanel);
     // addAndMakeVisible(*sidebarPanel);
     // addAndMakeVisible(*statusPanel);
     // addAndMakeVisible(*tonalityPanel);
@@ -47,19 +49,16 @@ void AudioPluginAudioProcessorEditor::paint (juce::Graphics& g)
 {
     // Dessiner le fond
     g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
-    
-    // Dessiner le titre aligné avec le StatusPanel
-    if (titleBounds.getWidth() > 0) {
-        g.setColour(juce::Colours::white);
-        g.setFont(juce::Font(juce::FontOptions(24.0f, juce::Font::bold)));
-        g.drawText("Diatony DAW Application", titleBounds, juce::Justification::centred, false);
-    }
 }
 
 //==============================================================================
 void AudioPluginAudioProcessorEditor::resized()
 {
     auto bounds = getLocalBounds();
+    
+    // Barre d'en-tête en haut
+    auto headerHeight = 50;
+    headerPanel->setBounds(bounds.removeFromTop(headerHeight));
     
     // Si la sidebar est visible, on ajuste les bounds en conséquence
     if (sidebarPanel->isVisible())
@@ -72,7 +71,6 @@ void AudioPluginAudioProcessorEditor::resized()
 
     // Le reste du code...
     auto area = bounds.reduced(20);
-    auto titleArea = area.removeFromTop(40);
     
     // Panel de statuts - hauteur augmentée pour afficher les deux zones
     auto statusBounds = area.removeFromTop(130);
@@ -90,20 +88,22 @@ void AudioPluginAudioProcessorEditor::resized()
     // Panel de génération (boutons)
     generationPanel->setBounds(area.removeFromTop(50)); // Hauteur réduite pour les boutons
     
-    // Maintenant le titre sera correctement centré, que la sidebar soit visible ou non
-    titleBounds = juce::Rectangle<int>(area.getX(), titleArea.getY(), 
-                                     area.getWidth(), titleArea.getHeight());
-    
     // Positionner le toast (pleine largeur)
-    toastComponent->setBounds(bounds);
-    
-    // Force le redessin pour que le titre apparaisse
-    repaint();
+    toastComponent->setBounds(getLocalBounds());
 }
 
 //==============================================================================
 void AudioPluginAudioProcessorEditor::setupPanels()
 {
+    // Configurer les callbacks pour le panel d'en-tête
+    headerPanel->onDiatonyClicked = [this]() {
+        handleDiatonyModeClicked();
+    };
+    
+    headerPanel->onHarmonizerClicked = [this]() {
+        handleHarmonizerModeClicked();
+    };
+    
     // Configurer les callbacks pour le panel de tonalité
     tonalityPanel->onTonalityChanged = [this](int noteValue) {
         processorRef.setTonality(noteValue);
@@ -139,6 +139,19 @@ void AudioPluginAudioProcessorEditor::setupPanels()
     sidebarPanel->onSolutionSelected = [this](const SolutionHistoryItem& solution) {
         handleSolutionSelected(solution);
     };
+}
+
+// Nouvelles méthodes pour gérer les boutons du HeaderPanel
+void AudioPluginAudioProcessorEditor::handleDiatonyModeClicked()
+{
+    // Pour l'instant, juste un message (à implémenter selon les besoins)
+    toastComponent->showMessage(juce::String::fromUTF8("Mode Diatony activé"));
+}
+
+void AudioPluginAudioProcessorEditor::handleHarmonizerModeClicked()
+{
+    // Pour l'instant, juste un message (à implémenter selon les besoins)
+    toastComponent->showMessage(juce::String::fromUTF8("Mode Harmonizer activé"));
 }
 
 //==============================================================================
