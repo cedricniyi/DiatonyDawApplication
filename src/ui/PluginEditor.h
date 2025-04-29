@@ -58,6 +58,8 @@ private:
     // Mode actif
     bool isDiatonyMode = true;
     
+    bool isSidebarVisible = false;  
+
     // Progression courante
     Progression currentProgression;
     
@@ -72,6 +74,7 @@ private:
     void handleDiatonyModeClicked();
     void handleHarmonizerModeClicked();
     void updateContentPanelVisibility();
+    void toggleSidebar();
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessorEditor)
 }; 

@@ -27,7 +27,8 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     
     // Ajouter les panels à l'interface
     addAndMakeVisible(*headerPanel);
-    // addAndMakeVisible(*sidebarPanel);
+    addAndMakeVisible(*sidebarPanel);
+    sidebarPanel->setVisible(false);  // Caché par défaut
     addChildComponent(*diatonyPanel);
     addChildComponent(*harmonizerPanel);
     addChildComponent(*toastComponent);
@@ -151,6 +152,11 @@ void AudioPluginAudioProcessorEditor::setupPanels()
     
     sidebarPanel->onSolutionSelected = [this](const SolutionHistoryItem& solution) {
         handleSolutionSelected(solution);
+    };
+
+    // Ajouter le callback pour le bouton de toggle sidebar
+    headerPanel->onToggleSidebarClicked = [this]() {
+        toggleSidebar();
     };
 }
 
@@ -289,8 +295,15 @@ void AudioPluginAudioProcessorEditor::handleSettingsClicked()
 {
     DiatonyAlertWindow::show(
         juce::String::fromUTF8("Paramètres"),
-        juce::String::fromUTF8("Fonctionnalité à venir dans une future mise à jour."),
-        juce::String::fromUTF8("OK")
+        juce::String::fromUTF8("Standalone et plugin DAW développé par C. Niyikiza et D. Sprockeels."),
+        juce::String::fromUTF8("Quitter")
     );
+}
+
+void AudioPluginAudioProcessorEditor::toggleSidebar()
+{
+    isSidebarVisible = !isSidebarVisible;
+    sidebarPanel->setVisible(isSidebarVisible);
+    resized();  // Pour recalculer la disposition
 }
 

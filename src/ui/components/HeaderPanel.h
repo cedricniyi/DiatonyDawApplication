@@ -15,6 +15,17 @@ public:
         titleLabel.setJustificationType(juce::Justification::centred); // Centre le texte
         addAndMakeVisible(titleLabel);
         
+        // Configuration de la flèche (en tant que Label)
+        sidebarToggleLabel.setText(juce::String::fromUTF8("🗄️➡️"), juce::dontSendNotification);
+        sidebarToggleLabel.setColour(juce::Label::textColourId, juce::Colours::white);
+        sidebarToggleLabel.setFont(juce::Font(juce::FontOptions(20.0f)));
+        sidebarToggleLabel.setJustificationType(juce::Justification::centred);
+        sidebarToggleLabel.setMouseCursor(juce::MouseCursor::PointingHandCursor);
+        addAndMakeVisible(sidebarToggleLabel);
+
+        // Ajouter le listener pour le clic sur la flèche
+        sidebarToggleLabel.addMouseListener(this, false);
+
         // Configuration du bouton Diatony (orange avec coins arrondis)
         diatonyButton.setButtonText("Diatony");
         diatonyButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xFFF28C28)); // Orange
@@ -69,6 +80,10 @@ public:
         // Séparation verticale après la zone du titre
         g.setColour(juce::Colour(0xFF444444));
         g.fillRect(titleWidth, 0, 1, getHeight());
+        
+        // Séparation verticale entre la flèche et le titre (50 pixels depuis la gauche)
+        g.setColour(juce::Colour(0xFF444444));
+        g.fillRect(50, 0, 1, getHeight());
     }
 
     //==============================================================================
@@ -77,9 +92,15 @@ public:
         auto bounds = getLocalBounds();
         
         // Le titre dans la première zone (largeur fixe)
-        titleWidth = 300; // Zone plus large pour le titre centré
+        titleWidth = 300;
         auto titleZone = bounds.removeFromLeft(titleWidth);
-        titleLabel.setBounds(titleZone.reduced(10, 0)); // Réduction des marges pour centrer
+        
+        // Zone de la flèche (50 premiers pixels)
+        auto toggleZone = titleZone.removeFromLeft(50);
+        sidebarToggleLabel.setBounds(toggleZone);
+        
+        // Positionner le titre dans le reste de la zone titre
+        titleLabel.setBounds(titleZone);  // Utiliser toute la zone restante
         
         // Configuration des dimensions de boutons
         int buttonWidth = 120;
@@ -87,12 +108,12 @@ public:
         int buttonY = (getHeight() - buttonHeight) / 2;
         
         // Boutons Diatony et Harmonizer à gauche de la seconde zone
-        int buttonsX = titleWidth + 20; // 20 pixels de marge après la séparation
+        int buttonsX = titleWidth + 20;
         diatonyButton.setBounds(buttonsX, buttonY, buttonWidth, buttonHeight);
         harmonizerButton.setBounds(diatonyButton.getRight() + 10, buttonY, buttonWidth, buttonHeight);
         
         // Bouton Settings à droite de la seconde zone
-        int settingsX = getWidth() - buttonWidth - 20; // 20 pixels de marge à droite
+        int settingsX = getWidth() - buttonWidth - 20;
         settingsButton.setBounds(settingsX, buttonY, buttonWidth, buttonHeight);
     }
     
@@ -100,13 +121,29 @@ public:
     std::function<void()> onDiatonyClicked;
     std::function<void()> onHarmonizerClicked;
     std::function<void()> onSettingsClicked;
+    std::function<void()> onToggleSidebarClicked;
+
+    // Ajouter la gestion du clic sur la flèche
+    void mouseUp(const juce::MouseEvent& event) override
+    {
+        if (event.eventComponent == &sidebarToggleLabel)
+        {
+            isFlipped = !isFlipped;
+            sidebarToggleLabel.setText(isFlipped ? juce::String::fromUTF8("⬅️") : juce::String::fromUTF8("🗄️➡️"), 
+                                     juce::dontSendNotification);
+            // sidebarToggleLabel.setFont(juce::Font(juce::FontOptions(.0f, juce::Font::bold)));
+            if (onToggleSidebarClicked) onToggleSidebarClicked();
+        }
+    }
 
 private:
     juce::Label titleLabel;
+    juce::Label sidebarToggleLabel;  // Remplacé TextButton par Label
     juce::TextButton diatonyButton;
     juce::TextButton harmonizerButton;
     juce::TextButton settingsButton;
     int titleWidth = 0; // Pour mémoriser la largeur du titre pour la séparation
+    bool isFlipped = false;  // Ajouter cette variable pour suivre l'état
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (HeaderPanel)
 }; 
