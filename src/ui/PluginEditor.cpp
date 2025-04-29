@@ -1,4 +1,5 @@
 #include "PluginEditor.h"
+#include "components/DiatonyAlertWindow.h"
 
 //==============================================================================
 AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAudioProcessor& p)
@@ -110,6 +111,10 @@ void AudioPluginAudioProcessorEditor::setupPanels()
     
     headerPanel->onHarmonizerClicked = [this]() {
         handleHarmonizerModeClicked();
+    };
+    
+    headerPanel->onSettingsClicked = [this]() {
+        handleSettingsClicked();
     };
     
     // Configurer les callbacks pour le panel de tonalité
@@ -282,12 +287,10 @@ void AudioPluginAudioProcessorEditor::handleSolutionSelected(const SolutionHisto
 
 void AudioPluginAudioProcessorEditor::handleSettingsClicked()
 {
-    // Implémentation des paramètres (vous pourriez utiliser un DialogWindow personnalisé)
-    juce::AlertWindow::showMessageBoxAsync(
-        juce::MessageBoxIconType::InfoIcon,
-        "Paramètres",
-        "Fonctionnalité à venir dans une future mise à jour.",
-        "OK"
+    DiatonyAlertWindow::show(
+        juce::String::fromUTF8("Paramètres"),
+        juce::String::fromUTF8("Fonctionnalité à venir dans une future mise à jour."),
+        juce::String::fromUTF8("OK")
     );
 }
 
