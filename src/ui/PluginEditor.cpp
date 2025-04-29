@@ -8,7 +8,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     setLookAndFeel(&diatonyLookAndFeel);
     
     // Créer la fenêtre de tooltip
-    tooltipWindow = std::make_unique<juce::TooltipWindow>(this, 700); // 700ms de délai avant l'apparition
+    tooltipWindow = std::make_unique<juce::TooltipWindow>(this, 700);
     
     // Créer les panels
     headerPanel = std::make_unique<HeaderPanel>();
@@ -17,6 +17,8 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     tonalityPanel = std::make_unique<TonalityPanel>();
     progressionPanel = std::make_unique<ProgressionPanel>();
     generationPanel = std::make_unique<GenerationPanel>();
+    diatonyPanel = std::make_unique<DiatonyContentPanel>();
+    harmonizerPanel = std::make_unique<HarmonizerContentPanel>();
     
     // Créer le composant toast pour les notifications
     toastComponent = std::make_unique<ToastComponent>();
@@ -25,14 +27,15 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     // Ajouter les panels à l'interface
     addAndMakeVisible(*headerPanel);
     // addAndMakeVisible(*sidebarPanel);
-    // addAndMakeVisible(*statusPanel);
-    // addAndMakeVisible(*tonalityPanel);
-    // addAndMakeVisible(*progressionPanel);
-    // addAndMakeVisible(*generationPanel);
-    // addChildComponent(*toastComponent);
+    addChildComponent(*diatonyPanel);
+    addChildComponent(*harmonizerPanel);
+    addChildComponent(*toastComponent);
     
     // Configurer les callbacks et l'interactivité
     setupPanels();
+    
+    // Initialiser la visibilité des panels
+    updateContentPanelVisibility();
     
     // Définir la taille de la fenêtre
     setSize (1200, 800);
@@ -60,33 +63,38 @@ void AudioPluginAudioProcessorEditor::resized()
     auto headerHeight = 50;
     headerPanel->setBounds(bounds.removeFromTop(headerHeight));
     
+    // Zone restante après le header
+    auto remainingBounds = bounds;
+    
     // Si la sidebar est visible, on ajuste les bounds en conséquence
     if (sidebarPanel->isVisible())
     {
         int sidebarWidth = 220;
-        auto sidebarBounds = bounds.removeFromLeft(sidebarWidth);
-        sidebarPanel->setBounds(sidebarBounds);
-        bounds.removeFromLeft(10);
+        sidebarPanel->setBounds(remainingBounds.removeFromLeft(sidebarWidth));
     }
 
+    // Positionner les panels de contenu dans tout l'espace restant
+    diatonyPanel->setBounds(remainingBounds);
+    harmonizerPanel->setBounds(remainingBounds);
+
     // Le reste du code...
-    auto area = bounds.reduced(20);
+    auto area = remainingBounds.reduced(20);
     
     // Panel de statuts - hauteur augmentée pour afficher les deux zones
     auto statusBounds = area.removeFromTop(130);
     statusPanel->setBounds(statusBounds);
-    area.removeFromTop(5); // Espace minimal entre les panels
+    area.removeFromTop(5);
     
     // Panel de tonalité
     tonalityPanel->setBounds(area.removeFromTop(120));
-    area.removeFromTop(5); // Espace minimal entre les panels
+    area.removeFromTop(5);
     
     // Panel de progression
     progressionPanel->setBounds(area.removeFromTop(160));
-    area.removeFromTop(5); // Espace minimal entre les panels
+    area.removeFromTop(5);
     
     // Panel de génération (boutons)
-    generationPanel->setBounds(area.removeFromTop(50)); // Hauteur réduite pour les boutons
+    generationPanel->setBounds(area.removeFromTop(50));
     
     // Positionner le toast (pleine largeur)
     toastComponent->setBounds(getLocalBounds());
@@ -141,17 +149,26 @@ void AudioPluginAudioProcessorEditor::setupPanels()
     };
 }
 
-// Nouvelles méthodes pour gérer les boutons du HeaderPanel
+//==============================================================================
+void AudioPluginAudioProcessorEditor::updateContentPanelVisibility()
+{
+    diatonyPanel->setVisible(isDiatonyMode);
+    harmonizerPanel->setVisible(!isDiatonyMode);
+}
+
+//==============================================================================
 void AudioPluginAudioProcessorEditor::handleDiatonyModeClicked()
 {
-    // Pour l'instant, juste un message (à implémenter selon les besoins)
-    toastComponent->showMessage(juce::String::fromUTF8("Mode Diatony activé"));
+    isDiatonyMode = true;
+    updateContentPanelVisibility();
+    toastComponent->showMessage(juce::String::fromUTF8("🟠 Mode Diatony activé"));
 }
 
 void AudioPluginAudioProcessorEditor::handleHarmonizerModeClicked()
 {
-    // Pour l'instant, juste un message (à implémenter selon les besoins)
-    toastComponent->showMessage(juce::String::fromUTF8("Mode Harmonizer activé"));
+    isDiatonyMode = false;
+    updateContentPanelVisibility();
+    toastComponent->showMessage(juce::String::fromUTF8("🟢 Mode Harmonizer activé"));
 }
 
 //==============================================================================

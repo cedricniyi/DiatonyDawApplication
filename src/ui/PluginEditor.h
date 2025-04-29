@@ -9,6 +9,8 @@
 #include "components/SidebarPanel.h"
 #include "components/ToastComponent.h"
 #include "components/HeaderPanel.h"
+#include "components/DiatonyContentPanel.h"
+#include "components/HarmonizerContentPanel.h"
 #include "LookAndFeel/DiatonyLookAndFeel.h"
 #include "model/Progression.h"
 
@@ -44,12 +46,17 @@ private:
     std::unique_ptr<TonalityPanel> tonalityPanel;
     std::unique_ptr<ProgressionPanel> progressionPanel;
     std::unique_ptr<GenerationPanel> generationPanel;
+    std::unique_ptr<DiatonyContentPanel> diatonyPanel;
+    std::unique_ptr<HarmonizerContentPanel> harmonizerPanel;
     
     // Composant toast pour les notifications temporaires
     std::unique_ptr<ToastComponent> toastComponent;
     
     // Zone du titre
     juce::Rectangle<int> titleBounds;
+    
+    // Mode actif
+    bool isDiatonyMode = true;
     
     // Progression courante
     Progression currentProgression;
@@ -64,6 +71,7 @@ private:
     void handleSolutionSelected(const SolutionHistoryItem& solution);
     void handleDiatonyModeClicked();
     void handleHarmonizerModeClicked();
+    void updateContentPanelVisibility();
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessorEditor)
 }; 
