@@ -160,12 +160,12 @@ private:
         
         // Troisième rangée (ASDFGHJKL)
         std::vector<int> row3 = {65, 83, 68, 70, 71, 72, 74, 75, 76};
-        float keyWidth3 = bounds.getWidth() / static_cast<float>(row3.size());
+        float keyWidth3 = bounds.getWidth() / static_cast<float>(row3.size() + 0.5f); // Ajout d'un espace supplémentaire
         float y3 = y2 + rowHeight;
         
         // Quatrième rangée (ZXCVBNM)
         std::vector<int> row4 = {90, 88, 67, 86, 66, 78, 77};
-        float keyWidth4 = bounds.getWidth() / static_cast<float>(row4.size());
+        float keyWidth4 = bounds.getWidth() / static_cast<float>(row4.size() + 3.0f); // Plus d'espace pour centrer
         float y4 = y3 + rowHeight;
         
         // Assigner les bounds à chaque touche
@@ -181,16 +181,26 @@ private:
             x2 += keyWidth2;
         }
         
-        float x3 = bounds.getX() + keyWidth3 / 2; // Décalage pour centrer la rangée
+        // Ajustement pour la troisième rangée
+        float availableWidth = bounds.getWidth() * 0.95f; // Utiliser 95% de la largeur disponible
+        float x3Start = bounds.getX() + (bounds.getWidth() - availableWidth) / 2.0f; // Centrer
+        float x3 = x3Start;
+        float adjustedKeyWidth3 = availableWidth / static_cast<float>(row3.size());
+        
         for (int keyCode : row3) {
-            keyboardMap[keyCode].bounds = juce::Rectangle<float>(x3, y3, keyWidth3 - 4, rowHeight - 4);
-            x3 += keyWidth3;
+            keyboardMap[keyCode].bounds = juce::Rectangle<float>(x3, y3, adjustedKeyWidth3 - 4, rowHeight - 4);
+            x3 += adjustedKeyWidth3;
         }
         
-        float x4 = bounds.getX() + bounds.getWidth() / 2 - (keyWidth4 * row4.size()) / 2; // Centrer
+        // Ajustement pour la quatrième rangée
+        float availableWidth4 = bounds.getWidth() * 0.75f; // Utiliser 75% de la largeur disponible
+        float x4Start = bounds.getX() + (bounds.getWidth() - availableWidth4) / 2.0f; // Centrer
+        float x4 = x4Start;
+        float adjustedKeyWidth4 = availableWidth4 / static_cast<float>(row4.size());
+        
         for (int keyCode : row4) {
-            keyboardMap[keyCode].bounds = juce::Rectangle<float>(x4, y4, keyWidth4 - 4, rowHeight - 4);
-            x4 += keyWidth4;
+            keyboardMap[keyCode].bounds = juce::Rectangle<float>(x4, y4, adjustedKeyWidth4 - 4, rowHeight - 4);
+            x4 += adjustedKeyWidth4;
         }
     }
     
