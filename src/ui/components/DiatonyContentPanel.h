@@ -37,7 +37,7 @@ public:
         g.setFont(20.0f);
         
         auto bounds = getLocalBounds();
-        auto keyboardHeight = 120; // Hauteur réservée pour le clavier
+        auto keyboardHeight = 200; // Hauteur réservée pour le clavier (augmentée à 200)
         
         // Zone de titre au-dessus du reste
         auto titleBounds = bounds;
@@ -52,7 +52,7 @@ public:
         auto bounds = getLocalBounds();
         
         // Réserver de l'espace en bas pour le clavier
-        int keyboardHeight = 120;
+        int keyboardHeight = 200; // Hauteur augmentée à 200
         auto keyboardBounds = bounds.removeFromBottom(keyboardHeight);
         
         // Positionner le clavier

@@ -143,64 +143,74 @@ private:
     // Calculer les dimensions des touches
     void calculateKeyDimensions()
     {
-        auto bounds = getLocalBounds().reduced(10);
+        // Utiliser plus de l'espace disponible pour les touches
+        auto bounds = getLocalBounds().reduced(8);
         
-        // Hauteur de chaque rangée (4 rangées au total)
-        float rowHeight = bounds.getHeight() / 4.0f;
+        // Réserver une petite zone en haut pour le contexte
+        int contextHeight = 20;
+        bounds.removeFromTop(contextHeight);
+        
+        // Hauteur de chaque rangée (4 rangées au total avec des espaces entre elles)
+        float totalRowsSpace = bounds.getHeight() * 0.9f; // Utiliser 90% de la hauteur disponible
+        float gapBetweenRows = bounds.getHeight() * 0.02f; // 2% de la hauteur en espacement
+        float rowHeight = (totalRowsSpace - (3 * gapBetweenRows)) / 4.0f;
         
         // Première rangée (1-0)
         std::vector<int> row1 = {49, 50, 51, 52, 53, 54, 55, 56, 57, 48};
-        float keyWidth1 = bounds.getWidth() / static_cast<float>(row1.size());
+        float totalWidth = bounds.getWidth() * 0.95f; // Utiliser 95% de la largeur
+        float keyWidth1 = totalWidth / static_cast<float>(row1.size());
         float y1 = bounds.getY();
         
         // Deuxième rangée (QWERTYUIOP)
         std::vector<int> row2 = {81, 87, 69, 82, 84, 89, 85, 73, 79, 80};
-        float keyWidth2 = bounds.getWidth() / static_cast<float>(row2.size());
-        float y2 = y1 + rowHeight;
+        float keyWidth2 = totalWidth / static_cast<float>(row2.size());
+        float y2 = y1 + rowHeight + gapBetweenRows;
         
         // Troisième rangée (ASDFGHJKL)
         std::vector<int> row3 = {65, 83, 68, 70, 71, 72, 74, 75, 76};
-        float keyWidth3 = bounds.getWidth() / static_cast<float>(row3.size() + 0.5f); // Ajout d'un espace supplémentaire
-        float y3 = y2 + rowHeight;
+        float keyWidth3 = totalWidth / static_cast<float>(row2.size()); // Même largeur que la rangée 2
+        float y3 = y2 + rowHeight + gapBetweenRows;
         
         // Quatrième rangée (ZXCVBNM)
         std::vector<int> row4 = {90, 88, 67, 86, 66, 78, 77};
-        float keyWidth4 = bounds.getWidth() / static_cast<float>(row4.size() + 3.0f); // Plus d'espace pour centrer
-        float y4 = y3 + rowHeight;
+        float keyWidth4 = keyWidth3; // Même largeur de touches que la rangée 3
+        float y4 = y3 + rowHeight + gapBetweenRows;
         
-        // Assigner les bounds à chaque touche
-        float x1 = bounds.getX();
+        // Assigner les bounds à chaque touche avec des espaces entre elles
+        float margin = 3.0f; // Marge entre les touches
+        
+        // Centrer la première rangée
+        float row1Start = bounds.getX() + (bounds.getWidth() - (keyWidth1 * row1.size())) / 2.0f;
+        float x1 = row1Start;
         for (int keyCode : row1) {
-            keyboardMap[keyCode].bounds = juce::Rectangle<float>(x1, y1, keyWidth1 - 4, rowHeight - 4);
+            keyboardMap[keyCode].bounds = juce::Rectangle<float>(x1, y1, keyWidth1 - margin, rowHeight - margin);
             x1 += keyWidth1;
         }
         
-        float x2 = bounds.getX();
+        // Centrer la deuxième rangée
+        float row2Start = bounds.getX() + (bounds.getWidth() - (keyWidth2 * row2.size())) / 2.0f;
+        float x2 = row2Start;
         for (int keyCode : row2) {
-            keyboardMap[keyCode].bounds = juce::Rectangle<float>(x2, y2, keyWidth2 - 4, rowHeight - 4);
+            keyboardMap[keyCode].bounds = juce::Rectangle<float>(x2, y2, keyWidth2 - margin, rowHeight - margin);
             x2 += keyWidth2;
         }
         
-        // Ajustement pour la troisième rangée
-        float availableWidth = bounds.getWidth() * 0.95f; // Utiliser 95% de la largeur disponible
-        float x3Start = bounds.getX() + (bounds.getWidth() - availableWidth) / 2.0f; // Centrer
-        float x3 = x3Start;
-        float adjustedKeyWidth3 = availableWidth / static_cast<float>(row3.size());
-        
+        // Décaler et centrer la troisième rangée (ASDFGHJKL)
+        float row3Width = keyWidth3 * row3.size();
+        float row3Start = bounds.getX() + (bounds.getWidth() - row3Width) / 2.0f;
+        float x3 = row3Start;
         for (int keyCode : row3) {
-            keyboardMap[keyCode].bounds = juce::Rectangle<float>(x3, y3, adjustedKeyWidth3 - 4, rowHeight - 4);
-            x3 += adjustedKeyWidth3;
+            keyboardMap[keyCode].bounds = juce::Rectangle<float>(x3, y3, keyWidth3 - margin, rowHeight - margin);
+            x3 += keyWidth3;
         }
         
-        // Ajustement pour la quatrième rangée
-        float availableWidth4 = bounds.getWidth() * 0.75f; // Utiliser 75% de la largeur disponible
-        float x4Start = bounds.getX() + (bounds.getWidth() - availableWidth4) / 2.0f; // Centrer
-        float x4 = x4Start;
-        float adjustedKeyWidth4 = availableWidth4 / static_cast<float>(row4.size());
-        
+        // Décaler et centrer la quatrième rangée (ZXCVBNM)
+        float row4Width = keyWidth4 * row4.size();
+        float row4Start = bounds.getX() + (bounds.getWidth() - row4Width) / 2.0f;
+        float x4 = row4Start;
         for (int keyCode : row4) {
-            keyboardMap[keyCode].bounds = juce::Rectangle<float>(x4, y4, adjustedKeyWidth4 - 4, rowHeight - 4);
-            x4 += adjustedKeyWidth4;
+            keyboardMap[keyCode].bounds = juce::Rectangle<float>(x4, y4, keyWidth4 - margin, rowHeight - margin);
+            x4 += keyWidth4;
         }
     }
     
@@ -210,7 +220,7 @@ private:
         // Ajouter une étiquette pour le contexte actuel
         if (currentContext.isNotEmpty()) {
             g.setColour(juce::Colours::white.withAlpha(0.6f));
-            g.setFont(12.0f);
+            g.setFont(14.0f); // Taille de police plus grande
             g.drawText("Mode: " + currentContext, getLocalBounds().removeFromTop(20), 
                        juce::Justification::centred, false);
         }
@@ -230,24 +240,24 @@ private:
             
             // Dessiner le fond de la touche
             g.setColour(keyColour);
-            g.fillRoundedRectangle(keyInfo.bounds, 4.0f);
+            g.fillRoundedRectangle(keyInfo.bounds, 6.0f); // Rayon de coin plus grand
             
             // Dessiner le contour de la touche
             g.setColour(juce::Colours::white.withAlpha(0.5f));
-            g.drawRoundedRectangle(keyInfo.bounds, 4.0f, 1.0f);
+            g.drawRoundedRectangle(keyInfo.bounds, 6.0f, 1.5f); // Contour plus épais
             
-            // Dessiner l'étiquette de la touche (toujours visible)
-            g.setFont(juce::Font(juce::FontOptions(keyInfo.bounds.getHeight() * 0.4f,juce::Font::bold)));
-            // g.setFont(juce::Font().withHeight(keyInfo.bounds.getHeight() * 0.4f).withStyle(juce::Font::bold));
+            // Dessiner l'étiquette de la touche (plus grande pour meilleure lisibilité)
+            float fontSize = keyInfo.bounds.getHeight() * 0.5f; // 50% de la hauteur de la touche
+            g.setFont(juce::Font(fontSize).withStyle(juce::Font::bold));
             
             // Ajuster la couleur du texte en fonction de l'état d'activation
             if (keyInfo.enabled) {
                 g.setColour(juce::Colours::white);
             } else {
-                g.setColour(juce::Colours::white.withAlpha(0.7f)); // Plus visible qu'avant
+                g.setColour(juce::Colours::white.withAlpha(0.7f));
             }
             
-            g.drawText(keyInfo.label, keyInfo.bounds.reduced(2), juce::Justification::centred, true);
+            g.drawText(keyInfo.label, keyInfo.bounds.reduced(3), juce::Justification::centred, true);
         }
     }
     
