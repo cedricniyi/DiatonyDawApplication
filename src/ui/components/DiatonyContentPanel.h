@@ -39,7 +39,7 @@ public:
         auto contentBounds = bounds;
         contentBounds.removeFromBottom(keyboardHeight);
         
-        // Diviser l'espace restant en 3 zones égales
+        // Diviser l'espace restant en zones
         const int zonePadding = 10; // Espacement entre zones
         
         // Zone 1: Tonalité et Mode (1/3 supérieur)
@@ -53,11 +53,11 @@ public:
         tonalityZone = tonalityZone.reduced(zonePadding);
         modeZone = modeZone.reduced(zonePadding);
         
-        // Zone 2: Progression
-        auto progressionZone = contentBounds.removeFromTop(contentBounds.getHeight() / 2);
+        // Zone 2: Progression (agrandie à 75% de l'espace restant)
+        auto progressionZone = contentBounds.removeFromTop(static_cast<int>(contentBounds.getHeight() * 0.75f));
         progressionZone = progressionZone.reduced(zonePadding);
         
-        // Zone 3: Génération
+        // Zone 3: Génération (réduite à 25% de l'espace restant)
         auto generationZone = contentBounds;
         generationZone = generationZone.reduced(zonePadding);
         
@@ -65,7 +65,9 @@ public:
         drawZoneWithTitle(g, tonalityZone, juce::String::fromUTF8("Tonalité"));
         drawZoneWithTitle(g, modeZone, juce::String::fromUTF8("Mode"));
         drawZoneWithTitle(g, progressionZone, juce::String::fromUTF8("Progression"));
-        drawZoneWithTitle(g, generationZone, juce::String::fromUTF8("Génération"));
+        
+        // Dessiner la zone génération avec un style différent
+        drawGenerationZone(g, generationZone);
     }
 
     void resized() override
@@ -131,7 +133,27 @@ private:
         g.setColour(juce::Colours::white.withAlpha(0.9f));
         g.setFont(juce::FontOptions(16.0f, juce::Font::bold));
         
-        g.drawText(title, titleArea, juce::Justification::centred, false);
+        g.drawText(title, titleArea.withTrimmedLeft(10), juce::Justification::left, false);
+    }
+    
+    // Méthode spécifique pour dessiner la zone génération
+    void drawGenerationZone(juce::Graphics& g, const juce::Rectangle<int>& zone)
+    {
+        const float cornerSize = 8.0f;
+        const int zoneBorderThickness = 1;
+        
+        // Dessiner un fond uni gris comme les en-têtes
+        g.setColour(juce::Colours::darkgrey.withAlpha(0.6f));
+        g.fillRoundedRectangle(zone.toFloat(), cornerSize);
+        
+        // Dessiner le contour
+        g.setColour(juce::Colours::grey.withAlpha(0.3f));
+        g.drawRoundedRectangle(zone.toFloat(), cornerSize, zoneBorderThickness);
+        
+        // Dessiner le texte centré
+        g.setColour(juce::Colours::white.withAlpha(0.9f));
+        g.setFont(juce::FontOptions(16.0f, juce::Font::bold));
+        g.drawText(juce::String::fromUTF8("Génération"), zone, juce::Justification::centred, false);
     }
 
     std::unique_ptr<InteractiveKeyboard> keyboardComponent;
