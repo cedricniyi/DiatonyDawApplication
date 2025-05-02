@@ -248,8 +248,7 @@ private:
             
             // Dessiner l'étiquette de la touche (plus grande pour meilleure lisibilité)
             float fontSize = keyInfo.bounds.getHeight() * 0.5f; // 50% de la hauteur de la touche
-            g.setFont(juce::Font(fontSize).withStyle(juce::Font::bold));
-            
+            g.setFont(juce::Font(juce::FontOptions(fontSize,juce::Font::bold)));
             // Ajuster la couleur du texte en fonction de l'état d'activation
             if (keyInfo.enabled) {
                 g.setColour(juce::Colours::white);
