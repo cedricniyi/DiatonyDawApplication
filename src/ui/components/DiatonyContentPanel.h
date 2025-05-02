@@ -2,8 +2,16 @@
 
 #include <JuceHeader.h>
 #include "InteractiveKeyboard.h"
+#include "zones/TonalityZone.h"
+#include "zones/ModeZone.h"
+#include "zones/ProgressionZone.h"
+#include "zones/GenerationZone.h"
 
 //==============================================================================
+/**
+ * Panel principal pour le mode Diatony
+ * Contient et arrange les différentes zones de paramètres
+ */
 class DiatonyContentPanel : public juce::Component
 {
 public:
@@ -11,12 +19,21 @@ public:
     {
         setOpaque(true);
         
+        // Créer les zones de paramètres
+        tonalityZone = std::make_unique<TonalityZone>();
+        modeZone = std::make_unique<ModeZone>();
+        progressionZone = std::make_unique<ProgressionZone>();
+        generationZone = std::make_unique<GenerationZone>();
+        
         // Créer et configurer le clavier interactif
         keyboardComponent = std::make_unique<InteractiveKeyboard>();
-        addAndMakeVisible(*keyboardComponent);
         
-        // Nous n'activons plus aucune touche automatiquement
-        // Le clavier sera affiché en gris avec les étiquettes standard
+        // Ajouter les composants à l'interface
+        addAndMakeVisible(*tonalityZone);
+        addAndMakeVisible(*modeZone);
+        addAndMakeVisible(*progressionZone);
+        addAndMakeVisible(*generationZone);
+        addAndMakeVisible(*keyboardComponent);
         
         // Configurer le callback pour les touches
         keyboardComponent->onKeyPressed = [this](int keyCode) {
@@ -30,44 +47,8 @@ public:
     //==============================================================================
     void paint(juce::Graphics& g) override
     {
+        // Couleur de fond pour tout le panel
         g.fillAll(juce::Colour(0xFF2A2A2A));
-
-        auto bounds = getLocalBounds();
-        auto keyboardHeight = 200; // Hauteur réservée pour le clavier
-        
-        // Espace restant après avoir retiré le clavier
-        auto contentBounds = bounds;
-        contentBounds.removeFromBottom(keyboardHeight);
-        
-        // Diviser l'espace restant en zones
-        const int zonePadding = 10; // Espacement entre zones
-        
-        // Zone 1: Tonalité et Mode (1/3 supérieur)
-        auto tonalityModeArea = contentBounds.removeFromTop(contentBounds.getHeight() / 3);
-        
-        // Sous-division de la zone tonalité/mode
-        auto tonalityZone = tonalityModeArea;
-        auto modeZone = tonalityZone.removeFromRight(static_cast<int>(tonalityModeArea.getWidth() * 0.2f));
-        
-        // Appliquer le padding
-        tonalityZone = tonalityZone.reduced(zonePadding);
-        modeZone = modeZone.reduced(zonePadding);
-        
-        // Zone 2: Progression (agrandie à 75% de l'espace restant)
-        auto progressionZone = contentBounds.removeFromTop(static_cast<int>(contentBounds.getHeight() * 0.75f));
-        progressionZone = progressionZone.reduced(zonePadding);
-        
-        // Zone 3: Génération (réduite à 25% de l'espace restant)
-        auto generationZone = contentBounds;
-        generationZone = generationZone.reduced(zonePadding);
-        
-        // Dessiner les zones avec leurs titres
-        drawZoneWithTitle(g, tonalityZone, juce::String::fromUTF8("Tonalité"));
-        drawZoneWithTitle(g, modeZone, juce::String::fromUTF8("Mode"));
-        drawZoneWithTitle(g, progressionZone, juce::String::fromUTF8("Progression"));
-        
-        // Dessiner la zone génération avec un style différent
-        drawGenerationZone(g, generationZone);
     }
 
     void resized() override
@@ -81,81 +62,53 @@ public:
         // Positionner le clavier
         keyboardComponent->setBounds(keyboardBounds);
         
-        // Les zones sont dessinées dans la méthode paint
-        // et ne nécessitent pas de positionnement particulier ici
+        // Espace restant pour les zones de paramètres, AVEC padding global
+        const int globalPadding = 10; 
+        auto contentBounds = bounds.reduced(globalPadding);
+        
+        // Espace vertical entre les rangées de zones
+        const int verticalGap = 10;
+        
+        // Zone 1: Tonalité et Mode (1/3 supérieur de l'espace disponible)
+        auto row1Height = (contentBounds.getHeight() - 2 * verticalGap) / 3;
+        auto tonalityModeArea = contentBounds.removeFromTop(row1Height);
+        
+        // Zone 2: Progression (agrandie à 75% de l'espace restant)
+        contentBounds.removeFromTop(verticalGap);
+        auto remainingHeight = contentBounds.getHeight();
+        auto progressionAreaHeight = static_cast<int>(remainingHeight * 0.75f);
+        auto progressionArea = contentBounds.removeFromTop(progressionAreaHeight);
+        
+        // Zone 3: Génération (réduite à 25% de l'espace restant)
+        contentBounds.removeFromTop(verticalGap);
+        auto generationArea = contentBounds;
+        
+        // --- Positionnement des composants --- 
+        
+        // Tonalité et Mode
+        const int horizontalGap = 10; // Espace entre Tonalité et Mode
+        auto tonalityArea = tonalityModeArea;
+        auto modeArea = tonalityArea.removeFromRight(static_cast<int>(tonalityModeArea.getWidth() * 0.2f));
+        tonalityArea.removeFromRight(horizontalGap); // Créer l'espace
+        
+        tonalityZone->setBounds(tonalityArea);
+        modeZone->setBounds(modeArea);
+        
+        // Progression
+        progressionZone->setBounds(progressionArea);
+        
+        // Génération
+        generationZone->setBounds(generationArea);
     }
 
 private:
-    // Méthode pour dessiner une zone avec un titre
-    void drawZoneWithTitle(juce::Graphics& g, const juce::Rectangle<int>& zone, const juce::String& title)
-    {
-        const int titleHeight = 30;
-        const int zoneBorderThickness = 1;
-        const float cornerSize = 8.0f;
-        
-        // Séparer la zone en en-tête et corps
-        auto titleArea = zone.withHeight(titleHeight);
-        auto contentArea = zone.withTrimmedTop(titleHeight);
-        
-        // Dessiner le contour de la zone complète
-        g.setColour(juce::Colours::grey.withAlpha(0.3f));
-        g.drawRoundedRectangle(zone.toFloat(), cornerSize, zoneBorderThickness);
-        
-        // Dessiner le corps de la zone
-        g.setColour(juce::Colours::black.withAlpha(0.2f));
-        
-        // Créer un chemin pour le corps avec coins arrondis en bas seulement
-        juce::Path contentPath;
-        contentPath.addRoundedRectangle(
-            contentArea.getX(), contentArea.getY(),
-            contentArea.getWidth(), contentArea.getHeight(),
-            cornerSize, cornerSize,
-            false, false, // Pas de coins arrondis en haut
-            true, true    // Coins arrondis en bas
-        );
-        g.fillPath(contentPath);
-        
-        // Dessiner l'en-tête
-        g.setColour(juce::Colours::darkgrey.withAlpha(0.6f));
-        
-        // Créer un chemin pour l'en-tête avec coins arrondis en haut seulement
-        juce::Path headerPath;
-        headerPath.addRoundedRectangle(
-            titleArea.getX(), titleArea.getY(),
-            titleArea.getWidth(), titleArea.getHeight(),
-            cornerSize, cornerSize,
-            true, true,  // Coins arrondis en haut
-            false, false // Pas de coins arrondis en bas
-        );
-        g.fillPath(headerPath);
-        
-        // Dessiner le texte du titre
-        g.setColour(juce::Colours::white.withAlpha(0.9f));
-        g.setFont(juce::FontOptions(16.0f, juce::Font::bold));
-        
-        g.drawText(title, titleArea.withTrimmedLeft(10), juce::Justification::left, false);
-    }
+    // Zones de paramètres
+    std::unique_ptr<TonalityZone> tonalityZone;
+    std::unique_ptr<ModeZone> modeZone;
+    std::unique_ptr<ProgressionZone> progressionZone;
+    std::unique_ptr<GenerationZone> generationZone;
     
-    // Méthode spécifique pour dessiner la zone génération
-    void drawGenerationZone(juce::Graphics& g, const juce::Rectangle<int>& zone)
-    {
-        const float cornerSize = 8.0f;
-        const int zoneBorderThickness = 1;
-        
-        // Dessiner un fond uni gris comme les en-têtes
-        g.setColour(juce::Colours::darkgrey.withAlpha(0.6f));
-        g.fillRoundedRectangle(zone.toFloat(), cornerSize);
-        
-        // Dessiner le contour
-        g.setColour(juce::Colours::grey.withAlpha(0.3f));
-        g.drawRoundedRectangle(zone.toFloat(), cornerSize, zoneBorderThickness);
-        
-        // Dessiner le texte centré
-        g.setColour(juce::Colours::white.withAlpha(0.9f));
-        g.setFont(juce::FontOptions(16.0f, juce::Font::bold));
-        g.drawText(juce::String::fromUTF8("Génération"), zone, juce::Justification::centred, false);
-    }
-
+    // Clavier interactif
     std::unique_ptr<InteractiveKeyboard> keyboardComponent;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(DiatonyContentPanel)
