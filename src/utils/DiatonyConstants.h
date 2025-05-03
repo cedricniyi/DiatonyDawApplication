@@ -38,16 +38,16 @@ namespace DiatonyConstants {
         
     const std::vector<NoteInfo> NOTES = {
         {C, noteNames[0]},          // C
-        {C_SHARP, "C♯ (C sharp)"},  // C#/Db
+        {C_SHARP, "C♯"},  // C#/Db
         {D, noteNames[2]},          // D
-        {E_FLAT, "E♭ (E flat)"},     // Eb
+        {E_FLAT, "E♭"},     // Eb
         {E, noteNames[4]},          // E
         {F, noteNames[5]},          // F
-        {F_SHARP, "F♯ (F sharp)"},  // F#
+        {F_SHARP, "F♯"},  // F#
         {G, noteNames[7]},          // G
-        {A_FLAT, "A♭ (A flat)"},     // Ab
+        {A_FLAT, "A♭"},     // Ab
         {A, noteNames[9]},          // A
-        {B_FLAT, "B♭ (B flat)"},     // Bb
+        {B_FLAT, "B♭"},     // Bb
         {B, noteNames[11]}          // B
     };
 
