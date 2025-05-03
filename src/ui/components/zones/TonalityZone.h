@@ -47,7 +47,10 @@ public:
             button->setColour(juce::TextButton::textColourOffId, juce::Colours::black);
             button->setColour(juce::TextButton::textColourOnId, juce::Colours::white); // Texte blanc si sélectionné
             button->setColour(juce::TextButton::buttonOnColourId, juce::Colour::fromRGB(135, 206, 235)); // Bleu clair doux quand cliqué
-            
+
+            // Empêcher le bouton de prendre le focus clavier au clic
+            button->setWantsKeyboardFocus(false);
+
             addAndMakeVisible(*button);
         }
         
