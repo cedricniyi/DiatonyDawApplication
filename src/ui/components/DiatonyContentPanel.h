@@ -1,7 +1,7 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "InteractiveKeyboard.h"
+#include "keyboard/InteractiveKeyboard.h"
 #include "zones/TonalityZone.h"
 #include "zones/ModeZone.h"
 #include "zones/ProgressionZone.h"
