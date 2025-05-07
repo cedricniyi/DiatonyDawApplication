@@ -4,6 +4,9 @@
 #include <map>
 #include <string>
 #include <functional>
+#include "KeyboardLayout.h"
+#include "layouts/QwertyLayout.h"
+#include "layouts/AzertyLayout.h"
 
 //==============================================================================
 /**
@@ -15,8 +18,8 @@ class InteractiveKeyboard : public juce::Component
 public:
     InteractiveKeyboard()
     {
-        // Configuration des touches QWERTY standard
-        setupStandardKeyboard();
+        // Par défaut, utiliser le layout QWERTY
+        setKeyboardLayout(std::make_unique<QwertyLayout>());
         
         // Activer les événements clavier
         setWantsKeyboardFocus(true);
@@ -44,6 +47,35 @@ public:
         calculateKeyDimensions();
     }
     
+    // Changer le layout du clavier
+    void setKeyboardLayout(std::unique_ptr<KeyboardLayout> newLayout)
+    {
+        currentLayout = std::move(newLayout);
+        
+        // Réinitialiser la keyboardMap
+        keyboardMap.clear();
+        
+        // Initialiser les touches à partir du layout
+        const auto& keys = currentLayout->getKeys();
+        for (const auto& keyInfo : keys) {
+            keyboardMap[keyInfo.keyCode] = InteractiveKeyboard::KeyInfo(keyInfo);
+        }
+        
+        // Recalculer les dimensions et redessiner
+        calculateKeyDimensions();
+        repaint();
+    }
+    
+    // Basculer entre les layouts disponibles
+    void toggleLayout()
+    {
+        if (currentLayout->getName() == "Qwerty") {
+            setKeyboardLayout(std::make_unique<AzertyLayout>());
+        } else {
+            setKeyboardLayout(std::make_unique<QwertyLayout>());
+        }
+    }
+    
     // Activer/désactiver des touches spécifiques avec une fonction personnalisée et étiquette
     void setKeyEnabled(juce::KeyPress key, bool enabled, const juce::String& label = {})
     {
@@ -69,7 +101,7 @@ public:
         // Réinitialiser toutes les touches
         for (auto& [keyCode, keyInfo] : keyboardMap) {
             keyInfo.enabled = false;
-            keyInfo.label = keyInfo.defaultLabel;
+            keyInfo.label = keyInfo.layoutProperties.defaultLabel;
         }
         
         // Activer les touches spécifiées avec leurs étiquettes
@@ -91,54 +123,32 @@ public:
 
 private:
     struct KeyInfo {
-        juce::Rectangle<float> bounds;
-        juce::String defaultLabel;
-        juce::String label;
-        bool enabled = false;
-        bool isCurrentlyPressed = false;
+        KeyboardLayout::KeyInfo layoutProperties; // Composition: contient les propriétés du layout
+        juce::Rectangle<float> bounds;            // Spécifique au dessin interactif
+        juce::String label;                       // Étiquette actuelle (peut surcharger layoutProperties.defaultLabel)
+        bool enabled = false;                     // État d'activation interactif
+        bool isCurrentlyPressed = false;          // État de pression interactif
+
+        // Constructeur pour initialiser à partir de KeyboardLayout::KeyInfo
+        KeyInfo(const KeyboardLayout::KeyInfo& layoutProps)
+            : layoutProperties(layoutProps),
+              label(layoutProps.defaultLabel), // Le label initial est le defaultLabel du layout
+              enabled(false),                  // Par défaut, non activée interactivement
+              isCurrentlyPressed(false)
+        {}
+
+        // Définir explicitement le constructeur par défaut pour std::map
+        KeyInfo()
+            : layoutProperties(0, juce::String(), juce::String()) // Initialise layoutProperties avec des valeurs par défaut valides
+        {
+            // les autres membres (bounds, label, enabled, isCurrentlyPressed) 
+            // sont soit default-constructibles, soit ont des initialiseurs par défaut en place.
+        }
     };
     
     std::map<int, KeyInfo> keyboardMap;
     juce::String currentContext;
-    
-    // Configuration du clavier QWERTY standard
-    void setupStandardKeyboard()
-    {
-        // Première rangée (1-0)
-        std::vector<std::pair<int, juce::String>> row1 = {
-            {49, "1"}, {50, "2"}, {51, "3"}, {52, "4"}, {53, "5"}, 
-            {54, "6"}, {55, "7"}, {56, "8"}, {57, "9"}, {48, "0"}
-        };
-        
-        // Deuxième rangée (QWERTYUIOP)
-        std::vector<std::pair<int, juce::String>> row2 = {
-            {81, "Q"}, {87, "W"}, {69, "E"}, {82, "R"}, {84, "T"}, 
-            {89, "Y"}, {85, "U"}, {73, "I"}, {79, "O"}, {80, "P"}
-        };
-        
-        // Troisième rangée (ASDFGHJKL)
-        std::vector<std::pair<int, juce::String>> row3 = {
-            {65, "A"}, {83, "S"}, {68, "D"}, {70, "F"}, {71, "G"}, 
-            {72, "H"}, {74, "J"}, {75, "K"}, {76, "L"}
-        };
-        
-        // Quatrième rangée (ZXCVBNM)
-        std::vector<std::pair<int, juce::String>> row4 = {
-            {90, "Z"}, {88, "X"}, {67, "C"}, {86, "V"}, {66, "B"}, 
-            {78, "N"}, {77, "M"}
-        };
-        
-        // Initialiser chaque touche
-        for (const auto& row : {row1, row2, row3, row4}) {
-            for (const auto& [keyCode, label] : row) {
-                KeyInfo info;
-                info.defaultLabel = label;
-                info.label = label;
-                info.enabled = false;
-                keyboardMap[keyCode] = info;
-            }
-        }
-    }
+    std::unique_ptr<KeyboardLayout> currentLayout;
     
     // Calculer les dimensions des touches
     void calculateKeyDimensions()
@@ -183,16 +193,20 @@ private:
         float row1Start = bounds.getX() + (bounds.getWidth() - (keyWidth1 * row1.size())) / 2.0f;
         float x1 = row1Start;
         for (int keyCode : row1) {
-            keyboardMap[keyCode].bounds = juce::Rectangle<float>(x1, y1, keyWidth1 - margin, rowHeight - margin);
-            x1 += keyWidth1;
+            if (keyboardMap.find(keyCode) != keyboardMap.end()) {
+                keyboardMap[keyCode].bounds = juce::Rectangle<float>(x1, y1, keyWidth1 - margin, rowHeight - margin);
+                x1 += keyWidth1;
+            }
         }
         
         // Centrer la deuxième rangée
         float row2Start = bounds.getX() + (bounds.getWidth() - (keyWidth2 * row2.size())) / 2.0f;
         float x2 = row2Start;
         for (int keyCode : row2) {
-            keyboardMap[keyCode].bounds = juce::Rectangle<float>(x2, y2, keyWidth2 - margin, rowHeight - margin);
-            x2 += keyWidth2;
+            if (keyboardMap.find(keyCode) != keyboardMap.end()) {
+                keyboardMap[keyCode].bounds = juce::Rectangle<float>(x2, y2, keyWidth2 - margin, rowHeight - margin);
+                x2 += keyWidth2;
+            }
         }
         
         // Décaler et centrer la troisième rangée (ASDFGHJKL)
@@ -200,8 +214,10 @@ private:
         float row3Start = bounds.getX() + (bounds.getWidth() - row3Width) / 2.0f;
         float x3 = row3Start;
         for (int keyCode : row3) {
-            keyboardMap[keyCode].bounds = juce::Rectangle<float>(x3, y3, keyWidth3 - margin, rowHeight - margin);
-            x3 += keyWidth3;
+            if (keyboardMap.find(keyCode) != keyboardMap.end()) {
+                keyboardMap[keyCode].bounds = juce::Rectangle<float>(x3, y3, keyWidth3 - margin, rowHeight - margin);
+                x3 += keyWidth3;
+            }
         }
         
         // Décaler et centrer la quatrième rangée (ZXCVBNM)
@@ -209,8 +225,10 @@ private:
         float row4Start = bounds.getX() + (bounds.getWidth() - row4Width) / 2.0f;
         float x4 = row4Start;
         for (int keyCode : row4) {
-            keyboardMap[keyCode].bounds = juce::Rectangle<float>(x4, y4, keyWidth4 - margin, rowHeight - margin);
-            x4 += keyWidth4;
+            if (keyboardMap.find(keyCode) != keyboardMap.end()) {
+                keyboardMap[keyCode].bounds = juce::Rectangle<float>(x4, y4, keyWidth4 - margin, rowHeight - margin);
+                x4 += keyWidth4;
+            }
         }
     }
     
@@ -218,28 +236,32 @@ private:
     void drawKeyboard(juce::Graphics& g)
     {
         // Ajouter une étiquette pour le contexte actuel
-        if (currentContext.isNotEmpty()) {
+        if (currentLayout) {
+            juce::String contextInfo = currentLayout->getName();
+            if (currentContext.isNotEmpty()) {
+                contextInfo += " - Mode: " + currentContext;
+            }
+            
             g.setColour(juce::Colours::white.withAlpha(0.6f));
             g.setFont(14.0f); // Taille de police plus grande
-            g.drawText("Mode: " + currentContext, getLocalBounds().removeFromTop(20), 
-                       juce::Justification::centred, false);
+            g.drawText(contextInfo, getLocalBounds().removeFromTop(20), 
+                      juce::Justification::centred, false);
         }
         
         // Dessiner chaque touche
         for (const auto& [keyCode, keyInfo] : keyboardMap) {
             // Couleur de fond de la touche
-            juce::Colour keyColour;
-            
+            juce::Colour keyColourToDraw;
             if (keyInfo.isCurrentlyPressed) {
-                keyColour = juce::Colours::blue.withAlpha(0.7f);
+                keyColourToDraw = keyInfo.layoutProperties.pressedKeyColour;
             } else if (keyInfo.enabled) {
-                keyColour = juce::Colours::orange.withAlpha(0.5f);
+                keyColourToDraw = keyInfo.layoutProperties.activeKeyColour;
             } else {
-                keyColour = juce::Colours::grey.withAlpha(0.3f);
+                keyColourToDraw = keyInfo.layoutProperties.keyColour;
             }
             
             // Dessiner le fond de la touche
-            g.setColour(keyColour);
+            g.setColour(keyColourToDraw);
             g.fillRoundedRectangle(keyInfo.bounds, 6.0f); // Rayon de coin plus grand
             
             // Dessiner le contour de la touche
@@ -249,11 +271,12 @@ private:
             // Dessiner l'étiquette de la touche (plus grande pour meilleure lisibilité)
             float fontSize = keyInfo.bounds.getHeight() * 0.5f; // 50% de la hauteur de la touche
             g.setFont(juce::Font(juce::FontOptions(fontSize,juce::Font::bold)));
+            
             // Ajuster la couleur du texte en fonction de l'état d'activation
             if (keyInfo.enabled) {
-                g.setColour(juce::Colours::white);
+                g.setColour(keyInfo.layoutProperties.activeTextColour);
             } else {
-                g.setColour(juce::Colours::white.withAlpha(0.7f));
+                g.setColour(keyInfo.layoutProperties.textColour);
             }
             
             g.drawText(keyInfo.label, keyInfo.bounds.reduced(3), juce::Justification::centred, true);
@@ -264,6 +287,12 @@ private:
     bool keyPressed(const juce::KeyPress& key) override
     {
         int keyCode = key.getKeyCode();
+        
+        // Gérer Ctrl+Tab pour changer de layout (Tab a le code 9)
+        if (keyCode == 9 && key.getModifiers().isCtrlDown()) {
+            toggleLayout();
+            return true;
+        }
         
         if (keyboardMap.find(keyCode) != keyboardMap.end()) {
             keyboardMap[keyCode].isCurrentlyPressed = true;

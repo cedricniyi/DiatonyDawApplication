@@ -35,11 +35,6 @@ public:
         addAndMakeVisible(*generationZone);
         addAndMakeVisible(*keyboardComponent);
         
-        // Configurer le callback pour les touches
-        keyboardComponent->onKeyPressed = [this](int keyCode) {
-            // Juste pour déboguer: afficher le code de la touche pressée
-            DBG("Touche pressée: " + juce::String(keyCode));
-        };
     }
 
     ~DiatonyContentPanel() override = default;
