@@ -13,6 +13,12 @@ const juce::Colour emeraudGreen (0xFF2ECC71);
 class GenerationZone : public juce::Component
 {
 public:
+    // Paramètres configurables facilement modifiables ici
+    const int titleWidth = 150;             // Largeur de la zone du titre
+    const int buttonLeftPadding = 35;       // Espace entre la séparation verticale et le bouton
+    const int buttonWidth = 200;            // Largeur du bouton
+    const int buttonHeight = 40;            // Hauteur du bouton
+
     GenerationZone()
     {
         setOpaque(false); // Nécessaire pour voir le fond dessiné dans paint()
@@ -73,12 +79,9 @@ public:
 
         if (generateSolutionButton)
         {
-            const int buttonWidth = 200;
-            const int buttonHeight = 40;
-            const int buttonPaddingFromSeparator = 10; // Espace entre la ligne de séparation et le bouton
-
             // Placer le bouton à gauche de la contentZone, centré verticalement
-            generateSolutionButton->setBounds(contentZone.getX() + buttonPaddingFromSeparator,
+            // avec le padding configurable depuis la variable membre
+            generateSolutionButton->setBounds(contentZone.getX() + buttonLeftPadding,
                                               contentZone.getCentreY() - buttonHeight / 2,
                                               buttonWidth,
                                               buttonHeight);
@@ -88,7 +91,6 @@ public:
 private:
     std::unique_ptr<juce::Label> generationLabel;
     std::unique_ptr<extra::OutlineTextButton> generateSolutionButton; // Bouton personnalisé depuis le module extra
-    const int titleWidth = 150;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GenerationZone)
 }; 
