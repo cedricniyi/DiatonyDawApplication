@@ -4,14 +4,22 @@
 
 //==============================================================================
 /**
- * Zone de génération avec un style distinct (fond uni gris, sans en-tête)
+ * Zone de génération avec un titre à gauche et une zone de contenu à droite.
  */
 class GenerationZone : public juce::Component
 {
 public:
     GenerationZone()
     {
-        setOpaque(false);
+        setOpaque(false); // Nécessaire pour voir le fond dessiné dans paint()
+
+        // Initialisation du Label
+        generationLabel = std::make_unique<juce::Label>("generationLabel", juce::String::fromUTF8("Solution"));
+        generationLabel->setFont(juce::FontOptions(20.0f, juce::Font::bold)); // Utilisation de juce::Font
+        generationLabel->setColour(juce::Label::textColourId, juce::Colours::white);
+        // La justification clé : centré horizontalement ET verticalement
+        generationLabel->setJustificationType(juce::Justification::centred); 
+        addAndMakeVisible(*generationLabel);
     }
     
     ~GenerationZone() override = default;
@@ -20,35 +28,57 @@ public:
     {
         const float cornerSize = 8.0f;
         const int zoneBorderThickness = 1;
-        const int padding = 5; // Même padding interne que BaseZone
+        const int padding = 5; // Padding unique autour du contenu
         
-        // Zone interne pour le dessin, réduite par le padding
-        auto drawingBounds = getLocalBounds().reduced(padding);
+        // Zone pour le fond et la bordure
+        auto bounds = getLocalBounds().reduced(padding);
         
-        // Dessiner un fond uni gris dans la zone interne
+        // Dessiner le fond uni gris
         g.setColour(juce::Colours::darkgrey.withAlpha(0.6f));
-        g.fillRoundedRectangle(drawingBounds.toFloat(), cornerSize);
+        g.fillRoundedRectangle(bounds.toFloat(), cornerSize);
         
-        // Dessiner le contour autour de la zone interne
+        // Dessiner le contour
         g.setColour(juce::Colours::grey.withAlpha(0.3f));
-        g.drawRoundedRectangle(drawingBounds.toFloat(), cornerSize, zoneBorderThickness);
+        g.drawRoundedRectangle(bounds.toFloat(), cornerSize, zoneBorderThickness);
         
-        // Dessiner le texte centré dans la zone interne
-        g.setColour(juce::Colours::white.withAlpha(0.9f));
-        g.setFont(juce::FontOptions(16.0f, juce::Font::bold));
-        g.drawText(juce::String::fromUTF8("Génération"), drawingBounds, juce::Justification::centred, false);
+        // Dessiner la ligne de séparation verticale
+        if (bounds.getWidth() > titleWidth)
+        {
+            g.setColour(juce::Colours::grey.withAlpha(0.3f));
+            g.drawLine(padding + titleWidth, padding, 
+                      padding + titleWidth, getHeight() - padding, 
+                      1.0f);
+        }
     }
     
     void resized() override
     {
-        // Positionner les composants ici quand il y en aura, en utilisant un padding interne
-        const int padding = 5;
+        const int padding = 5; // Utiliser le même padding que dans paint()
+        
+        // La zone disponible pour le contenu est toute la zone interne après padding
         auto contentBounds = getLocalBounds().reduced(padding);
-        // Exemple: myButton->setBounds(contentBounds.reduced(10));
+        
+        // Créer la zone du titre à gauche
+        auto titleZone = contentBounds.removeFromLeft(titleWidth);
+        
+        // Espace restant pour le contenu à droite
+        auto contentZone = contentBounds;
+
+        // Si le label existe, le placer dans la zone du titre
+        if (generationLabel)
+        {
+            generationLabel->setBounds(titleZone);
+        }
     }
 
 private:
-    // Composants d'interface utilisateur à ajouter ici
+    std::unique_ptr<juce::Label> generationLabel;
+    const int titleWidth = 150; // Largeur fixe pour la zone du titre
     
+    // Les pointeurs pour les boutons sont supprimés pour cette version simplifiée
+    // std::unique_ptr<juce::TextButton> generateButton;
+    // std::unique_ptr<juce::ArrowButton> playButton;
+    // La classe LookAndFeel est aussi supprimée car non utilisée ici
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GenerationZone)
 }; 
