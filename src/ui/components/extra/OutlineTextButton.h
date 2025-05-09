@@ -15,6 +15,9 @@ public:
                                const juce::Colour& backgroundColour, // Sera utilisée comme couleur de contour
                                bool shouldDrawButtonAsHighlighted,
                                bool shouldDrawButtonAsDown) override;
+                               
+    void drawButtonText (juce::Graphics& g, juce::TextButton& button, 
+                         bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown) override;
 };
 
 // Classe de bouton personnalisée utilisant OutlineButtonLookAndFeel
@@ -26,7 +29,9 @@ public:
                       juce::Colour borderColourToUse,
                       float borderThicknessToUse)
         : juce::TextButton(buttonText),
-          borderThickness(borderThicknessToUse)
+          borderThickness(borderThicknessToUse),
+          normalTextColour(textColourToUse),
+          normalBorderColour(borderColourToUse)
     {
         setColour(juce::TextButton::textColourOnId, textColourToUse);
         setColour(juce::TextButton::textColourOffId, textColourToUse);
@@ -44,9 +49,16 @@ public:
     }
 
     float getBorderThickness() const { return borderThickness; }
+    
+    // Permet de connaître les couleurs normales (non-désactivées)
+    juce::Colour getNormalTextColour() const { return normalTextColour; }
+    juce::Colour getNormalBorderColour() const { return normalBorderColour; }
 
 private:
     float borderThickness;
+    juce::Colour normalTextColour;    // Stockage des couleurs normales pour les comparer
+    juce::Colour normalBorderColour;  // quand le bouton est désactivé
+    
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(OutlineTextButton)
 };
 
@@ -71,14 +83,52 @@ inline void OutlineButtonLookAndFeel::drawButtonBackground (juce::Graphics& g,
 
     juce::Colour currentBorderColour = backgroundColour;
 
-    if (button.isDown() || shouldDrawButtonAsDown)
+    // Gérer l'état désactivé en réduisant l'opacité
+    if (!button.isEnabled())
+    {
+        // Réduire l'opacité à 30%
+        currentBorderColour = currentBorderColour.withAlpha(0.3f);
+    }
+    else if (button.isDown() || shouldDrawButtonAsDown)
         currentBorderColour = currentBorderColour.darker(0.2f);
     else if (button.isOver() || shouldDrawButtonAsHighlighted)
-        currentBorderColour = currentBorderColour.brighter(0.2f); // Ou légèrement différent pour le survol
+        currentBorderColour = currentBorderColour.brighter(0.2f);
 
     g.setColour(currentBorderColour);
     // Important : Dessiner le rectangle, ne pas le remplir pour un bouton avec contour uniquement
     g.drawRoundedRectangle(bounds, cornerRadius, thickness);
+}
+
+// Définition de la méthode drawButtonText
+inline void OutlineButtonLookAndFeel::drawButtonText (juce::Graphics& g, juce::TextButton& button, 
+                                                     bool /*shouldDrawButtonAsHighlighted*/, 
+                                                     bool /*shouldDrawButtonAsDown*/)
+{
+    g.setFont(getTextButtonFont(button, button.getHeight()));
+    
+    // Choisir la couleur du texte selon l'état du bouton
+    juce::Colour textColour = button.findColour(button.getToggleState() ? 
+                                                juce::TextButton::textColourOnId : 
+                                                juce::TextButton::textColourOffId);
+    
+    // Si le bouton est désactivé, réduire l'opacité du texte
+    if (!button.isEnabled())
+    {
+        textColour = textColour.withAlpha(0.3f);
+    }
+
+    g.setColour(textColour);
+    
+    const int yIndent = juce::jmin(4, button.proportionOfHeight(0.3f));
+    const int cornerSize = juce::jmin(button.getHeight(), button.getWidth()) / 2;
+    
+    const int leftIndent = cornerSize / 2;
+    const int rightIndent = cornerSize / 2;
+    const int textWidth = button.getWidth() - leftIndent - rightIndent;
+    
+    g.drawFittedText(button.getButtonText(),
+                     leftIndent, yIndent, textWidth, button.getHeight() - yIndent * 2,
+                     juce::Justification::centred, 2);
 }
 
 } // namespace extra 
