@@ -172,14 +172,14 @@ void AudioPluginAudioProcessorEditor::handleDiatonyModeClicked()
 {
     isDiatonyMode = true;
     updateContentPanelVisibility();
-    toastComponent->showMessage(juce::String::fromUTF8("🟠 Mode Diatony activé"));
+    toastComponent->showMessage(juce::String::fromUTF8("🟠 Switched to Diatony mode"));
 }
 
 void AudioPluginAudioProcessorEditor::handleHarmonizerModeClicked()
 {
     isDiatonyMode = false;
     updateContentPanelVisibility();
-    toastComponent->showMessage(juce::String::fromUTF8("🟢 Mode Harmonizer activé"));
+    toastComponent->showMessage(juce::String::fromUTF8("🟢 Switched to Harmonizer mode"));
 }
 
 //==============================================================================
@@ -273,13 +273,13 @@ void AudioPluginAudioProcessorEditor::handleLoadSolution(const SolutionHistoryIt
         generationPanel->setPlayButtonEnabled(true);
         
         // Afficher un toast de confirmation au lieu d'utiliser la zone de statut
-        juce::String message = juce::String::fromUTF8("Solution chargée: ") + solution.getName();
+        juce::String message = juce::String::fromUTF8("Loaded solution: ") + solution.getName();
         toastComponent->showMessage(message);
     } else {
         // Le fichier n'existe pas - afficher un toast d'erreur
         generationPanel->setPlayButtonEnabled(false);
         
-        juce::String errorMessage = juce::String::fromUTF8("Erreur: Fichier MIDI non trouvé");
+        juce::String errorMessage = juce::String::fromUTF8("Error: MIDI file not found");
         toastComponent->showMessage(errorMessage);
     }
 }
@@ -287,16 +287,16 @@ void AudioPluginAudioProcessorEditor::handleLoadSolution(const SolutionHistoryIt
 void AudioPluginAudioProcessorEditor::handleSolutionSelected(const SolutionHistoryItem& solution)
 {
     // Afficher une notification toast au lieu d'utiliser la zone de statut
-    juce::String message = juce::String::fromUTF8("Solution sélectionnée: ") + solution.getName();
+    juce::String message = juce::String::fromUTF8("Selected solution: ") + solution.getName();
     toastComponent->showMessage(message);
 }
 
 void AudioPluginAudioProcessorEditor::handleSettingsClicked()
 {
     DiatonyAlertWindow::show(
-        juce::String::fromUTF8("Paramètres"),
-        juce::String::fromUTF8("Standalone et plugin DAW développé par C. Niyikiza et D. Sprockeels."),
-        juce::String::fromUTF8("Quitter")
+        juce::String::fromUTF8("Settings"),
+        juce::String::fromUTF8("Standalone and DAW plugin developed by C. Niyikiza and D. Sprockeels."),
+        juce::String::fromUTF8("Close")
     );
 }
 

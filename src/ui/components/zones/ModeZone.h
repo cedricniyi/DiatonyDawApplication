@@ -95,7 +95,7 @@ private:
     {
         if (currentMode == modeName) return; // Pas de changement si on clique sur le mode déjà sélectionné
 
-        DBG(juce::String::fromUTF8("Mode sélectionné: ") + modeName);
+        DBG(juce::String::fromUTF8("Selected mode: ") + modeName);
         currentMode = modeName;
         setSelectedModeButton(modeName);
         

@@ -15,7 +15,7 @@ class TonalityZone : public BaseZone
 {
 public:
     TonalityZone()
-    : BaseZone(juce::String::fromUTF8("Tonalité"))
+    : BaseZone(juce::String::fromUTF8("Tonality"))
     {
         // Mapper les valeurs de note à leur index pour un accès facile
         for(size_t i = 0; i < DiatonyConstants::NOTES.size(); ++i) {
@@ -134,7 +134,7 @@ private:
     // Gérer le clic sur un bouton de tonalité
     void handleTonalityButtonClick(int noteValue, const juce::String& buttonText)
     {
-        DBG(juce::String::fromUTF8  ("Tonalité sélectionnée: ") + buttonText + " (" + juce::String(noteValue) + ")");
+        DBG(juce::String::fromUTF8  ("Selected tonality: ") + buttonText + " (" + juce::String(noteValue) + ")");
         
         setSelectedButton(noteValue);
         
