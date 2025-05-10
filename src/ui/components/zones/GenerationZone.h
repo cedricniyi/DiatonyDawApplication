@@ -19,7 +19,6 @@ public:
     // Paramètres configurables facilement modifiables ici
     const int titleWidth = 150;             // Largeur de la zone du titre
     const int buttonLeftPadding = 35;       // Espace entre la séparation verticale et le bouton
-    // const int buttonWidth = 200;         // Supprimé: largeur calculée dynamiquement
     const int buttonHeight = 40;            // Hauteur du bouton
     const int buttonSpacing = 35;           // Espacement entre les boutons
     const int buttonTextPadding = 20;       // Padding horizontal supplémentaire pour le texte du bouton
@@ -35,51 +34,25 @@ public:
         generationLabel->setJustificationType(juce::Justification::centred);
         addAndMakeVisible(*generationLabel);
 
-        // Initialisation du premier bouton (vert) - Toujours activé
-        generateSolutionButton = std::make_unique<extra::OutlineTextButton>(
-            "Generate a solution", // Texte du bouton
-            emeraudGreen,          // Couleur du texte
-            emeraudGreen,          // Couleur du contour
-            2.0f                   // Épaisseur du contour
-        );
-        addAndMakeVisible(*generateSolutionButton);
-        
-        // Initialisation du deuxième bouton (bleu clair) avec symbole ▶ - Désactivé
-        playSolutionButton = std::make_unique<extra::OutlineTextButton>(
-            juce::String::fromUTF8("▶ Play solution"),      // Texte du bouton avec symbole unicode de lecture
-            lightBlue,                                      // Couleur du texte
-            lightBlue,                                      // Couleur du contour
-            2.0f                                            // Épaisseur du contour
-        );
-        playSolutionButton->setEnabled(false); // Désactivé par défaut
-        addAndMakeVisible(*playSolutionButton);
-        
-        // Initialisation du bouton Drag (orange) - Désactivé
-        dragMidiButton = std::make_unique<extra::OutlineTextButton>(
-            juce::String::fromUTF8("Drag solution as MIDI track ↗"),   // Texte du bouton avec flèche
-            orangeColor,                        // Couleur du texte
-            orangeColor,                        // Couleur du contour
-            2.0f                                // Épaisseur du contour
-        );
-        dragMidiButton->setEnabled(false); // Désactivé par défaut
-        addAndMakeVisible(*dragMidiButton);
-                
-        // Initialisation du quatrième bouton (gris) - Désactivé
-        midiToMusicXMLButton = std::make_unique<extra::OutlineTextButton>(
-            "Midi to MusicXML",    // Texte du bouton
-            lightGrey,             // Couleur du texte
-            lightGrey,             // Couleur du contour
-            2.0f                   // Épaisseur du contour
-        );
-        midiToMusicXMLButton->setEnabled(false); // Désactivé par défaut
-        addAndMakeVisible(*midiToMusicXMLButton);
+        // Création et initialisation des boutons avec une fonction helper
+        createButton(generateSolutionButton, "Generate a solution", emeraudGreen, true);
+        createButton(playSolutionButton, juce::String::fromUTF8("▶ Play solution"), lightBlue, false);
+        createButton(dragMidiButton, juce::String::fromUTF8("Drag solution as MIDI track ↗"), orangeColor, false);
+        createButton(midiToMusicXMLButton, "Midi to MusicXML", lightGrey, false);
+    }
+    
+    // Méthode helper pour créer un bouton (réduit la duplication de code)
+    void createButton(std::unique_ptr<extra::OutlineTextButton>& button, 
+                     const juce::String& text, const juce::Colour& color, bool enabled)
+    {
+        button = std::make_unique<extra::OutlineTextButton>(text, color, color, 2.0f);
+        button->setEnabled(enabled);
+        addAndMakeVisible(*button);
     }
     
     // Méthode pour activer/désactiver les boutons selon que la solution est générée ou non
     void setSolutionGenerated(bool isGenerated)
     {
-        // Si une solution est générée, activer tous les boutons sauf "Generate"
-        // Si aucune solution n'est générée, seul le bouton "Generate" est actif
         playSolutionButton->setEnabled(isGenerated);
         dragMidiButton->setEnabled(isGenerated);
         midiToMusicXMLButton->setEnabled(isGenerated);
@@ -91,7 +64,7 @@ public:
     {
         const float cornerSize = 8.0f;
         const int zoneBorderThickness = 1;
-        const int padding = 5; // Padding unique autour du contenu
+        const int padding = 5;
 
         auto bounds = getLocalBounds().reduced(padding);
 
@@ -101,31 +74,23 @@ public:
         g.setColour(juce::Colours::grey.withAlpha(0.3f));
         g.drawRoundedRectangle(bounds.toFloat(), cornerSize, zoneBorderThickness);
 
+        // Dessiner la ligne de séparation verticale
         if (bounds.getWidth() > titleWidth)
-        {
-            g.setColour(juce::Colours::grey.withAlpha(0.3f));
-            g.drawLine(padding + titleWidth, padding,
-                       padding + titleWidth, getHeight() - padding,
-                       1.0f);
-        }
+            g.drawLine(padding + titleWidth, padding, padding + titleWidth, getHeight() - padding, 1.0f);
     }
 
-    // Fonction utilitaire pour calculer la largeur nécessaire pour un bouton
+    // Version simplifiée qui évite les variables intermédiaires inutiles
     int calculateButtonWidth(juce::Button* button)
     {
-        if (button == nullptr)
-            return 100; // Valeur par défaut
-
-        // Utiliser une police standard pour les calculs
-        juce::Font buttonFont(juce::FontOptions(14.0f, juce::Font::bold));
+        if (!button) return 100;
         
-        // Utiliser GlyphArrangement pour calculer la largeur (méthode non dépréciée)
+        juce::Font font(juce::FontOptions(14.0f, juce::Font::bold));
         juce::GlyphArrangement glyphs;
-        glyphs.addLineOfText(buttonFont, button->getButtonText(), 0.0f, 0.0f);
-        auto textBounds = glyphs.getBoundingBox(0, glyphs.getNumGlyphs(), true);
+        glyphs.addLineOfText(font, button->getButtonText(), 0.0f, 0.0f);
         
-        // Ajouter un padding horizontal pour éviter que le texte ne soit trop serré
-        return static_cast<int>(textBounds.getWidth()) + buttonTextPadding * 2;
+        // Retourner directement le résultat du calcul
+        return static_cast<int>(glyphs.getBoundingBox(0, glyphs.getNumGlyphs(), true).getWidth()) 
+                + buttonTextPadding * 2;
     }
 
     void resized() override
@@ -133,71 +98,37 @@ public:
         const int padding = 5;
         auto contentBounds = getLocalBounds().reduced(padding);
         auto titleZone = contentBounds.removeFromLeft(titleWidth);
-        auto contentZone = contentBounds; // Espace restant après la titleZone
-
+        
+        // Positionner le label
         if (generationLabel)
-        {
             generationLabel->setBounds(titleZone);
-        }
-
-        // Calculer la largeur de chaque bouton en fonction de son texte
-        int width1 = calculateButtonWidth(generateSolutionButton.get());
-        int width2 = calculateButtonWidth(playSolutionButton.get());
-        int width3 = calculateButtonWidth(dragMidiButton.get());
-        int width4 = calculateButtonWidth(midiToMusicXMLButton.get());
         
-        // Position du premier bouton (Generate solution)
-        int firstButtonX = contentZone.getX() + buttonLeftPadding;
-        int buttonsY = contentZone.getCentreY() - buttonHeight / 2;
+        // Utiliser une approche plus fonctionnelle pour positionner les boutons
+        int x = contentBounds.getX() + buttonLeftPadding;
+        int y = contentBounds.getCentreY() - buttonHeight / 2;
         
-        // Position du deuxième bouton (Play solution)
-        int secondButtonX = firstButtonX + width1 + buttonSpacing;
+        // Lambda pour positionner chaque bouton et mettre à jour x
+        auto positionButton = [&](auto& btn) {
+            if (btn) {
+                int width = calculateButtonWidth(btn.get());
+                btn->setBounds(x, y, width, buttonHeight);
+                x += width + buttonSpacing;
+            }
+        };
         
-        // Position du troisième bouton (Drag solution)
-        int thirdButtonX = secondButtonX + width2 + buttonSpacing;
-        
-        // Position du quatrième bouton (Midi to MusicXML)
-        int fourthButtonX = thirdButtonX + width3 + buttonSpacing;
-        
-        if (generateSolutionButton)
-        {
-            generateSolutionButton->setBounds(firstButtonX, 
-                                              buttonsY,
-                                              width1,
-                                              buttonHeight);
-        }
-        
-        if (playSolutionButton)
-        {
-            playSolutionButton->setBounds(secondButtonX,
-                                           buttonsY,
-                                           width2,
-                                           buttonHeight);
-        }
-        
-        if (dragMidiButton)
-        {
-            dragMidiButton->setBounds(thirdButtonX,
-                                      buttonsY,
-                                      width3,
-                                      buttonHeight);
-        }
-        
-        if (midiToMusicXMLButton)
-        {
-            midiToMusicXMLButton->setBounds(fourthButtonX,
-                                            buttonsY,
-                                            width4,
-                                            buttonHeight);
-        }
+        // Positionner tous les boutons en séquence
+        positionButton(generateSolutionButton);
+        positionButton(playSolutionButton);
+        positionButton(dragMidiButton);
+        positionButton(midiToMusicXMLButton);
     }
 
 private:
     std::unique_ptr<juce::Label> generationLabel;
-    std::unique_ptr<extra::OutlineTextButton> generateSolutionButton;  // Premier bouton (vert)
-    std::unique_ptr<extra::OutlineTextButton> playSolutionButton;      // Deuxième bouton (bleu) avec symbole ▶
-    std::unique_ptr<extra::OutlineTextButton> dragMidiButton;          // Troisième bouton (orange) pour drag
-    std::unique_ptr<extra::OutlineTextButton> midiToMusicXMLButton;    // Quatrième bouton (gris)
+    std::unique_ptr<extra::OutlineTextButton> generateSolutionButton;
+    std::unique_ptr<extra::OutlineTextButton> playSolutionButton;
+    std::unique_ptr<extra::OutlineTextButton> dragMidiButton;
+    std::unique_ptr<extra::OutlineTextButton> midiToMusicXMLButton;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GenerationZone)
 }; 
