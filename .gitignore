@@ -10,3 +10,4 @@ diatony.dylib
 .cursorignore
 Solutions/
 Solutions
+.cursor/
