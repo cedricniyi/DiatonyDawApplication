@@ -11,3 +11,5 @@ diatony.dylib
 Solutions/
 Solutions
 .cursor/
+archive/
+*diff*.txt
