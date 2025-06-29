@@ -83,30 +83,30 @@ public:
         
         int size = chords.size();
         
+        // Créer les paramètres pour la section tonale avec unique_ptr
+        auto sectionParams = std::make_unique<TonalProgressionParameters>(
+            0,                                          // sectionId
+            size,                                       // size
+            0,                                          // start
+            size - 1,                                   // end
+            tonality,                                   // tonality
+            chords,                                     // chords
+            chordQualities,                             // qualities
+            states                                      // states
+        );
+        
+        // Créer les paramètres pour la texture à quatre voix (pas de modulation pour une section simple)
+        std::vector<TonalProgressionParameters*> sectionParamsVector = {sectionParams.get()};
+        std::vector<ModulationParameters*> modulationParams = {}; // Vide pour une section simple
+        
+        auto pieceParams = std::make_unique<FourVoiceTextureParameters>(
+            size,                                       // totalNumberOfChords
+            1,                                          // numberOfSections
+            sectionParamsVector,                        // sectionParameters
+            modulationParams                            // modulationParameters
+        );
+        
         try {
-            // Créer les paramètres pour la section tonale avec unique_ptr
-            auto sectionParams = std::make_unique<TonalProgressionParameters>(
-                0,                                          // sectionId
-                size,                                       // size
-                0,                                          // start
-                size - 1,                                   // end
-                tonality,                                   // tonality
-                chords,                                     // chords
-                chordQualities,                             // qualities
-                states                                      // states
-            );
-            
-            // Créer les paramètres pour la texture à quatre voix (pas de modulation pour une section simple)
-            std::vector<TonalProgressionParameters*> sectionParamsVector = {sectionParams.get()};
-            std::vector<ModulationParameters*> modulationParams = {}; // Vide pour une section simple
-            
-            auto pieceParams = std::make_unique<FourVoiceTextureParameters>(
-                size,                                       // totalNumberOfChords
-                1,                                          // numberOfSections
-                sectionParamsVector,                        // sectionParameters
-                modulationParams                            // modulationParameters
-            );
-            
             // Obtention de la solution (utilise les options par défaut de solve_diatony)
             auto solution = solve_diatony(pieceParams.get(), nullptr, true);
             
