@@ -4,6 +4,7 @@
 #include <juce_audio_basics/juce_audio_basics.h>
 #include "../../Diatony/c++/headers/aux/MidiFileGeneration.hpp"
 #include "../../Diatony/c++/headers/diatony/SolveDiatony.hpp"
+#include "../../Diatony/c++/headers/diatony/FourVoiceTexture.hpp"
 #include "../../Diatony/c++/headers/aux/Tonality.hpp"
 #include "../../Diatony/c++/headers/aux/MajorTonality.hpp"
 #include "../../Diatony/c++/headers/aux/MinorTonality.hpp"
@@ -82,26 +83,50 @@ public:
         
         int size = chords.size();
         
+        // Créer les paramètres pour la section tonale avec unique_ptr
+        auto sectionParams = std::make_unique<TonalProgressionParameters>(
+            0,                                          // sectionId
+            size,                                       // size
+            0,                                          // start
+            size - 1,                                   // end
+            tonality,                                   // tonality
+            chords,                                     // chords
+            chordQualities,                             // qualities
+            states                                      // states
+        );
+        
+        // Créer les paramètres pour la texture à quatre voix (pas de modulation pour une section simple)
+        std::vector<TonalProgressionParameters*> sectionParamsVector = {sectionParams.get()};
+        std::vector<ModulationParameters*> modulationParams = {}; // Vide pour une section simple
+        
+        auto pieceParams = std::make_unique<FourVoiceTextureParameters>(
+            size,                                       // totalNumberOfChords
+            1,                                          // numberOfSections
+            sectionParamsVector,                        // sectionParameters
+            modulationParams                            // modulationParameters
+        );
+        
         try {
-            // Obtention de la solution
-            auto newSolutions = solve_diatony_problem(size, tonality, chords, 
-                                                    chordQualities, states, false);
-
-            if (!newSolutions.empty()) {
+            // Obtention de la solution (utilise les options par défaut de solve_diatony)
+            auto solution = solve_diatony(pieceParams.get(), nullptr, true);
+            
+            if (solution != nullptr) {
                 // Utilisation de FileUtils pour générer un nom de fichier unique avec timestamp
                 juce::String finalPath = FileUtils::generateUniqueFilename(fullPath);
-                writeSolToMIDIFile(size, finalPath.toStdString(), newSolutions.back());
+                juce::String finalPathWithExtension = finalPath + ".mid";
+                writeSolToMIDIFile(solution->getParameters()->get_totalNumberOfChords(), 
+                                 finalPathWithExtension.toStdString(), solution);
                 
-                currentMidiFilePath = finalPath;
+                currentMidiFilePath = finalPathWithExtension;
                 
                 // Extraire le nom du fichier du chemin complet
-                juce::File file(finalPath);
+                juce::File file(finalPathWithExtension);
                 juce::String fileName = file.getFileName();
                 
                 // Sauvegarder les métadonnées dans la base de données JSON
-                Db::addSolution(fileName, finalPath);
+                Db::addSolution(fileName, finalPathWithExtension);
                 
-                return finalPath;
+                return finalPathWithExtension;
             } else {
                 return {};
             }

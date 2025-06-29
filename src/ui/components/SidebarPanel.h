@@ -76,7 +76,7 @@ class SidebarPanel : public juce::Component {
 public:
     SidebarPanel() {
         // Titre de la barre latérale
-        titleLabel = std::make_unique<juce::Label>("", "Historique");
+        titleLabel = std::make_unique<juce::Label>("", "History");
 
         titleLabel->setFont(juce::Font(juce::FontOptions(16.0f, juce::Font::bold)));
         titleLabel->setJustificationType(juce::Justification::centred);
@@ -90,7 +90,7 @@ public:
         addAndMakeVisible(*solutionsList);
         
         // Bouton d'actualisation
-        refreshButton = std::make_unique<juce::TextButton>("Actualiser");
+        refreshButton = std::make_unique<juce::TextButton>("Refresh");
         refreshButton->onClick = [this]() {
             if (onRefreshRequested) {
                 onRefreshRequested();
@@ -99,7 +99,7 @@ public:
         addAndMakeVisible(*refreshButton);
         
         // Bouton pour charger la solution sélectionnée
-        loadButton = std::make_unique<juce::TextButton>("Charger");
+        loadButton = std::make_unique<juce::TextButton>("Load");
         loadButton->setEnabled(false);
         loadButton->onClick = [this]() {
             if (onLoadRequested && selectedSolution) {

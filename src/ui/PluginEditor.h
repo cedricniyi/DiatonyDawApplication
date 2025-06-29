@@ -1,5 +1,6 @@
 #pragma once
 
+#include <JuceHeader.h>
 #include "../core/PluginProcessor.h"
 #include "components/TonalityPanel.h"
 #include "components/ProgressionPanel.h"
@@ -7,9 +8,15 @@
 #include "components/StatusPanel.h"
 #include "components/SidebarPanel.h"
 #include "components/ToastComponent.h"
+#include "components/HeaderPanel.h"
+#include "components/DiatonyContentPanel.h"
+#include "components/HarmonizerContentPanel.h"
 #include "LookAndFeel/DiatonyLookAndFeel.h"
+#include "model/Progression.h"
 
 //==============================================================================
+/**
+*/
 class AudioPluginAudioProcessorEditor final : public juce::AudioProcessorEditor
 {
 public:
@@ -22,6 +29,10 @@ public:
     void handlePlaybackFinished();
 
 private:
+    // This reference is provided as a quick way for your editor to
+    // access the processor object that created it.
+    AudioPluginAudioProcessor& processorRef;
+    
     // Look and feel personnalisé
     DiatonyLookAndFeel diatonyLookAndFeel;
     
@@ -29,11 +40,14 @@ private:
     std::unique_ptr<juce::TooltipWindow> tooltipWindow;
     
     // Panels
+    std::unique_ptr<HeaderPanel> headerPanel;
     std::unique_ptr<SidebarPanel> sidebarPanel;
     std::unique_ptr<StatusPanel> statusPanel;
     std::unique_ptr<TonalityPanel> tonalityPanel;
     std::unique_ptr<ProgressionPanel> progressionPanel;
     std::unique_ptr<GenerationPanel> generationPanel;
+    std::unique_ptr<DiatonyContentPanel> diatonyPanel;
+    std::unique_ptr<HarmonizerContentPanel> harmonizerPanel;
     
     // Composant toast pour les notifications temporaires
     std::unique_ptr<ToastComponent> toastComponent;
@@ -41,6 +55,11 @@ private:
     // Zone du titre
     juce::Rectangle<int> titleBounds;
     
+    // Mode actif
+    bool isDiatonyMode = true;
+    
+    bool isSidebarVisible = false;  
+
     // Progression courante
     Progression currentProgression;
     
@@ -48,17 +67,14 @@ private:
     void setupPanels();
     void handleGenerateButtonClicked();
     void handlePlayButtonClicked();
-    
-    // Méthodes pour gérer l'historique des solutions
+    void handleSettingsClicked();
     void handleRefreshSolutions();
     void handleLoadSolution(const SolutionHistoryItem& solution);
     void handleSolutionSelected(const SolutionHistoryItem& solution);
-    
-    // Méthodes de la sidebar d'origine (pour compatibilité)
-    void handleSettingsClicked();
-    
-    // Référence au processeur audio
-    AudioPluginAudioProcessor& processorRef;
+    void handleDiatonyModeClicked();
+    void handleHarmonizerModeClicked();
+    void updateContentPanelVisibility();
+    void toggleSidebar();
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessorEditor)
 }; 

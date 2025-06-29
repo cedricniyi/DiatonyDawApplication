@@ -1,4 +1,5 @@
 #include "PluginEditor.h"
+#include "components/DiatonyAlertWindow.h"
 
 //==============================================================================
 AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAudioProcessor& p)
@@ -8,32 +9,38 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     setLookAndFeel(&diatonyLookAndFeel);
     
     // Créer la fenêtre de tooltip
-    tooltipWindow = std::make_unique<juce::TooltipWindow>(this, 700); // 700ms de délai avant l'apparition
+    tooltipWindow = std::make_unique<juce::TooltipWindow>(this, 700);
     
     // Créer les panels
+    headerPanel = std::make_unique<HeaderPanel>();
     sidebarPanel = std::make_unique<SidebarPanel>();
     statusPanel = std::make_unique<StatusPanel>();
     tonalityPanel = std::make_unique<TonalityPanel>();
     progressionPanel = std::make_unique<ProgressionPanel>();
     generationPanel = std::make_unique<GenerationPanel>();
+    diatonyPanel = std::make_unique<DiatonyContentPanel>();
+    harmonizerPanel = std::make_unique<HarmonizerContentPanel>();
     
     // Créer le composant toast pour les notifications
     toastComponent = std::make_unique<ToastComponent>();
     toastComponent->setVisible(false);
     
     // Ajouter les panels à l'interface
+    addAndMakeVisible(*headerPanel);
     addAndMakeVisible(*sidebarPanel);
-    addAndMakeVisible(*statusPanel);
-    addAndMakeVisible(*tonalityPanel);
-    addAndMakeVisible(*progressionPanel);
-    addAndMakeVisible(*generationPanel);
+    sidebarPanel->setVisible(false);  // Caché par défaut
+    addChildComponent(*diatonyPanel);
+    addChildComponent(*harmonizerPanel);
     addChildComponent(*toastComponent);
     
     // Configurer les callbacks et l'interactivité
     setupPanels();
     
+    // Initialiser la visibilité des panels
+    updateContentPanelVisibility();
+    
     // Définir la taille de la fenêtre
-    setSize (800, 600);
+    setSize (1200, 800);
 }
 
 AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
@@ -47,13 +54,6 @@ void AudioPluginAudioProcessorEditor::paint (juce::Graphics& g)
 {
     // Dessiner le fond
     g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
-    
-    // Dessiner le titre aligné avec le StatusPanel
-    if (titleBounds.getWidth() > 0) {
-        g.setColour(juce::Colours::white);
-        g.setFont(juce::Font(juce::FontOptions(24.0f, juce::Font::bold)));
-        g.drawText("Diatony DAW Application", titleBounds, juce::Justification::centred, false);
-    }
 }
 
 //==============================================================================
@@ -61,52 +61,63 @@ void AudioPluginAudioProcessorEditor::resized()
 {
     auto bounds = getLocalBounds();
     
-    // Positionner le toast (pleine largeur)
-    toastComponent->setBounds(bounds);
+    // Barre d'en-tête en haut
+    auto headerHeight = 50;
+    headerPanel->setBounds(bounds.removeFromTop(headerHeight));
     
-    // Largeur de la barre latérale augmentée
-    int sidebarWidth = 220; // Élargissement de la barre latérale
+    // Zone restante après le header
+    auto remainingBounds = bounds;
     
-    // Placer la barre latérale à gauche
-    auto sidebarBounds = bounds.removeFromLeft(sidebarWidth);
-    sidebarPanel->setBounds(sidebarBounds);
-    
-    // Espacement entre la barre latérale et le contenu principal
-    bounds.removeFromLeft(10);
-    
-    // Réduire les marges du contenu principal
-    auto area = bounds.reduced(20);
-    
-    // Réserver de l'espace pour le titre
-    auto titleArea = area.removeFromTop(40);
+    // Si la sidebar est visible, on ajuste les bounds en conséquence
+    if (sidebarPanel->isVisible())
+    {
+        int sidebarWidth = 220;
+        sidebarPanel->setBounds(remainingBounds.removeFromLeft(sidebarWidth));
+    }
+
+    // Positionner les panels de contenu dans tout l'espace restant
+    diatonyPanel->setBounds(remainingBounds);
+    harmonizerPanel->setBounds(remainingBounds);
+
+    // Le reste du code...
+    auto area = remainingBounds.reduced(20);
     
     // Panel de statuts - hauteur augmentée pour afficher les deux zones
     auto statusBounds = area.removeFromTop(130);
     statusPanel->setBounds(statusBounds);
-    area.removeFromTop(5); // Espace minimal entre les panels
+    area.removeFromTop(5);
     
     // Panel de tonalité
     tonalityPanel->setBounds(area.removeFromTop(120));
-    area.removeFromTop(5); // Espace minimal entre les panels
+    area.removeFromTop(5);
     
     // Panel de progression
     progressionPanel->setBounds(area.removeFromTop(160));
-    area.removeFromTop(5); // Espace minimal entre les panels
+    area.removeFromTop(5);
     
     // Panel de génération (boutons)
-    generationPanel->setBounds(area.removeFromTop(50)); // Hauteur réduite pour les boutons
+    generationPanel->setBounds(area.removeFromTop(50));
     
-    // Stocker les coordonnées pour le titre aligné avec le StatusPanel
-    titleBounds = juce::Rectangle<int>(statusBounds.getX(), titleArea.getY(), 
-                                       statusBounds.getWidth(), titleArea.getHeight());
-    
-    // Force le redessin pour que le titre apparaisse
-    repaint();
+    // Positionner le toast (pleine largeur)
+    toastComponent->setBounds(getLocalBounds());
 }
 
 //==============================================================================
 void AudioPluginAudioProcessorEditor::setupPanels()
 {
+    // Configurer les callbacks pour le panel d'en-tête
+    headerPanel->onDiatonyClicked = [this]() {
+        handleDiatonyModeClicked();
+    };
+    
+    headerPanel->onHarmonizerClicked = [this]() {
+        handleHarmonizerModeClicked();
+    };
+    
+    headerPanel->onSettingsClicked = [this]() {
+        handleSettingsClicked();
+    };
+    
     // Configurer les callbacks pour le panel de tonalité
     tonalityPanel->onTonalityChanged = [this](int noteValue) {
         processorRef.setTonality(noteValue);
@@ -142,6 +153,33 @@ void AudioPluginAudioProcessorEditor::setupPanels()
     sidebarPanel->onSolutionSelected = [this](const SolutionHistoryItem& solution) {
         handleSolutionSelected(solution);
     };
+
+    // Ajouter le callback pour le bouton de toggle sidebar
+    headerPanel->onToggleSidebarClicked = [this]() {
+        toggleSidebar();
+    };
+}
+
+//==============================================================================
+void AudioPluginAudioProcessorEditor::updateContentPanelVisibility()
+{
+    diatonyPanel->setVisible(isDiatonyMode);
+    harmonizerPanel->setVisible(!isDiatonyMode);
+}
+
+//==============================================================================
+void AudioPluginAudioProcessorEditor::handleDiatonyModeClicked()
+{
+    isDiatonyMode = true;
+    updateContentPanelVisibility();
+    toastComponent->showMessage(juce::String::fromUTF8("🟠 Switched to Diatony mode"));
+}
+
+void AudioPluginAudioProcessorEditor::handleHarmonizerModeClicked()
+{
+    isDiatonyMode = false;
+    updateContentPanelVisibility();
+    toastComponent->showMessage(juce::String::fromUTF8("🟢 Switched to Harmonizer mode"));
 }
 
 //==============================================================================
@@ -235,13 +273,13 @@ void AudioPluginAudioProcessorEditor::handleLoadSolution(const SolutionHistoryIt
         generationPanel->setPlayButtonEnabled(true);
         
         // Afficher un toast de confirmation au lieu d'utiliser la zone de statut
-        juce::String message = juce::String::fromUTF8("Solution chargée: ") + solution.getName();
+        juce::String message = juce::String::fromUTF8("Loaded solution: ") + solution.getName();
         toastComponent->showMessage(message);
     } else {
         // Le fichier n'existe pas - afficher un toast d'erreur
         generationPanel->setPlayButtonEnabled(false);
         
-        juce::String errorMessage = juce::String::fromUTF8("Erreur: Fichier MIDI non trouvé");
+        juce::String errorMessage = juce::String::fromUTF8("Error: MIDI file not found");
         toastComponent->showMessage(errorMessage);
     }
 }
@@ -249,18 +287,23 @@ void AudioPluginAudioProcessorEditor::handleLoadSolution(const SolutionHistoryIt
 void AudioPluginAudioProcessorEditor::handleSolutionSelected(const SolutionHistoryItem& solution)
 {
     // Afficher une notification toast au lieu d'utiliser la zone de statut
-    juce::String message = juce::String::fromUTF8("Solution sélectionnée: ") + solution.getName();
+    juce::String message = juce::String::fromUTF8("Selected solution: ") + solution.getName();
     toastComponent->showMessage(message);
 }
 
 void AudioPluginAudioProcessorEditor::handleSettingsClicked()
 {
-    // Implémentation des paramètres (vous pourriez utiliser un DialogWindow personnalisé)
-    juce::AlertWindow::showMessageBoxAsync(
-        juce::MessageBoxIconType::InfoIcon,
-        "Paramètres",
-        "Fonctionnalité à venir dans une future mise à jour.",
-        "OK"
+    DiatonyAlertWindow::show(
+        juce::String::fromUTF8("Settings"),
+        juce::String::fromUTF8("Standalone and DAW plugin developed by C. Niyikiza and D. Sprockeels."),
+        juce::String::fromUTF8("Close")
     );
+}
+
+void AudioPluginAudioProcessorEditor::toggleSidebar()
+{
+    isSidebarVisible = !isSidebarVisible;
+    sidebarPanel->setVisible(isSidebarVisible);
+    resized();  // Pour recalculer la disposition
 }
 

@@ -10,3 +10,6 @@ diatony.dylib
 .cursorignore
 Solutions/
 Solutions
+.cursor/
+archive/
+*diff*.txt

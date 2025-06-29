@@ -52,16 +52,16 @@ public:
         int textWidth = (int)glyphs.getBoundingBox(0, -1, true).getWidth();
         int toastWidth = textWidth + 40; // Marge supplémentaire
         
-        // Créer un rectangle centré pour le toast
+        // Créer un rectangle aligné à droite pour le toast
         auto toastBounds = juce::Rectangle<int>(
-            bounds.getCentreX() - toastWidth / 2,
-            bounds.getY() + 10,
+            bounds.getRight() - toastWidth,  // 20 pixels de marge à droite
+            bounds.getY() + 55,                   // 52 pixels depuis le haut
             toastWidth,
             36
         );
         
         // Dessiner le fond du toast avec l'opacité actuelle
-        g.setColour(juce::Colour(0xFF333333).withAlpha(opacity));
+        g.setColour(juce::Colour(0xCC333333).withAlpha(opacity));
         g.fillRoundedRectangle(toastBounds.toFloat(), 8.0f);
         
         // Dessiner la bordure
