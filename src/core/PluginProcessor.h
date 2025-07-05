@@ -2,7 +2,7 @@
 
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_audio_basics/juce_audio_basics.h>
-#include "../model/Progression.h"
+#include "../model/DiatonyModel.h"
 #include "../model/ChordSequence.h"
 
 //==============================================================================
@@ -47,13 +47,11 @@ public:
 
     //==============================================================================
     // API simplifiée pour l'interface utilisateur
-    juce::String generateMidiSolution(const Progression& progression);
+    juce::String generateMidiSolution(const DiatonyModel& model);
     bool startMidiPlayback();
     void stopMidiPlayback();
     bool isPlayingMidi() const;
     bool loadMidiFile(const juce::String& midiFilePath);
-    void setTonality(int noteValue);
-    void setMode(bool isMajor);
     
     // Notification de fin de lecture
     void handlePlaybackFinished();

@@ -213,9 +213,9 @@ void AudioPluginAudioProcessor::setStateInformation (const void* data, int sizeI
 
 //==============================================================================
 // API simplifiée pour l'interface utilisateur
-juce::String AudioPluginAudioProcessor::generateMidiSolution(const Progression& progression)
+juce::String AudioPluginAudioProcessor::generateMidiSolution(const DiatonyModel& model)
 {
-    return chordSequence.generateMidiSolution(progression);
+    return chordSequence.generateMidiSolution(model);
 }
 
 bool AudioPluginAudioProcessor::startMidiPlayback()
@@ -237,16 +237,6 @@ bool AudioPluginAudioProcessor::loadMidiFile(const juce::String& midiFilePath)
 {
     // Nous utilisons directement la méthode existante dans ChordSequence
     return chordSequence.loadSolutionByPath(midiFilePath);
-}
-
-void AudioPluginAudioProcessor::setTonality(int noteValue)
-{
-    chordSequence.setTonality(noteValue);
-}
-
-void AudioPluginAudioProcessor::setMode(bool isMajor)
-{
-    chordSequence.setMode(isMajor);
 }
 
 void AudioPluginAudioProcessor::handlePlaybackFinished()
