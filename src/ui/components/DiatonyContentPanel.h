@@ -100,9 +100,8 @@ public:
         generationZone->setBounds(generationArea);
     }
     
-    // Accesseur pour le modèle
+    // Accesseur pour le modèle (lecture seule depuis l'extérieur)
     const DiatonyModel& getModel() const { return model; }
-    DiatonyModel& getModel() { return model; }
     
     // Callback pour notifier les changements du modèle vers l'extérieur
     std::function<void(const DiatonyModel&)> onModelChanged;
