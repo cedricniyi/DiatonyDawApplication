@@ -15,9 +15,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     headerPanel = std::make_unique<HeaderPanel>();
     sidebarPanel = std::make_unique<SidebarPanel>();
     statusPanel = std::make_unique<StatusPanel>();
-    tonalityPanel = std::make_unique<TonalityPanel>();
-    progressionPanel = std::make_unique<ProgressionPanel>();
-    generationPanel = std::make_unique<GenerationPanel>();
+    
     diatonyPanel = std::make_unique<DiatonyContentPanel>();
     harmonizerPanel = std::make_unique<HarmonizerContentPanel>();
     
@@ -28,7 +26,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     // Ajouter les panels à l'interface
     addAndMakeVisible(*headerPanel);
     addAndMakeVisible(*sidebarPanel);
-    sidebarPanel->setVisible(false);  // Caché par défaut
+    sidebarPanel->setVisible(false);  // Caché par défaut  
     addChildComponent(*diatonyPanel);
     addChildComponent(*harmonizerPanel);
     addChildComponent(*toastComponent);
@@ -79,25 +77,6 @@ void AudioPluginAudioProcessorEditor::resized()
     diatonyPanel->setBounds(remainingBounds);
     harmonizerPanel->setBounds(remainingBounds);
 
-    // Le reste du code...
-    auto area = remainingBounds.reduced(20);
-    
-    // Panel de statuts - hauteur augmentée pour afficher les deux zones
-    auto statusBounds = area.removeFromTop(130);
-    statusPanel->setBounds(statusBounds);
-    area.removeFromTop(5);
-    
-    // Panel de tonalité
-    tonalityPanel->setBounds(area.removeFromTop(120));
-    area.removeFromTop(5);
-    
-    // Panel de progression
-    progressionPanel->setBounds(area.removeFromTop(160));
-    area.removeFromTop(5);
-    
-    // Panel de génération (boutons)
-    generationPanel->setBounds(area.removeFromTop(50));
-    
     // Positionner le toast (pleine largeur)
     toastComponent->setBounds(getLocalBounds());
 }
@@ -118,27 +97,9 @@ void AudioPluginAudioProcessorEditor::setupPanels()
         handleSettingsClicked();
     };
     
-    // Configurer les callbacks pour le panel de tonalité
-    tonalityPanel->onTonalityChanged = [this](int noteValue) {
-        processorRef.setTonality(noteValue);
-    };
-    
-    tonalityPanel->onModeChanged = [this](bool isMajor) {
-        processorRef.setMode(isMajor);
-    };
-    
-    // Configurer les callbacks pour le panel de progression
-    progressionPanel->onProgressionChanged = [this](const Progression& progression) {
-        currentProgression = progression;
-    };
-    
-    // Configurer les callbacks pour le panel de génération
-    generationPanel->onGenerateClicked = [this]() {
-        handleGenerateButtonClicked();
-    };
-    
-    generationPanel->onPlayClicked = [this]() {
-        handlePlayButtonClicked();
+    // Configurer le callback pour le DiatonyContentPanel
+    diatonyPanel->onModelChanged = [this](const DiatonyModel& model) {
+        handleModelChanged(model);
     };
     
     // Configurer les callbacks pour la sidebar
@@ -183,42 +144,42 @@ void AudioPluginAudioProcessorEditor::handleHarmonizerModeClicked()
 }
 
 //==============================================================================
+void AudioPluginAudioProcessorEditor::handleModelChanged(const DiatonyModel& model)
+{
+    // Mettre à jour le status avec les informations du modèle
+    statusPanel->setGenerationStatus(model.toString());
+    
+    // TODO: Ajouter d'autres logiques selon les besoins
+    // Par exemple, activer/désactiver des boutons selon l'état du modèle
+}
+
+//==============================================================================
 void AudioPluginAudioProcessorEditor::handleGenerateButtonClicked()
 {
     DBG("handleGenerateButtonClicked: début");
     
-    // Désactiver les contrôles pendant la génération
-    generationPanel->setGenerateButtonEnabled(false);
-    generationPanel->setPlayButtonEnabled(false);
+    // Récupérer le modèle depuis DiatonyContentPanel
+    const auto& model = diatonyPanel->getModel();
     
-    // Vérifier si la progression est valide
-    DBG(juce::String::fromUTF8("Vérification validité: chords=") + juce::String(currentProgression.getChords().size()) + 
-        juce::String::fromUTF8(", states=") + juce::String(currentProgression.getStates().size()));
-    
-    if (!currentProgression.isValid()) {
-        DBG("Progression invalide, génération annulée");
-        statusPanel->setGenerationStatus(juce::String("Progression invalide"));
-        generationPanel->setGenerateButtonEnabled(true);
+    // Vérifier si le modèle est complet
+    if (!model.isComplete()) {
+        DBG("Modèle incomplet, génération annulée");
+        statusPanel->setGenerationStatus(juce::String("Modèle incomplet"));
         return;
     }
     
-    DBG("Progression valide, génération en cours...");
+    DBG("Modèle complet, génération en cours...");
     statusPanel->setGenerationStatus(juce::String::fromUTF8("Génération en cours..."));
     
-    // Générer la solution MIDI
-    juce::String midiPath = processorRef.generateMidiSolution(currentProgression);
+    // Générer la solution MIDI en utilisant le nouveau modèle
+    juce::String midiPath = processorRef.generateMidiSolution(model);
     
     if (!midiPath.isEmpty()) {
         statusPanel->setGenerationStatus(juce::String::fromUTF8("Génération réussie !"));
-        generationPanel->setPlayButtonEnabled(true);
-        progressionPanel->clearInputs();
-        currentProgression.clear(); // Réinitialiser la progression
+        // TODO: Activer le bouton de lecture quand GenerationZone sera connectée
     } else {
         statusPanel->setGenerationStatus(juce::String::fromUTF8("Échec de la génération"));
-        generationPanel->setPlayButtonEnabled(false);
     }
-    
-    generationPanel->setGenerateButtonEnabled(true);
 }
 
 //==============================================================================
@@ -226,18 +187,12 @@ void AudioPluginAudioProcessorEditor::handlePlayButtonClicked()
 {
     if (processorRef.isPlayingMidi()) {
         processorRef.stopMidiPlayback();
-        generationPanel->setPlayButtonText(juce::String::fromUTF8("Écouter"));
         statusPanel->setPlaybackStatus(juce::String::fromUTF8("Lecture en pause"));
-        generationPanel->setGenerateButtonEnabled(true);
     } else {
         if (processorRef.startMidiPlayback()) {
-            generationPanel->setPlayButtonText(juce::String::fromUTF8("Arrêter"));
             statusPanel->setPlaybackStatus(juce::String::fromUTF8("Lecture en cours..."));
-            generationPanel->setGenerateButtonEnabled(false);
         } else {
             statusPanel->setPlaybackStatus(juce::String::fromUTF8("Erreur de lecture"));
-            generationPanel->setPlayButtonEnabled(false);
-            generationPanel->setGenerateButtonEnabled(true);
         }
     }
 }
@@ -246,9 +201,7 @@ void AudioPluginAudioProcessorEditor::handlePlayButtonClicked()
 void AudioPluginAudioProcessorEditor::handlePlaybackFinished()
 {
     juce::MessageManager::callAsync([this]() {
-        generationPanel->setPlayButtonText(juce::String::fromUTF8("Écouter"));
         statusPanel->setPlaybackStatus("");
-        generationPanel->setGenerateButtonEnabled(true);
     });
 }
 
@@ -270,15 +223,12 @@ void AudioPluginAudioProcessorEditor::handleLoadSolution(const SolutionHistoryIt
     if (juce::File(midiPath).existsAsFile()) {
         // Charger le fichier MIDI pour lecture
         processorRef.loadMidiFile(midiPath);
-        generationPanel->setPlayButtonEnabled(true);
         
-        // Afficher un toast de confirmation au lieu d'utiliser la zone de statut
+        // Afficher un toast de confirmation
         juce::String message = juce::String::fromUTF8("Loaded solution: ") + solution.getName();
         toastComponent->showMessage(message);
     } else {
         // Le fichier n'existe pas - afficher un toast d'erreur
-        generationPanel->setPlayButtonEnabled(false);
-        
         juce::String errorMessage = juce::String::fromUTF8("Error: MIDI file not found");
         toastComponent->showMessage(errorMessage);
     }
@@ -286,7 +236,7 @@ void AudioPluginAudioProcessorEditor::handleLoadSolution(const SolutionHistoryIt
 
 void AudioPluginAudioProcessorEditor::handleSolutionSelected(const SolutionHistoryItem& solution)
 {
-    // Afficher une notification toast au lieu d'utiliser la zone de statut
+    // Afficher une notification toast
     juce::String message = juce::String::fromUTF8("Selected solution: ") + solution.getName();
     toastComponent->showMessage(message);
 }

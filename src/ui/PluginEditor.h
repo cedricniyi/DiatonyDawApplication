@@ -2,9 +2,6 @@
 
 #include <JuceHeader.h>
 #include "../core/PluginProcessor.h"
-#include "components/TonalityPanel.h"
-#include "components/ProgressionPanel.h"
-#include "components/GenerationPanel.h"
 #include "components/StatusPanel.h"
 #include "components/SidebarPanel.h"
 #include "components/ToastComponent.h"
@@ -12,7 +9,7 @@
 #include "components/DiatonyContentPanel.h"
 #include "components/HarmonizerContentPanel.h"
 #include "LookAndFeel/DiatonyLookAndFeel.h"
-#include "model/Progression.h"
+#include "../model/DiatonyModel.h"
 
 //==============================================================================
 /**
@@ -43,9 +40,6 @@ private:
     std::unique_ptr<HeaderPanel> headerPanel;
     std::unique_ptr<SidebarPanel> sidebarPanel;
     std::unique_ptr<StatusPanel> statusPanel;
-    std::unique_ptr<TonalityPanel> tonalityPanel;
-    std::unique_ptr<ProgressionPanel> progressionPanel;
-    std::unique_ptr<GenerationPanel> generationPanel;
     std::unique_ptr<DiatonyContentPanel> diatonyPanel;
     std::unique_ptr<HarmonizerContentPanel> harmonizerPanel;
     
@@ -59,9 +53,6 @@ private:
     bool isDiatonyMode = true;
     
     bool isSidebarVisible = false;  
-
-    // Progression courante
-    Progression currentProgression;
     
     // Méthodes de gestion des événements
     void setupPanels();
@@ -75,6 +66,7 @@ private:
     void handleHarmonizerModeClicked();
     void updateContentPanelVisibility();
     void toggleSidebar();
+    void handleModelChanged(const DiatonyModel& model);
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessorEditor)
 }; 
