@@ -39,6 +39,19 @@ public:
         createButton(playSolutionButton, juce::String::fromUTF8("▶ Play solution"), lightBlue, false);
         createButton(dragMidiButton, juce::String::fromUTF8("Drag solution as MIDI track ↗"), orangeColor, false);
         createButton(midiToMusicXMLButton, "Midi to MusicXML", lightGrey, false);
+        
+        // Connecter les callbacks
+        generateSolutionButton->onClick = [this]() {
+            if (onGenerateClicked) {
+                onGenerateClicked();
+            }
+        };
+        
+        playSolutionButton->onClick = [this]() {
+            if (onPlayClicked) {
+                onPlayClicked();
+            }
+        };
     }
     
     // Méthode helper pour créer un bouton (réduit la duplication de code)
@@ -57,6 +70,10 @@ public:
         dragMidiButton->setEnabled(isGenerated);
         midiToMusicXMLButton->setEnabled(isGenerated);
     }
+    
+    // Callbacks pour les boutons
+    std::function<void()> onGenerateClicked;
+    std::function<void()> onPlayClicked;
 
     ~GenerationZone() override = default;
 

@@ -103,8 +103,10 @@ public:
     // Accesseur pour le modèle (lecture seule depuis l'extérieur)
     const DiatonyModel& getModel() const { return model; }
     
-    // Callback pour notifier les changements du modèle vers l'extérieur
+    // Callbacks pour notifier l'extérieur 
     std::function<void(const DiatonyModel&)> onModelChanged;
+    std::function<void()> onGenerateRequested;
+    std::function<void()> onPlayRequested;
 
 private:
     // Zones de paramètres
@@ -134,11 +136,18 @@ private:
             notifyModelChanged();
         };
         
-        // TODO: Connecter ProgressionZone quand elle sera implémentée
-        // progressionZone->onProgressionChanged = [this](const Progression& progression) {
-        //     model.setProgression(progression);
-        //     notifyModelChanged();
-        // };
+        // Callbacks pour la génération
+        generationZone->onGenerateClicked = [this]() {
+            if (onGenerateRequested) {
+                onGenerateRequested();
+            }
+        };
+        
+        generationZone->onPlayClicked = [this]() {
+            if (onPlayRequested) {
+                onPlayRequested();
+            }
+        };
     }
     
     void notifyModelChanged()

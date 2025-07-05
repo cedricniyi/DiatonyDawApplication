@@ -97,9 +97,17 @@ void AudioPluginAudioProcessorEditor::setupPanels()
         handleSettingsClicked();
     };
     
-    // Configurer le callback pour le DiatonyContentPanel
+    // Configurer les callbacks pour le DiatonyContentPanel
     diatonyPanel->onModelChanged = [this](const DiatonyModel& model) {
         handleModelChanged(model);
+    };
+    
+    diatonyPanel->onGenerateRequested = [this]() {
+        handleGenerateButtonClicked();
+    };
+    
+    diatonyPanel->onPlayRequested = [this]() {
+        handlePlayButtonClicked();
     };
     
     // Configurer les callbacks pour la sidebar
