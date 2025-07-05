@@ -8,7 +8,7 @@
 #include "../../Diatony/c++/headers/aux/Tonality.hpp"
 #include "../../Diatony/c++/headers/aux/MajorTonality.hpp"
 #include "../../Diatony/c++/headers/aux/MinorTonality.hpp"
-#include "Progression.h"
+#include "DiatonyModel.h"
 #include "../utils/FileUtils.h"
 #include "../utils/DatabaseManagement.h"
 
@@ -16,30 +16,28 @@
     #error "APPLICATION_SUPPORT_PATH n'est pas défini"
 #endif
 
+/**
+ * Service spécialisé pour la génération de solutions MIDI via Diatony
+ * et la lecture de fichiers MIDI
+ */
 class ChordSequence {
 public:
-    ChordSequence() : currentTonality(C), isMajorMode(true), midiPlaying(false), currentMidiPosition(0) {}
+    ChordSequence() : midiPlaying(false), currentMidiPosition(0) {}
     
-    // Méthodes de configuration
-    void setTonality(int noteValue) { 
-        currentTonality = noteValue;
-    }
-    
-    void setMode(bool isMajor) {
-        isMajorMode = isMajor;
-    }
-    
-    // Méthode de génération
-    juce::String generateMidiSolution(const Progression& progression) {
-        // Vérifier que la progression est valide
-        if (!progression.isValid()) {
+    // Méthode de génération - prend maintenant DiatonyModel en paramètre
+    juce::String generateMidiSolution(const DiatonyModel& model) {
+        // Vérifier que le modèle est complet
+        if (!model.isComplete()) {
             return {};
         }
         
-        // Récupérer les données de progression
+        // Récupérer les données du modèle
+        const auto& progression = model.getProgression();
         auto chords = progression.getChords();
         auto states = progression.getStates();
         auto customQualities = progression.getQualities();
+        int tonality = model.getTonality();
+        bool isMajorMode = model.getIsMajor();
         
         // Obtenir le dossier Application Support
         juce::File appSupportDir = juce::File::getSpecialLocation(juce::File::userHomeDirectory)
@@ -61,14 +59,14 @@ public:
         // Créer la tonalité appropriée
         std::unique_ptr<MajorTonality> majorTonality;
         std::unique_ptr<MinorTonality> minorTonality;
-        Tonality* tonality = nullptr;
+        Tonality* tonalityPtr = nullptr;
         
         if (isMajorMode) {
-            majorTonality = std::make_unique<MajorTonality>(currentTonality);
-            tonality = majorTonality.get();
+            majorTonality = std::make_unique<MajorTonality>(tonality);
+            tonalityPtr = majorTonality.get();
         } else {
-            minorTonality = std::make_unique<MinorTonality>(currentTonality);
-            tonality = minorTonality.get();
+            minorTonality = std::make_unique<MinorTonality>(tonality);
+            tonalityPtr = minorTonality.get();
         }
         
         // Préparer les qualités d'accords
@@ -77,7 +75,7 @@ public:
             if (i < customQualities.size() && customQualities[i] != -1) {
                 chordQualities.push_back(customQualities[i]);
             } else {
-                chordQualities.push_back(tonality->get_chord_quality(chords[i]));
+                chordQualities.push_back(tonalityPtr->get_chord_quality(chords[i]));
             }
         }
         
@@ -89,7 +87,7 @@ public:
             size,                                       // size
             0,                                          // start
             size - 1,                                   // end
-            tonality,                                   // tonality
+            tonalityPtr,                                // tonality
             chords,                                     // chords
             chordQualities,                             // qualities
             states                                      // states
@@ -204,8 +202,6 @@ public:
     }
     
 private:
-    int currentTonality;
-    bool isMajorMode;
     juce::String currentMidiFilePath;
     std::unique_ptr<juce::MidiFile> midiFile;
     std::unique_ptr<juce::MidiMessageSequence> midiSequence;
