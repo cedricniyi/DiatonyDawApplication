@@ -6,11 +6,13 @@
 #include "zones/ModeZone.h"
 #include "zones/ProgressionZone.h"
 #include "zones/GenerationZone.h"
+#include "../../model/DiatonyModel.h"
 
 //==============================================================================
 /**
  * Panel principal pour le mode Diatony
  * Contient et arrange les différentes zones de paramètres
+ * Gère un modèle central DiatonyModel
  */
 class DiatonyContentPanel : public juce::Component
 {
@@ -35,6 +37,8 @@ public:
         addAndMakeVisible(*generationZone);
         addAndMakeVisible(*keyboardComponent);
         
+        // Configurer les callbacks des zones pour mettre à jour le modèle
+        setupZoneCallbacks();
     }
 
     ~DiatonyContentPanel() override = default;
@@ -95,6 +99,13 @@ public:
         // Génération
         generationZone->setBounds(generationArea);
     }
+    
+    // Accesseur pour le modèle
+    const DiatonyModel& getModel() const { return model; }
+    DiatonyModel& getModel() { return model; }
+    
+    // Callback pour notifier les changements du modèle vers l'extérieur
+    std::function<void(const DiatonyModel&)> onModelChanged;
 
 private:
     // Zones de paramètres
@@ -105,6 +116,38 @@ private:
     
     // Clavier interactif
     std::unique_ptr<InteractiveKeyboard> keyboardComponent;
+    
+    // Modèle central
+    DiatonyModel model;
+    
+    void setupZoneCallbacks()
+    {
+        // Callback pour les changements de tonalité
+        tonalityZone->onTonalitySelected = [this](int noteValue) {
+            model.setTonality(noteValue);
+            notifyModelChanged();
+        };
+        
+        // Callback pour les changements de mode
+        modeZone->onModeSelected = [this](const juce::String& mode) {
+            bool isMajor = (mode == "Major");
+            model.setMode(isMajor);
+            notifyModelChanged();
+        };
+        
+        // TODO: Connecter ProgressionZone quand elle sera implémentée
+        // progressionZone->onProgressionChanged = [this](const Progression& progression) {
+        //     model.setProgression(progression);
+        //     notifyModelChanged();
+        // };
+    }
+    
+    void notifyModelChanged()
+    {
+        if (onModelChanged) {
+            onModelChanged(model);
+        }
+    }
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(DiatonyContentPanel)
 }; 
