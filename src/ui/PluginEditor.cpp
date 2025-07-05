@@ -184,9 +184,10 @@ void AudioPluginAudioProcessorEditor::handleGenerateButtonClicked()
     
     if (!midiPath.isEmpty()) {
         statusPanel->setGenerationStatus(juce::String::fromUTF8("Génération réussie !"));
-        // TODO: Activer le bouton de lecture quand GenerationZone sera connectée
+        diatonyPanel->setSolutionGenerated(true);
     } else {
         statusPanel->setGenerationStatus(juce::String::fromUTF8("Échec de la génération"));
+        diatonyPanel->setSolutionGenerated(false);
     }
 }
 

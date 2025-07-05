@@ -103,6 +103,11 @@ public:
     // Accesseur pour le modèle (lecture seule depuis l'extérieur)
     const DiatonyModel& getModel() const { return model; }
     
+    // Méthodes pour contrôler l'état des boutons de génération
+    void setSolutionGenerated(bool isGenerated) {
+        generationZone->setSolutionGenerated(isGenerated);
+    }
+    
     // Callbacks pour notifier l'extérieur 
     std::function<void(const DiatonyModel&)> onModelChanged;
     std::function<void()> onGenerateRequested;
@@ -133,6 +138,12 @@ private:
         modeZone->onModeSelected = [this](const juce::String& mode) {
             bool isMajor = (mode == "Major");
             model.setMode(isMajor);
+            notifyModelChanged();
+        };
+        
+        // Callback pour les changements de progression
+        progressionZone->onProgressionChanged = [this](const Progression& progression) {
+            model.setProgression(progression);
             notifyModelChanged();
         };
         
