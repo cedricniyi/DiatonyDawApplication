@@ -59,7 +59,6 @@ target_sources(DiatonyDawApplication
         src/model/ChordSequence.h
         src/audio/SimpleSound.h
         src/audio/SimpleVoice.h
-        src/ui/components/TonalityPanel.h
         src/ui/components/ProgressionPanel.h
         src/ui/components/GenerationPanel.h
         src/ui/LookAndFeel/DiatonyLookAndFeel.h
@@ -67,6 +66,11 @@ target_sources(DiatonyDawApplication
         src/utils/Midiprocessor.h
         src/utils/FileUtils.h
         src/utils/DatabaseManagement.h
+        src/ui/components/zones/BaseZone.h
+        src/ui/components/zones/GenerationZone.h
+        src/ui/components/zones/ModeZone.h
+        src/ui/components/zones/ProgressionZone.h
+        src/ui/components/zones/TonalityZone.h
 )
 
 target_include_directories(DiatonyDawApplication PRIVATE 
