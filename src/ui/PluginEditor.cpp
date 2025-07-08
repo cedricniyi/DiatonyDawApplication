@@ -1,5 +1,6 @@
 #include "PluginEditor.h"
 #include "components/DiatonyAlertWindow.h"
+#include "melatonin_inspector/melatonin_inspector.h"
 
 //==============================================================================
 AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAudioProcessor& p)
@@ -36,6 +37,9 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     
     // Initialiser la visibilité des panels
     updateContentPanelVisibility();
+    
+    // Permettre au composant de recevoir les événements clavier
+    setWantsKeyboardFocus(true);
     
     // Définir la taille de la fenêtre
     setSize (1200, 800);
@@ -254,7 +258,7 @@ void AudioPluginAudioProcessorEditor::handleSettingsClicked()
 {
     DiatonyAlertWindow::show(
         juce::String::fromUTF8("Settings"),
-        juce::String::fromUTF8("Standalone and DAW plugin developed by C. Niyikiza and D. Sprockeels."),
+        juce::String::fromUTF8("Standalone and DAW plugin developed by C. Niyikiza and D. Sprockeels.\n\nRaccourci clavier :\n• Cmd/Ctrl + I : Toggle Inspector"),
         juce::String::fromUTF8("Close")
     );
 }
@@ -264,5 +268,34 @@ void AudioPluginAudioProcessorEditor::toggleSidebar()
     isSidebarVisible = !isSidebarVisible;
     sidebarPanel->setVisible(isSidebarVisible);
     resized();  // Pour recalculer la disposition
+}
+
+//==============================================================================
+bool AudioPluginAudioProcessorEditor::keyPressed(const juce::KeyPress& key)
+{
+    // Raccourci Cmd/Ctrl + I pour toggle l'inspector
+    if (key == juce::KeyPress('i', juce::ModifierKeys::commandModifier, 0))
+    {
+        toggleInspector();
+        return true;
+    }
+    
+    return false;
+}
+
+//==============================================================================
+void AudioPluginAudioProcessorEditor::toggleInspector()
+{
+    if (inspector.isVisible())
+    {
+        inspector.setVisible(false);
+        toastComponent->showMessage(juce::String::fromUTF8("🔍 Inspector désactivé"));
+    }
+    else
+    {
+        inspector.setVisible(true);
+        inspector.toggle(true);
+        toastComponent->showMessage(juce::String::fromUTF8("🔍 Inspector activé (Cmd/Ctrl + I pour toggle)"));
+    }
 }
 

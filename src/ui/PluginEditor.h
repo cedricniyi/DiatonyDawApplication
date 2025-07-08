@@ -10,6 +10,7 @@
 #include "components/HarmonizerContentPanel.h"
 #include "LookAndFeel/DiatonyLookAndFeel.h"
 #include "../model/DiatonyModel.h"
+#include "melatonin_inspector/melatonin_inspector.h"
 
 //==============================================================================
 /**
@@ -24,6 +25,7 @@ public:
     void paint (juce::Graphics&) override;
     void resized() override;
     void handlePlaybackFinished();
+    bool keyPressed(const juce::KeyPress& key) override;
 
 private:
     // This reference is provided as a quick way for your editor to
@@ -54,6 +56,9 @@ private:
     
     bool isSidebarVisible = false;  
     
+    // Melatonin Inspector pour déboguer l'interface
+    melatonin::Inspector inspector { *this, false };
+    
     // Méthodes de gestion des événements
     void setupPanels();
     void handleGenerateButtonClicked();
@@ -67,6 +72,7 @@ private:
     void updateContentPanelVisibility();
     void toggleSidebar();
     void handleModelChanged(const DiatonyModel& model);
+    void toggleInspector();
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessorEditor)
 }; 

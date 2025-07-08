@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.22)
 
 include(FetchContent)
 
+# Dépendance JSON 
 FetchContent_Declare(
     json
     URL https://github.com/nlohmann/json/releases/download/v3.12.0/json.tar.xz
@@ -9,10 +10,17 @@ FetchContent_Declare(
     DOWNLOAD_EXTRACT_TIMESTAMP TRUE
 )
 
+# Dépendance Melatonin Inspector, pour inspecter l'interface de l'application
+FetchContent_Declare(
+    melatonin_inspector
+    GIT_REPOSITORY https://github.com/sudara/melatonin_inspector.git
+    GIT_TAG        origin/main      # ou une release taguée si tu préfères
+    SOURCE_DIR     ${CMAKE_CURRENT_BINARY_DIR}/melatonin_inspector
+)
+
 # Cette option désactive la compilation des tests
 set(JSON_BuildTests OFF CACHE INTERNAL "")
 
-# Rend la bibliothèque disponible
 FetchContent_MakeAvailable(json)
 
 project(DiatonyDawApplication VERSION 0.0.1)
@@ -29,6 +37,8 @@ if(ENABLE_ASAN)
 endif()
 
 add_subdirectory("${CMAKE_SOURCE_DIR}/modules/JUCE" JUCE)
+
+FetchContent_MakeAvailable(melatonin_inspector)  
 
 juce_add_plugin(DiatonyDawApplication
     COMPANY_NAME "64492300_CN_UCL"                # Specify the name of the plugin's author
@@ -90,6 +100,7 @@ target_compile_definitions(DiatonyDawApplication
 target_link_libraries(DiatonyDawApplication
     PRIVATE
         # AudioPluginData           # If we'd created a binary data target, we'd link to it here
+        melatonin_inspector
         juce::juce_audio_utils
         nlohmann_json::nlohmann_json
     PUBLIC
