@@ -1,301 +1,93 @@
 #include "PluginEditor.h"
-#include "components/DiatonyAlertWindow.h"
-#include "melatonin_inspector/melatonin_inspector.h"
 
 //==============================================================================
 AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAudioProcessor& p)
-    : AudioProcessorEditor (&p), processorRef (p), titleBounds(0, 0, 0, 0)
+    : AudioProcessorEditor (&p), audioProcessor (p)
 {
-    // Appliquer le look and feel personnalisé
+    // Appliquer le thème personnalisé
     setLookAndFeel(&diatonyLookAndFeel);
     
-    // Créer la fenêtre de tooltip
-    tooltipWindow = std::make_unique<juce::TooltipWindow>(this, 700);
+    // Configurer la fenêtre
+    setSize(800, 600);
     
-    // Créer les panels
-    headerPanel = std::make_unique<HeaderPanel>();
-    sidebarPanel = std::make_unique<SidebarPanel>();
-    statusPanel = std::make_unique<StatusPanel>();
+    // Créer le composant de toast
+    toast = std::make_unique<SimpleToastComponent>();
+    addAndMakeVisible(*toast);
     
-    diatonyPanel = std::make_unique<DiatonyContentPanel>();
-    harmonizerPanel = std::make_unique<HarmonizerContentPanel>();
+    // Configurer le titre
+    titleLabel.setText("Diatony DAW Application - Nouvelle Interface", juce::dontSendNotification);
+    titleLabel.setFont(juce::Font(juce::FontOptions(24.0f, juce::Font::bold)));
+    titleLabel.setJustificationType(juce::Justification::centred);
+    titleLabel.setColour(juce::Label::textColourId, juce::Colours::white);
+    addAndMakeVisible(titleLabel);
     
-    // Créer le composant toast pour les notifications
-    toastComponent = std::make_unique<ToastComponent>();
-    toastComponent->setVisible(false);
-    
-    // Ajouter les panels à l'interface
-    addAndMakeVisible(*headerPanel);
-    addAndMakeVisible(*sidebarPanel);
-    sidebarPanel->setVisible(false);  // Caché par défaut  
-    addChildComponent(*diatonyPanel);
-    addChildComponent(*harmonizerPanel);
-    addChildComponent(*toastComponent);
-    
-    // Configurer les callbacks et l'interactivité
-    setupPanels();
-    
-    // Initialiser la visibilité des panels
-    updateContentPanelVisibility();
-    
-    // Permettre au composant de recevoir les événements clavier
-    setWantsKeyboardFocus(true);
-    
-    // Définir la taille de la fenêtre
-    setSize (1200, 800);
+    // Bouton de test
+    testButton.setButtonText("Test Toast & Alert");
+    testButton.onClick = [this]() {
+        showToast("Toast de test !");
+        
+        // Montrer l'alerte après un petit délai
+        juce::Timer::callAfterDelay(1000, [this]() {
+            showAlert("Test Alert", "Interface redémarrée avec succès ! Les composants réutilisables sont disponibles.");
+        });
+    };
+    addAndMakeVisible(testButton);
 }
 
 AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
 {
-    // Nettoyer le look and feel
     setLookAndFeel(nullptr);
 }
 
 //==============================================================================
 void AudioPluginAudioProcessorEditor::paint (juce::Graphics& g)
 {
-    // Dessiner le fond
-    g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
+    // Fond de l'application
+    g.fillAll(diatonyLookAndFeel.findColour(juce::ResizableWindow::backgroundColourId));
+    
+    // Cadre décoratif
+    g.setColour(juce::Colours::grey.withAlpha(0.3f));
+    g.drawRoundedRectangle(getLocalBounds().reduced(20).toFloat(), 10.0f, 2.0f);
+    
+    // Message d'accueil
+    g.setColour(juce::Colours::white.withAlpha(0.7f));
+    g.setFont(16.0f);
+    g.drawText("Interface redémarrée avec succès !", 
+               getLocalBounds().reduced(40).removeFromBottom(100).removeFromTop(40), 
+               juce::Justification::centred, true);
 }
 
-//==============================================================================
 void AudioPluginAudioProcessorEditor::resized()
 {
-    auto bounds = getLocalBounds();
+    auto bounds = getLocalBounds().reduced(40);
     
-    // Barre d'en-tête en haut
-    auto headerHeight = 50;
-    headerPanel->setBounds(bounds.removeFromTop(headerHeight));
+    // Toast en plein écran pour les notifications
+    if (toast) toast->setBounds(getLocalBounds());
     
-    // Zone restante après le header
-    auto remainingBounds = bounds;
+    // Titre en haut
+    titleLabel.setBounds(bounds.removeFromTop(60));
     
-    // Si la sidebar est visible, on ajuste les bounds en conséquence
-    if (sidebarPanel->isVisible())
-    {
-        int sidebarWidth = 220;
-        sidebarPanel->setBounds(remainingBounds.removeFromLeft(sidebarWidth));
-    }
-
-    // Positionner les panels de contenu dans tout l'espace restant
-    diatonyPanel->setBounds(remainingBounds);
-    harmonizerPanel->setBounds(remainingBounds);
-
-    // Positionner le toast (pleine largeur)
-    toastComponent->setBounds(getLocalBounds());
+    // Espace
+    bounds.removeFromTop(20);
+    
+    // Bouton de test au centre
+    auto buttonBounds = bounds.reduced(200, 150);
+    testButton.setBounds(buttonBounds.removeFromTop(40));
 }
 
 //==============================================================================
-void AudioPluginAudioProcessorEditor::setupPanels()
+void AudioPluginAudioProcessorEditor::showToast(const juce::String& message)
 {
-    // Configurer les callbacks pour le panel d'en-tête
-    headerPanel->onDiatonyClicked = [this]() {
-        handleDiatonyModeClicked();
-    };
-    
-    headerPanel->onHarmonizerClicked = [this]() {
-        handleHarmonizerModeClicked();
-    };
-    
-    headerPanel->onSettingsClicked = [this]() {
-        handleSettingsClicked();
-    };
-    
-    // Configurer les callbacks pour le DiatonyContentPanel
-    diatonyPanel->onModelChanged = [this](const DiatonyModel& model) {
-        handleModelChanged(model);
-    };
-    
-    diatonyPanel->onGenerateRequested = [this]() {
-        handleGenerateButtonClicked();
-    };
-    
-    diatonyPanel->onPlayRequested = [this]() {
-        handlePlayButtonClicked();
-    };
-    
-    // Configurer les callbacks pour la sidebar
-    sidebarPanel->onRefreshRequested = [this]() {
-        handleRefreshSolutions();
-    };
-    
-    sidebarPanel->onLoadRequested = [this](const SolutionHistoryItem& solution) {
-        handleLoadSolution(solution);
-    };
-    
-    sidebarPanel->onSolutionSelected = [this](const SolutionHistoryItem& solution) {
-        handleSolutionSelected(solution);
-    };
-
-    // Ajouter le callback pour le bouton de toggle sidebar
-    headerPanel->onToggleSidebarClicked = [this]() {
-        toggleSidebar();
-    };
+    if (toast) toast->showMessage(message);
 }
 
-//==============================================================================
-void AudioPluginAudioProcessorEditor::updateContentPanelVisibility()
+void AudioPluginAudioProcessorEditor::showAlert(const juce::String& title, const juce::String& message)
 {
-    diatonyPanel->setVisible(isDiatonyMode);
-    harmonizerPanel->setVisible(!isDiatonyMode);
+    DiatonyAlertWindow::show(title, message);
 }
 
-//==============================================================================
-void AudioPluginAudioProcessorEditor::handleDiatonyModeClicked()
-{
-    isDiatonyMode = true;
-    updateContentPanelVisibility();
-    toastComponent->showMessage(juce::String::fromUTF8("🟠 Switched to Diatony mode"));
-}
-
-void AudioPluginAudioProcessorEditor::handleHarmonizerModeClicked()
-{
-    isDiatonyMode = false;
-    updateContentPanelVisibility();
-    toastComponent->showMessage(juce::String::fromUTF8("🟢 Switched to Harmonizer mode"));
-}
-
-//==============================================================================
-void AudioPluginAudioProcessorEditor::handleModelChanged(const DiatonyModel& model)
-{
-    // Mettre à jour le status avec les informations du modèle
-    statusPanel->setGenerationStatus(model.toString());
-    
-    // TODO: Ajouter d'autres logiques selon les besoins
-    // Par exemple, activer/désactiver des boutons selon l'état du modèle
-}
-
-//==============================================================================
-void AudioPluginAudioProcessorEditor::handleGenerateButtonClicked()
-{
-    DBG("handleGenerateButtonClicked: début");
-    
-    // Récupérer le modèle depuis DiatonyContentPanel
-    const auto& model = diatonyPanel->getModel();
-    
-    // Vérifier si le modèle est complet
-    if (!model.isComplete()) {
-        DBG("Modèle incomplet, génération annulée");
-        statusPanel->setGenerationStatus(juce::String("Modèle incomplet"));
-        return;
-    }
-    
-    DBG("Modèle complet, génération en cours...");
-    statusPanel->setGenerationStatus(juce::String::fromUTF8("Génération en cours..."));
-    
-    // Générer la solution MIDI en utilisant le nouveau modèle
-    juce::String midiPath = processorRef.generateMidiSolution(model);
-    
-    if (!midiPath.isEmpty()) {
-        statusPanel->setGenerationStatus(juce::String::fromUTF8("Génération réussie !"));
-        diatonyPanel->setSolutionGenerated(true);
-    } else {
-        statusPanel->setGenerationStatus(juce::String::fromUTF8("Échec de la génération"));
-        diatonyPanel->setSolutionGenerated(false);
-    }
-}
-
-//==============================================================================
-void AudioPluginAudioProcessorEditor::handlePlayButtonClicked()
-{
-    if (processorRef.isPlayingMidi()) {
-        processorRef.stopMidiPlayback();
-        statusPanel->setPlaybackStatus(juce::String::fromUTF8("Lecture en pause"));
-    } else {
-        if (processorRef.startMidiPlayback()) {
-            statusPanel->setPlaybackStatus(juce::String::fromUTF8("Lecture en cours..."));
-        } else {
-            statusPanel->setPlaybackStatus(juce::String::fromUTF8("Erreur de lecture"));
-        }
-    }
-}
-
-//==============================================================================
 void AudioPluginAudioProcessorEditor::handlePlaybackFinished()
 {
-    juce::MessageManager::callAsync([this]() {
-        statusPanel->setPlaybackStatus("");
-    });
-}
-
-//==============================================================================
-void AudioPluginAudioProcessorEditor::handleRefreshSolutions()
-{
-    // Charger les solutions de la base de données
-    sidebarPanel->loadSolutionsFromDb();
-    
-    // Afficher un toast de confirmation
-    toastComponent->showMessage(juce::String::fromUTF8("Historique mis à jour"));
-}
-
-void AudioPluginAudioProcessorEditor::handleLoadSolution(const SolutionHistoryItem& solution)
-{
-    // Récupérer le chemin vers le fichier MIDI
-    juce::String midiPath = solution.getPath();
-    
-    if (juce::File(midiPath).existsAsFile()) {
-        // Charger le fichier MIDI pour lecture
-        processorRef.loadMidiFile(midiPath);
-        
-        // Afficher un toast de confirmation
-        juce::String message = juce::String::fromUTF8("Loaded solution: ") + solution.getName();
-        toastComponent->showMessage(message);
-    } else {
-        // Le fichier n'existe pas - afficher un toast d'erreur
-        juce::String errorMessage = juce::String::fromUTF8("Error: MIDI file not found");
-        toastComponent->showMessage(errorMessage);
-    }
-}
-
-void AudioPluginAudioProcessorEditor::handleSolutionSelected(const SolutionHistoryItem& solution)
-{
-    // Afficher une notification toast
-    juce::String message = juce::String::fromUTF8("Selected solution: ") + solution.getName();
-    toastComponent->showMessage(message);
-}
-
-void AudioPluginAudioProcessorEditor::handleSettingsClicked()
-{
-    DiatonyAlertWindow::show(
-        juce::String::fromUTF8("Settings"),
-        juce::String::fromUTF8("Standalone and DAW plugin developed by C. Niyikiza and D. Sprockeels.\n\nRaccourci clavier :\n• Cmd/Ctrl + I : Toggle Inspector"),
-        juce::String::fromUTF8("Close")
-    );
-}
-
-void AudioPluginAudioProcessorEditor::toggleSidebar()
-{
-    isSidebarVisible = !isSidebarVisible;
-    sidebarPanel->setVisible(isSidebarVisible);
-    resized();  // Pour recalculer la disposition
-}
-
-//==============================================================================
-bool AudioPluginAudioProcessorEditor::keyPressed(const juce::KeyPress& key)
-{
-    // Raccourci Cmd/Ctrl + I pour toggle l'inspector
-    if (key == juce::KeyPress('i', juce::ModifierKeys::commandModifier, 0))
-    {
-        toggleInspector();
-        return true;
-    }
-    
-    return false;
-}
-
-//==============================================================================
-void AudioPluginAudioProcessorEditor::toggleInspector()
-{
-    if (inspector.isVisible())
-    {
-        inspector.setVisible(false);
-        toastComponent->showMessage(juce::String::fromUTF8("🔍 Inspector désactivé"));
-    }
-    else
-    {
-        inspector.setVisible(true);
-        inspector.toggle(true);
-        toastComponent->showMessage(juce::String::fromUTF8("🔍 Inspector activé (Cmd/Ctrl + I pour toggle)"));
-    }
-}
-
+    // Notifier l'utilisateur que la lecture est terminée
+    showToast("Lecture terminée");
+} 
