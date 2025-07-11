@@ -41,7 +41,9 @@ private:
     TopPanel topPanel;
     MiddlePanel middlePanel;
     BottomPanel bottomPanel;
-    
+
+    // Constrainer pour la taille
+    std::unique_ptr<juce::ComponentBoundsConstrainer> constrainer;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessorEditor)
 }; 

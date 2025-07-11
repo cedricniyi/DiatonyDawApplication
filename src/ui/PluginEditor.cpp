@@ -1,4 +1,5 @@
 #include "PluginEditor.h"
+#include <juce_gui_basics/juce_gui_basics.h>
 #include "melatonin_inspector/melatonin_inspector.h"
 
 //==============================================================================
@@ -8,13 +9,15 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
       middlePanel(),
       bottomPanel()
 {
-    // Appliquer le thème personnalisé
-    setLookAndFeel(&diatonyLookAndFeel);
+
     
     // Configurer la fenêtre
+        
+    constrainer = std::make_unique<juce::ComponentBoundsConstrainer>();
+    constrainer->setSizeLimits(1125, 562, 1694, 847);      // tailles min/max
+    constrainer->setFixedAspectRatio(1500.0 / 750.0);     // ratio constant
+    setConstrainer(constrainer.get());                    // lie le constrainer à l’éditeur
     
-    setResizeLimits(750, 375, 1500, 750);
-    setResizable(true,  false);
     setSize(1500, 750);
 
     addAndMakeVisible (topPanel);
