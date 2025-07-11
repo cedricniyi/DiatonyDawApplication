@@ -16,9 +16,6 @@ public:
     //==============================================================================
     void paint (juce::Graphics&) override;
     void resized() override;
-    
-    // Méthodes appelées par le processeur
-    void handlePlaybackFinished();
 
 private:
     // Référence au processeur

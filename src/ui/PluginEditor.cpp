@@ -84,10 +84,4 @@ void AudioPluginAudioProcessorEditor::showToast(const juce::String& message)
 void AudioPluginAudioProcessorEditor::showAlert(const juce::String& title, const juce::String& message)
 {
     DiatonyAlertWindow::show(title, message);
-}
-
-void AudioPluginAudioProcessorEditor::handlePlaybackFinished()
-{
-    // Notifier l'utilisateur que la lecture est terminée
-    showToast("Lecture terminée");
 } 
