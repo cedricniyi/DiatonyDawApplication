@@ -2,9 +2,13 @@
 
 #include <JuceHeader.h>
 #include "../core/PluginProcessor.h"
-#include "../ui_reusable/base/DiatonyLookAndFeel.h"
-#include "../ui_reusable/dialogs/SimpleToastComponent.h"
-#include "../ui_reusable/dialogs/DiatonyAlertWindow.h"
+#include "style/DiatonyLookAndFeel.h"
+#include "extra/SimpleToastComponent.h"
+#include "extra/DiatonyAlertWindow.h"
+#include "panels/TopPanel.h"
+#include "panels/MiddlePanel.h"
+#include "panels/BottomPanel.h"
+#include "melatonin_inspector/melatonin_inspector.h"
 
 //==============================================================================
 class AudioPluginAudioProcessorEditor : public juce::AudioProcessorEditor
@@ -21,6 +25,8 @@ private:
     // Référence au processeur
     AudioPluginAudioProcessor& audioProcessor;
     
+    // Melatonin Inspector pour déboguer l'interface
+    melatonin::Inspector inspector { *this, false };
     // Look and feel personnalisé
     DiatonyLookAndFeel diatonyLookAndFeel;
     
@@ -30,10 +36,12 @@ private:
     // Éléments de base pour commencer
     juce::Label titleLabel;
     juce::TextButton testButton;
+
+    // 3 Parties de l'interface 
+    TopPanel topPanel;
+    MiddlePanel middlePanel;
+    BottomPanel bottomPanel;
     
-    // Méthodes utilitaires
-    void showToast(const juce::String& message);
-    void showAlert(const juce::String& title, const juce::String& message);
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessorEditor)
 }; 
