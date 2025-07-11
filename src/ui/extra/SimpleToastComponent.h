@@ -40,7 +40,7 @@ public:
         auto bounds = getLocalBounds().reduced(20, 0);
         
         // Calculer la largeur du texte
-        juce::Font font(14.0f);
+        juce::Font font(juce::FontOptions(14.0f));
         int textWidth = font.getStringWidth(toastMessage);
         int toastWidth = textWidth + 40; // Marge supplémentaire
         
