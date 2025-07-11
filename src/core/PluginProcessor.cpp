@@ -1,7 +1,5 @@
 #include "PluginProcessor.h"
 #include "../ui/PluginEditor.h"
-#include "../audio/SimpleVoice.h"
-#include "../audio/SimpleSound.h"
 
 #ifndef  JucePlugin_Name
  #define JucePlugin_Name    "DiatonyDawApplication"
@@ -18,19 +16,10 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
                      #endif
                        )
 {
-    synth.clearVoices();
-    // Ajouter les voix de synthé (par exemple 4 voix)
-    for (int i = 0; i < 4; ++i)
-        synth.addVoice(new SimpleVoice());
-
-    // Effacer tous les sons existants et ajouter notre son personnalisé
-    synth.clearSounds();
-    synth.addSound(new SimpleSound());
 }
 
 AudioPluginAudioProcessor::~AudioPluginAudioProcessor()
 {
-    releaseResources();
 }
 
 //==============================================================================
@@ -101,13 +90,15 @@ void AudioPluginAudioProcessor::changeProgramName (int index, const juce::String
 //==============================================================================
 void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    // Initialisation avant la lecture
-    synth.setCurrentPlaybackSampleRate(sampleRate);
+    // Use this method as the place to do any pre-playback
+    // initialisation that you need..
+    juce::ignoreUnused (sampleRate, samplesPerBlock);
 }
 
 void AudioPluginAudioProcessor::releaseResources()
 {
-    // Libérer les ressources lorsque la lecture s'arrête
+    // When playback stops, you can use this as an opportunity to free up any
+    // spare memory, etc.
 }
 
 bool AudioPluginAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
@@ -116,13 +107,15 @@ bool AudioPluginAudioProcessor::isBusesLayoutSupported (const BusesLayout& layou
     juce::ignoreUnused (layouts);
     return true;
   #else
-    // Vérifier si la configuration est supportée
-    // Dans ce code, on ne supporte que mono ou stéréo
+    // This is the place where you check if the layout is supported.
+    // In this template code we only support mono or stereo.
+    // Some plugin hosts, such as certain GarageBand versions, will only
+    // load plugins that support stereo bus layouts.
     if (layouts.getMainOutputChannelSet() != juce::AudioChannelSet::mono()
      && layouts.getMainOutputChannelSet() != juce::AudioChannelSet::stereo())
         return false;
 
-    // Vérifier si l'entrée correspond à la sortie
+    // This checks if the input layout matches the output layout
    #if ! JucePlugin_IsSynth
     if (layouts.getMainOutputChannelSet() != layouts.getMainInputChannelSet())
         return false;
@@ -132,59 +125,13 @@ bool AudioPluginAudioProcessor::isBusesLayoutSupported (const BusesLayout& layou
   #endif
 }
 
-void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
+void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
+                                              juce::MidiBuffer& midiMessages)
 {
+    // clear any input
     buffer.clear();
-
-    if (chordSequence.isPlayingMidi() && chordSequence.getMidiSequence() != nullptr) {
-        // Buffer MIDI temporaire pour la prévisualisation interne
-        juce::MidiBuffer previewMidiBuffer;
-        int numSamples = buffer.getNumSamples();
-
-        // Utiliser un tempo fixe (ici 120 BPM) - à adapter si besoin
-        double bpm = 120.0;
-        double secondsPerQuarterNote = 60.0 / bpm;
-        double samplesPerQuarterNote = getSampleRate() * secondsPerQuarterNote;
-        double samplesPerTick = samplesPerQuarterNote / chordSequence.getMidiFile()->getTimeFormat();
-
-        double startTick = chordSequence.getCurrentPosition();
-        double endTick = startTick + (numSamples / samplesPerTick);
-
-        // Parcourir les événements MIDI
-        auto midiSeq = chordSequence.getMidiSequence();
-        for (int i = 0; i < midiSeq->getNumEvents(); ++i) {
-            auto* midiEvent = midiSeq->getEventPointer(i);
-            double eventTick = midiEvent->message.getTimeStamp();
-            
-            if (eventTick >= startTick && eventTick < endTick) {
-                int samplePosition = static_cast<int>((eventTick - startTick) * samplesPerTick);
-                samplePosition = std::clamp(samplePosition, 0, numSamples - 1);
-
-                previewMidiBuffer.addEvent(midiEvent->message, samplePosition);
-                midiMessages.addEvent(midiEvent->message, samplePosition);
-            }
-        }
-
-        // Rendre l'audio
-        synth.renderNextBlock(buffer, previewMidiBuffer, 0, numSamples);
-
-        // Limiter l'amplitude pour éviter les distorsions
-        for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
-        {
-            float* channelData = buffer.getWritePointer(channel);
-            for (int sample = 0; sample < numSamples; ++sample)
-                channelData[sample] = std::clamp(channelData[sample], -0.95f, 0.95f);
-        }
-        
-        // Mise à jour de la position
-        chordSequence.setCurrentPosition(endTick);
-        
-        // Vérifier si nous avons atteint la fin
-        if (chordSequence.getCurrentPosition() >= midiSeq->getEndTime()) {
-            stopMidiPlayback();
-            handlePlaybackFinished();
-        }
-    }
+    // midiMessages.clear();
+    midiProcessor.process(midiMessages);
 }
 
 //==============================================================================
@@ -201,48 +148,17 @@ juce::AudioProcessorEditor* AudioPluginAudioProcessor::createEditor()
 //==============================================================================
 void AudioPluginAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
-    // TODO: Sauvegarder les paramètres dans le bloc de mémoire
+    // You should use this method to store your parameters in the memory block.
+    // You could do that either as raw data, or use the XML or ValueTree classes
+    // as intermediaries to make it easy to save and load complex data.
     juce::ignoreUnused (destData);
 }
 
 void AudioPluginAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
-    // TODO: Restaurer vos paramètres depuis ce bloc de mémoire
+    // You should use this method to restore your parameters from this memory block,
+    // whose contents will have been created by the getStateInformation() call.
     juce::ignoreUnused (data, sizeInBytes);
-}
-
-//==============================================================================
-// API simplifiée pour l'interface utilisateur
-juce::String AudioPluginAudioProcessor::generateMidiSolution(const DiatonyModel& model)
-{
-    return chordSequence.generateMidiSolution(model);
-}
-
-bool AudioPluginAudioProcessor::startMidiPlayback()
-{
-    return chordSequence.startMidiPlayback();
-}
-
-void AudioPluginAudioProcessor::stopMidiPlayback()
-{
-    chordSequence.stopMidiPlayback();
-}
-
-bool AudioPluginAudioProcessor::isPlayingMidi() const
-{
-    return chordSequence.isPlayingMidi();
-}
-
-bool AudioPluginAudioProcessor::loadMidiFile(const juce::String& midiFilePath)
-{
-    // Nous utilisons directement la méthode existante dans ChordSequence
-    return chordSequence.loadSolutionByPath(midiFilePath);
-}
-
-void AudioPluginAudioProcessor::handlePlaybackFinished()
-{
-    if (auto* editor = dynamic_cast<AudioPluginAudioProcessorEditor*>(getActiveEditor()))
-        editor->handlePlaybackFinished();
 }
 
 //==============================================================================

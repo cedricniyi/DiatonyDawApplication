@@ -1,9 +1,7 @@
 #pragma once
 
 #include <juce_audio_processors/juce_audio_processors.h>
-#include <juce_audio_basics/juce_audio_basics.h>
-#include "../model/DiatonyModel.h"
-#include "../model/ChordSequence.h"
+#include "../utils/Midiprocessor.h"
 
 //==============================================================================
 class AudioPluginAudioProcessor final : public juce::AudioProcessor
@@ -45,23 +43,8 @@ public:
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
-    //==============================================================================
-    // API simplifiée pour l'interface utilisateur
-    juce::String generateMidiSolution(const DiatonyModel& model);
-    bool startMidiPlayback();
-    void stopMidiPlayback();
-    bool isPlayingMidi() const;
-    bool loadMidiFile(const juce::String& midiFilePath);
-    
-    // Notification de fin de lecture
-    void handlePlaybackFinished();
-    
 private:
-    // Contrôleur pour les séquences d'accords
-    ChordSequence chordSequence;
-    
-    // Synthétiseur pour la prévisualisation audio
-    juce::Synthesiser synth;
-    
+    MidiProcessor midiProcessor;
+    //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessor)
 }; 
