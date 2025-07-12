@@ -3,6 +3,7 @@
 #include <JuceHeader.h>
 #include "../extra/ColoredPanel.h"
 #include "../extra/StyledButton.h"
+#include "../../utils/FontManager.h"
 
 class TopPanel : public ColoredPanel
 {
@@ -20,7 +21,10 @@ public:
         mainLabel.setText(juce::String::fromUTF8("DiatonyDAW – Prototype"),juce::dontSendNotification);
         mainLabel.setJustificationType (juce::Justification::centredLeft);
         mainLabel.setColour (juce::Label::textColourId, juce::Colours::black);
-        mainLabel.setFont (juce::Font (juce::FontOptions (24.0f,juce::Font::bold)));
+        
+        // Utiliser les fonts SF Pro via FontManager
+        auto& fontManager = FontManager::getInstance();
+        mainLabel.setFont(fontManager.getSFProDisplay(24.0f, FontManager::FontWeight::Bold));
        
         addAndMakeVisible (mainLabel);
 
