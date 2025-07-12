@@ -18,6 +18,14 @@ FetchContent_Declare(
     SOURCE_DIR     ${CMAKE_CURRENT_BINARY_DIR}/melatonin_inspector
 )
 
+# Dépendance Melatonin Blur, pour les effets de flou et shadows
+FetchContent_Declare(
+    melatonin_blur
+    GIT_REPOSITORY https://github.com/sudara/melatonin_blur.git
+    GIT_TAG        origin/main
+    SOURCE_DIR     ${CMAKE_CURRENT_BINARY_DIR}/melatonin_blur
+)
+
 # Cette option désactive la compilation des tests
 set(JSON_BuildTests OFF CACHE INTERNAL "")
 
@@ -38,7 +46,8 @@ endif()
 
 add_subdirectory("${CMAKE_SOURCE_DIR}/modules/JUCE" JUCE)
 
-FetchContent_MakeAvailable(melatonin_inspector)  
+FetchContent_MakeAvailable(melatonin_inspector)
+FetchContent_MakeAvailable(melatonin_blur)  
 
 juce_add_plugin(DiatonyDawApplication
     COMPANY_NAME "64492300_CN_UCL"                # Specify the name of the plugin's author
@@ -103,6 +112,7 @@ target_link_libraries(DiatonyDawApplication
     PRIVATE
         # AudioPluginData           # If we'd created a binary data target, we'd link to it here
         melatonin_inspector
+        melatonin_blur
         juce::juce_audio_utils
         nlohmann_json::nlohmann_json
     PUBLIC
