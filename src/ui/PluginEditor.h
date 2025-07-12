@@ -2,7 +2,6 @@
 
 #include <JuceHeader.h>
 #include "../core/PluginProcessor.h"
-#include "style/DiatonyLookAndFeel.h"
 #include "extra/SimpleToastComponent.h"
 #include "extra/DiatonyAlertWindow.h"
 #include "panels/TopPanel.h"
@@ -27,8 +26,7 @@ private:
     
     // Melatonin Inspector pour déboguer l'interface
     melatonin::Inspector inspector { *this, false };
-    // Look and feel personnalisé
-    DiatonyLookAndFeel diatonyLookAndFeel;
+
     
     // Composants de notification
     std::unique_ptr<SimpleToastComponent> toast;

@@ -1,6 +1,7 @@
 #include "PluginEditor.h"
 #include <juce_gui_basics/juce_gui_basics.h>
 #include "melatonin_inspector/melatonin_inspector.h"
+#include "utils/FontManager.h"
 
 //==============================================================================
 AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAudioProcessor& p)
@@ -9,6 +10,8 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
       middlePanel(),
       bottomPanel()
 {
+    // Initialiser les fonts SF Pro
+    FontManager::getInstance().initializeFonts();
 
     constrainer = std::make_unique<juce::ComponentBoundsConstrainer>();
     constrainer->setSizeLimits(1125, 562, 1694, 847);      // tailles min/max
