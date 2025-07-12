@@ -7,7 +7,7 @@
 class BottomPanel : public ColoredPanel
 {
 public:
-    BottomPanel() : ColoredPanel(juce::Colours::lightslategrey) {}
+    BottomPanel() : ColoredPanel(juce::Colours::white) {}
     
     void paint(juce::Graphics& g) override
     {

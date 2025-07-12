@@ -7,7 +7,7 @@
 class MiddlePanel : public ColoredPanel
 {
 public:
-    MiddlePanel() : ColoredPanel(juce::Colours::dimgrey) {}
+    MiddlePanel() : ColoredPanel(juce::Colours::white) {}
     
     void paint(juce::Graphics& g) override
     {
