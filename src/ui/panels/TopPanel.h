@@ -2,24 +2,65 @@
 
 #include <JuceHeader.h>
 #include "../extra/ColoredPanel.h"
+#include "../extra/StyledButton.h"
 
-//==============================================================================
 class TopPanel : public ColoredPanel
 {
 public:
-    TopPanel() : ColoredPanel(juce::Colours::black) {}
-    
-    void paint(juce::Graphics& g) override
+    TopPanel()
+        : ColoredPanel (juce::Colours::white),
+          settingsButton (juce::String::fromUTF8("⚙️ Settings"),
+                          juce::Colour::fromString ("ff2980b9"),
+                          juce::Colour::fromString ("ff3498db")),
+          historyButton  (juce::String::fromUTF8("📋 History"),
+                          juce::Colour::fromString ("ff2980b9"),
+                          juce::Colour::fromString ("ff3498db"))
     {
-        ColoredPanel::paint(g);
-        // Ici vous pouvez ajouter des éléments spécifiques au TopPanel
+        // Label gauche
+        mainLabel.setText(juce::String::fromUTF8("DiatonyDAW – Prototype"),juce::dontSendNotification);
+        mainLabel.setJustificationType (juce::Justification::centredLeft);
+        mainLabel.setColour (juce::Label::textColourId, juce::Colours::black);
+        mainLabel.setFont (juce::Font (juce::FontOptions (24.0f,juce::Font::bold)));
+       
+        addAndMakeVisible (mainLabel);
+
+        // Boutons droite
+        addAndMakeVisible (settingsButton);
+        addAndMakeVisible (historyButton);
     }
-    
+
     void resized() override
     {
-        // Ici vous pouvez gérer le layout spécifique au TopPanel
+        auto area = getLocalBounds().reduced (20, 10);
+
+        // Positionner le label à gauche
+        auto labelWidth = area.getWidth() / 2;
+        mainLabel.setBounds (area.removeFromLeft (labelWidth));
+
+        // FlexBox pour les deux boutons à droite
+        juce::FlexBox buttonsFlex;
+        buttonsFlex.flexDirection = juce::FlexBox::Direction::row;
+        buttonsFlex.justifyContent = juce::FlexBox::JustifyContent::flexEnd;
+        buttonsFlex.alignItems    = juce::FlexBox::AlignItems::center;
+        buttonsFlex.items = {
+            juce::FlexItem (settingsButton).withMinWidth (100).withMinHeight (30)
+                                            .withMargin ({ 0, 5, 0, 0 }),
+            juce::FlexItem (historyButton).withMinWidth (100).withMinHeight (30)
+        };
+
+        buttonsFlex.performLayout (area);
     }
-    
+
+    void paint (juce::Graphics& g) override
+    {
+        // Fond blanc via ColoredPanel
+        ColoredPanel::paint (g);
+    }
+
 private:
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TopPanel)
+    juce::Label      mainLabel;
+    StyledButton     settingsButton;
+    StyledButton     historyButton;
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TopPanel)
 };
