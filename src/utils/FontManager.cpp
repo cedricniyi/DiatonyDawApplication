@@ -79,21 +79,51 @@ juce::FontOptions FontManager::getFont(const std::string& family, float size, Fo
         
         if (resourceData != nullptr && resourceSize > 0) {
             typeface = createTypefaceFromBinaryData(resourceData, resourceSize);
-            DBG("Successfully loaded SF Pro font: " + fontKey);
+            if (typeface != nullptr) {
+                DBG("Successfully loaded SF Pro font: " + fontKey);
+            }
         }
         
-        // Fallback vers la font par défaut si la ressource n'est pas trouvée
+        // Fallback vers la font par défaut si la ressource n'est pas trouvée ou si le chargement a échoué
         if (typeface == nullptr) {
-            DBG("Font resource not found, using default font for: " + fontKey);
-            auto fontOptions = juce::FontOptions().withHeight(size);
-            typeface = fontOptions.getTypeface();
+            DBG("Font resource not found or loading failed, using default font for: " + fontKey);
+            
+            // Utiliser une font par défaut simple
+            juce::Font defaultFont("Arial", size, juce::Font::plain);
+            typeface = defaultFont.getTypefacePtr();
+            
+            // Si même Arial échoue, utiliser la font par défaut de JUCE
+            if (typeface == nullptr) {
+                DBG("Arial fallback failed, using JUCE default font for: " + fontKey);
+                juce::Font juceDefaultFont;
+                typeface = juceDefaultFont.getTypefacePtr();
+            }
         }
         
         typefaceCache[fontKey] = typeface;
     }
     
-    // Retourner la FontOptions avec la typeface
-    return juce::FontOptions().withTypeface(typefaceCache[fontKey]).withHeight(size);
+    // Vérifier que la typeface mise en cache est valide
+    auto cachedTypeface = typefaceCache[fontKey];
+    if (cachedTypeface == nullptr) {
+        DBG("Cached typeface is null for: " + fontKey + ", creating emergency fallback");
+        
+        // Créer une font d'urgence simple
+        juce::Font emergencyFont("Arial", size, juce::Font::plain);
+        auto emergencyTypeface = emergencyFont.getTypefacePtr();
+        
+        // Vérification finale : si même la font d'urgence échoue, retourner une FontOptions basique
+        if (emergencyTypeface == nullptr) {
+            DBG("Emergency font failed, returning basic FontOptions for: " + fontKey);
+            return juce::FontOptions().withHeight(size);
+        }
+        
+        // Utiliser le constructeur direct au lieu de withTypeface() pour éviter l'assertion JUCE 8
+        return juce::FontOptions(emergencyTypeface).withHeight(size);
+    }
+    
+    // Utiliser le constructeur direct au lieu de withTypeface() pour éviter l'assertion JUCE 8
+    return juce::FontOptions(cachedTypeface).withHeight(size);
 }
 
 juce::Typeface::Ptr FontManager::createTypefaceFromBinaryData(const char* data, size_t dataSize) {
