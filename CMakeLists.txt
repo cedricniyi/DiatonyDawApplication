@@ -50,7 +50,7 @@ FetchContent_MakeAvailable(melatonin_inspector)
 FetchContent_MakeAvailable(melatonin_blur)  
 
 juce_add_plugin(DiatonyDawApplication
-    COMPANY_NAME "64492300_CN_UCL"                # Specify the name of the plugin's author
+    COMPANY_NAME "64492300_CN_UCL"              # Specify the name of the plugin's author
     NEEDS_MIDI_INPUT TRUE                       # Does the plugin need midi input?
     NEEDS_MIDI_OUTPUT TRUE                      # Does the plugin need midi output?
     PLUGIN_MANUFACTURER_CODE Juce               # A four-character manufacturer id with at least one upper-case character
@@ -92,10 +92,53 @@ target_sources(DiatonyDawApplication
         src/utils/Midiprocessor.h
         src/utils/FileUtils.h
         src/utils/DatabaseManagement.h
+        
+        # Font Manager
+        src/utils/FontManager.cpp
+        src/utils/FontManager.h
 )
+
+# === Configuration des Fonts SF Pro ===
+# Vérification de la présence des fonts essentielles
+set(FONTS_DIR "${CMAKE_SOURCE_DIR}/src/utils/Fonts")
+set(ESSENTIAL_FONTS
+    "${FONTS_DIR}/SF-Pro-Display-Regular.otf"
+    "${FONTS_DIR}/SF-Pro-Display-Bold.otf"
+    "${FONTS_DIR}/SF-Pro-Display-Semibold.otf"
+    "${FONTS_DIR}/SF-Pro-Text-Regular.otf"
+    "${FONTS_DIR}/SF-Pro-Text-Medium.otf"
+)
+
+# Rechercher toutes les fonts SF Pro disponibles
+file(GLOB SF_PRO_FONTS "${FONTS_DIR}/SF-Pro-*.otf")
+
+if(SF_PRO_FONTS)
+    # Compter le nombre de fonts trouvées
+    list(LENGTH SF_PRO_FONTS FONT_COUNT)
+    message(STATUS "Found ${FONT_COUNT} SF Pro fonts")
+    
+    # Afficher la liste des fonts trouvées pour debug
+    foreach(FONT ${SF_PRO_FONTS})
+        get_filename_component(FONT_NAME ${FONT} NAME)
+        message(STATUS "  - ${FONT_NAME}")
+    endforeach()
+    
+    # Créer les ressources binaires pour les fonts
+    juce_add_binary_data(FontResources
+        SOURCES ${SF_PRO_FONTS}
+        HEADER_NAME "BinaryData.h"
+        NAMESPACE "BinaryData"
+    )
+    
+    message(STATUS "SF Pro fonts successfully added to binary resources")
+else()
+    message(WARNING "No SF Pro fonts found in ${FONTS_DIR}")
+    message(WARNING "Please place your SF Pro .otf files in src/utils/Fonts/")
+endif()
 
 target_include_directories(DiatonyDawApplication PRIVATE 
     ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_BINARY_DIR}  # Pour accéder à BinaryData.h généré
 )
 
 target_compile_definitions(DiatonyDawApplication
@@ -119,6 +162,12 @@ target_link_libraries(DiatonyDawApplication
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags
         juce::juce_recommended_config_flags)
+
+# Link font resources if they were created
+if(TARGET FontResources)
+    target_link_libraries(DiatonyDawApplication PRIVATE FontResources)
+    message(STATUS "FontResources target linked to DiatonyDawApplication")
+endif()
 
 
 # --- Set the Gecode paths ---
