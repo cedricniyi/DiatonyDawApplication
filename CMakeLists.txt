@@ -28,6 +28,7 @@ FetchContent_Declare(
 
 # Cette option désactive la compilation des tests
 set(JSON_BuildTests OFF CACHE INTERNAL "")
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 FetchContent_MakeAvailable(json)
 
