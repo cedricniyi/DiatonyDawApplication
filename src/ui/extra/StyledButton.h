@@ -1,32 +1,53 @@
 // StyledButton.h
 #pragma once
 #include <JuceHeader.h>
+#include "../../utils/FontManager.h"
 
-/// Un TextButton réutilisable, où l’on ne précise que le texte et 2 couleurs
+/// Un TextButton réutilisable, où l'on ne précise que le texte et 2 couleurs
 class StyledButton : public juce::TextButton
 {
 public:
     /** 
-     * @param buttonText   Le libellé du bouton
-     * @param normalColor  Couleur de fond au repos
-     * @param highlightColor Couleur de fond au survol/clic
+     * Constructeur simple avec possibilité de personnaliser la font
      */
     StyledButton (const juce::String& buttonText,
                   juce::Colour normalColor,
-                  juce::Colour highlightColor)
-      : juce::TextButton (buttonText)
+                  juce::Colour highlightColor,
+                  float fontSize = 14.0f,
+                  FontManager::FontWeight fontWeight = FontManager::FontWeight::Regular)
+      : juce::TextButton (buttonText),
+        customFont(juce::Font(fontManager->getSFProDisplay(fontSize, fontWeight)))
     {
         // Couleurs du bouton
         setColour (juce::TextButton::buttonColourId,      normalColor);
         setColour (juce::TextButton::buttonOnColourId,    highlightColor);
-        // Couleur du texte, toujours blanc ici
         setColour (juce::TextButton::textColourOffId,     juce::Colours::white);
         setColour (juce::TextButton::textColourOnId,      juce::Colours::white);
-        // Suppression du contour si jamais utilisé dans un ComboBox-like
         setColour (juce::ComboBox::outlineColourId,       juce::Colours::transparentBlack);
-
-        // // Optionnel : coins arrondis, padding, etc.
-        // setColour (juce::TextButton::outlineColourId,     juce::Colours::transparentBlack);
-        // setButtonText (buttonText);
     }
+    
+    // Override simple pour dessiner avec notre font
+    void paintButton (juce::Graphics& g, bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown) override
+    {
+        // Dessiner le fond du bouton (sans texte)
+        auto bounds = getLocalBounds().toFloat();
+        
+        // Couleur du fond selon l'état
+        juce::Colour backgroundColour = findColour(juce::TextButton::buttonColourId);
+        if (shouldDrawButtonAsHighlighted || shouldDrawButtonAsDown)
+            backgroundColour = findColour(juce::TextButton::buttonOnColourId);
+            
+        g.setColour(backgroundColour);
+        g.fillRoundedRectangle(bounds, 4.0f);
+        
+        // Dessiner uniquement notre texte avec la font personnalisée
+        g.setColour(findColour(shouldDrawButtonAsDown ? juce::TextButton::textColourOnId 
+                                                      : juce::TextButton::textColourOffId));
+        g.setFont(customFont);
+        g.drawText(getButtonText(), bounds.toNearestInt(), juce::Justification::centred, true);
+    }
+
+private:
+    juce::SharedResourcePointer<FontManager> fontManager;
+    juce::Font customFont;
 };
