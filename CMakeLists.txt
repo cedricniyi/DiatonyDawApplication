@@ -83,6 +83,10 @@ target_sources(DiatonyDawApplication
         src/ui/section/SectionPanel.h
         src/ui/style/DiatonyLookAndFeel.h
         
+        # Animation
+        src/ui/animation/AnimationManager.cpp
+        src/ui/animation/AnimationManager.h
+        
         # Fichiers header only (à inclure pour être sûr qu'ils sont pris en compte)
         src/model/Progression.h
         src/model/ChordSequence.h
@@ -158,6 +162,7 @@ target_link_libraries(DiatonyDawApplication
         melatonin_inspector
         melatonin_blur
         juce::juce_audio_utils
+        juce::juce_animation
         nlohmann_json::nlohmann_json
     PUBLIC
         juce::juce_recommended_config_flags
