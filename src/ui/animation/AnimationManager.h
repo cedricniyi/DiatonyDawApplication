@@ -7,17 +7,15 @@
 /**
  * @brief Gestionnaire centralisé des animations utilisant le module juce_animation de JUCE 8
  * 
- * Cette classe utilise ValueAnimatorBuilder et AnimatorUpdater pour créer des animations fluides
- * sans avoir besoin de gérer manuellement des Timer ou de la logique d'interpolation.
+ * Cette classe utilise ValueAnimatorBuilder et AnimatorUpdater pour créer des animations fluides.
+ * Hérite de DeletedAtShutdown pour éviter les problèmes d'ordre de destruction avec le MessageManager.
  */
-class AnimationManager : private juce::Timer
+class AnimationManager : private juce::Timer, private juce::DeletedAtShutdown
 {
 public:
     //==============================================================================
-    /** Obtient l'instance singleton de l'AnimationManager */
-    static AnimationManager& getInstance();
+    JUCE_DECLARE_SINGLETON(AnimationManager, true)
     
-    //==============================================================================
     /** 
      * Anime une valeur float avec des paramètres personnalisables
      * 

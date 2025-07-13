@@ -1,13 +1,8 @@
 #include "AnimationManager.h"
 
 //==============================================================================
-AnimationManager& AnimationManager::getInstance()
-{
-    static AnimationManager instance;
-    return instance;
-}
+JUCE_IMPLEMENT_SINGLETON(AnimationManager)
 
-//==============================================================================
 AnimationManager::AnimationManager()
 {
     // Créer l'AnimatorUpdater pour gérer les mises à jour d'animation
@@ -18,6 +13,9 @@ AnimationManager::~AnimationManager()
 {
     stopAllAnimations();
     stopTimer();
+    
+    // ESSENTIEL : Nettoyer le singleton pour éviter l'assertion dans juce_Singleton.h:62
+    clearSingletonInstance();
 }
 
 //==============================================================================
