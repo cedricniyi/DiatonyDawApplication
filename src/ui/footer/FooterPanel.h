@@ -1,25 +1,49 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "../extra/ColoredPanel.h"
+#include "components/ActionsArea.h"
+#include "components/MidiPianoArea.h"
 
 //==============================================================================
-class FooterPanel : public ColoredPanel
+class FooterPanel : public juce::Component
 {
 public:
-    FooterPanel() : ColoredPanel(juce::Colours::white) {}
+    FooterPanel() 
+        : midiPianoArea(),
+          actionsArea()
+    {
+        addAndMakeVisible (midiPianoArea);    
+        addAndMakeVisible (actionsArea);
+    }
     
     void paint(juce::Graphics& g) override
     {
-        ColoredPanel::paint(g);
-        // Ici vous pouvez ajouter des éléments spécifiques au FooterPanel
+
     }
     
     void resized() override
     {
-        // Ici vous pouvez gérer le layout spécifique au FooterPanel
+        // Appliquer le padding à toute la zone
+        auto area = getLocalBounds();
+
+        // Diviser la zone en deux avec FlexBox
+        juce::FlexBox fb;
+        fb.flexDirection = juce::FlexBox::Direction::row;
+        fb.justifyContent = juce::FlexBox::JustifyContent::spaceBetween;
+        fb.alignItems = juce::FlexBox::AlignItems::stretch;
+
+        // Midi piano à gauche (25% de l'espace)
+        fb.items.add(juce::FlexItem(midiPianoArea).withFlex(0.25f).withMargin({0, 4, 0, 0}));
+        
+        // Actions à droite (75% de l'espace restant)
+        fb.items.add(juce::FlexItem(actionsArea).withFlex(0.75f).withMargin({0, 0, 0, 4}));
+
+        fb.performLayout(area);
     }
     
 private:
+    MidiPianoArea       midiPianoArea;
+    ActionsArea         actionsArea;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(FooterPanel)
 }; 
