@@ -12,23 +12,24 @@ public:
         : ColoredPanel (juce::Colours::white),
           settingsButton (juce::String::fromUTF8("⚙️ Settings"),
                           juce::Colour::fromString ("ff2980b9"),
-                          juce::Colour::fromString ("ff3498db")),
+                          juce::Colour::fromString ("ff3498db"),
+                          14.0f, FontManager::FontWeight::Medium),
           historyButton  (juce::String::fromUTF8("📋 History"),
                           juce::Colour::fromString ("ff2980b9"),
-                          juce::Colour::fromString ("ff3498db"))
+                          juce::Colour::fromString ("ff3498db"),
+                          14.0f, FontManager::FontWeight::Medium)
     {
         // Label gauche
         mainLabel.setText(juce::String::fromUTF8("DiatonyDAW – Prototype"),juce::dontSendNotification);
         mainLabel.setJustificationType (juce::Justification::centredLeft);
         mainLabel.setColour (juce::Label::textColourId, juce::Colours::black);
         
-        // Utiliser les fonts SF Pro via FontManager
-        auto& fontManager = FontManager::getInstance();
-        mainLabel.setFont(fontManager.getSFProDisplay(24.0f, FontManager::FontWeight::Bold));
+        // Utiliser les fonts SF Pro via SharedResourcePointer
+        mainLabel.setFont(fontManager->getSFProDisplay(24.0f, FontManager::FontWeight::Bold));
        
         addAndMakeVisible (mainLabel);
 
-        // Boutons droite
+        // Boutons droite (fonts déjà configurées dans le constructeur)
         addAndMakeVisible (settingsButton);
         addAndMakeVisible (historyButton);
     }
@@ -62,6 +63,8 @@ public:
     }
 
 private:
+    juce::SharedResourcePointer<FontManager> fontManager;
+    
     juce::Label      mainLabel;
     StyledButton     settingsButton;
     StyledButton     historyButton;
