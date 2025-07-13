@@ -2,6 +2,7 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 #include "melatonin_inspector/melatonin_inspector.h"
 #include "utils/FontManager.h"
+#include "ui/animation/AnimationManager.h"
 
 //==============================================================================
 AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAudioProcessor& p)
@@ -20,11 +21,10 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     
     setSize(1500, 750);
 
-    // Configuration du callback pour l'animation
+    // Configuration du callback pour l'animation moderne
     footerPanel.onRequestResize = [this] { startFlexAnimation(); };
     
-    // Initialiser le timer d'animation
-    animationTimer = std::make_unique<AnimationTimer>(*this);
+    DBG("PluginEditor: Callback onRequestResize assigné au FooterPanel"); // Debug
 
     addAndMakeVisible (headerPanel);
     addAndMakeVisible (sectionPanel);
@@ -83,43 +83,21 @@ void AudioPluginAudioProcessorEditor::resized()
 
 void AudioPluginAudioProcessorEditor::startFlexAnimation()
 {
+    DBG("PluginEditor: startFlexAnimation() appelée !"); // Debug
+    
     // Valeur de départ et cible (toggle)
-    targetFooterFlex = (footerFlex < 30.0f) ? 40.0f : 25.0f;
+    float targetFooterFlex = (footerFlex < 30.0f) ? 40.0f : 25.0f;
     
-    // Enregistrer le temps de début
-    animationStart = juce::Time::getMillisecondCounterHiRes();
+    DBG("PluginEditor: footerFlex actuel = " << footerFlex << ", target = " << targetFooterFlex);
     
-    // Démarrer le timer d'animation (60 FPS)
-    animationTimer->startTimer(16);
-}
-
-void AudioPluginAudioProcessorEditor::updateFlexAnimation()
-{
-    double currentTime = juce::Time::getMillisecondCounterHiRes();
-    double elapsed = currentTime - animationStart;
-    
-    if (elapsed >= animationDuration)
-    {
-        // Animation terminée
-        footerFlex = targetFooterFlex;
-        animationTimer->stopTimer();
-        resized();
-        return;
-    }
-    
-    // Calcul du progrès (0.0 à 1.0)
-    double progress = elapsed / animationDuration;
-    
-    // Easing ease-in-out quadratic
-    if (progress < 0.5)
-        progress = 2.0 * progress * progress;
-    else
-        progress = -1.0 + (4.0 - 2.0 * progress) * progress;
-    
-    // Interpolarion entre la valeur actuelle et la cible
-    float startValue = (targetFooterFlex == 40.0f) ? 25.0f : 40.0f;
-    footerFlex = startValue + (targetFooterFlex - startValue) * static_cast<float>(progress);
-    
-    // Mettre à jour le layout
-    resized();
+    // Utiliser l'AnimationManager modernisé avec l'API juce_animation
+    AnimationManager::getInstance().animateValueSimple(
+        footerFlex,
+        targetFooterFlex,
+        300.0, // durée en ms
+        [this]() { 
+            // Callback appelé à chaque frame pour redessiner le layout
+            resized(); 
+        }
+    );
 }

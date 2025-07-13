@@ -13,7 +13,15 @@ public:
           actionsArea()
     {
         // Configurer le callback pour le bouton de redimensionnement
-        midiPianoArea.onResizeToggle = [this] { if (onRequestResize) onRequestResize(); };
+        midiPianoArea.onResizeToggle = [this] { 
+            DBG("FooterPanel: Callback onResizeToggle reçu !"); // Debug
+            if (onRequestResize) {
+                DBG("FooterPanel: Callback onRequestResize trouvé, appel en cours...");
+                onRequestResize(); 
+            } else {
+                DBG("FooterPanel: ERREUR: Callback onRequestResize est null !");
+            }
+        };
         
         addAndMakeVisible (midiPianoArea);    
         addAndMakeVisible (actionsArea);

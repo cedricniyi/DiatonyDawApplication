@@ -29,7 +29,15 @@ public:
         headerLabel.setFont(juce::Font(fontOptions));
         
         // Configuration du bouton de redimensionnement
-        resizeButton.onClick = [this] { if (onResizeToggle) onResizeToggle(); };
+        resizeButton.onClick = [this] { 
+            DBG("Bouton de redimensionnement cliqué !"); // Debug
+            if (onResizeToggle) {
+                DBG("Callback onResizeToggle trouvé, appel en cours...");
+                onResizeToggle(); 
+            } else {
+                DBG("ERREUR: Callback onResizeToggle est null !");
+            }
+        };
         
         addAndMakeVisible (headerLabel);
         addAndMakeVisible (contentArea);
