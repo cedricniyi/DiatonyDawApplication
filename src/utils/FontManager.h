@@ -23,10 +23,9 @@ public:
         Italic
     };
     
-    static FontManager& getInstance() {
-        static FontManager instance;
-        return instance;
-    }
+    // Constructeur et destructeur publics pour SharedResourcePointer
+    FontManager();
+    ~FontManager() = default;
     
     // Méthodes principales pour obtenir des fonts
     juce::FontOptions getSFProDisplay(float size, FontWeight weight = FontWeight::Regular, FontStyle style = FontStyle::Regular);
@@ -39,17 +38,7 @@ public:
     juce::FontOptions getBoldFont(float size) { return getSFProDisplay(size, FontWeight::Bold); }
     juce::FontOptions getSemiboldFont(float size) { return getSFProDisplay(size, FontWeight::Semibold); }
     
-    // Initialisation des fonts (à appeler au démarrage)
-    void initializeFonts();
-    
 private:
-    FontManager() = default;
-    ~FontManager() = default;
-    
-    // Empêcher la copie
-    FontManager(const FontManager&) = delete;
-    FontManager& operator=(const FontManager&) = delete;
-    
     // Créer une font à partir des données binaires
     juce::Typeface::Ptr createTypefaceFromBinaryData(const char* data, size_t dataSize);
     
@@ -61,4 +50,7 @@ private:
     
     // Fonction helper pour obtenir une font spécifique
     juce::FontOptions getFont(const std::string& family, float size, FontWeight weight, FontStyle style);
+    
+    // Méthode privée pour initialiser les fonts (appelée dans le constructeur)
+    void initializeFonts();
 }; 

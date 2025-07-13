@@ -3,6 +3,11 @@
 #include "BinaryData.h"
 #include <algorithm>
 
+FontManager::FontManager() {
+    // Initialiser automatiquement les fonts au moment de la construction
+    initializeFonts();
+}
+
 void FontManager::initializeFonts() {
     // Pré-charger les fonts les plus utilisées pour améliorer les performances
     getSFProDisplay(16.0f, FontWeight::Regular);
@@ -59,6 +64,30 @@ juce::FontOptions FontManager::getFont(const std::string& family, float size, Fo
             resourceData = BinaryData::SFProDisplaySemibold_otf;
             resourceSize = BinaryData::SFProDisplaySemibold_otfSize;
         }
+        else if (fontKey == "SF-Pro-Display-Medium") {
+            resourceData = BinaryData::SFProDisplayMedium_otf;
+            resourceSize = BinaryData::SFProDisplayMedium_otfSize;
+        }
+        else if (fontKey == "SF-Pro-Display-Light") {
+            resourceData = BinaryData::SFProDisplayLight_otf;
+            resourceSize = BinaryData::SFProDisplayLight_otfSize;
+        }
+        else if (fontKey == "SF-Pro-Display-Heavy") {
+            resourceData = BinaryData::SFProDisplayHeavy_otf;
+            resourceSize = BinaryData::SFProDisplayHeavy_otfSize;
+        }
+        else if (fontKey == "SF-Pro-Display-Black") {
+            resourceData = BinaryData::SFProDisplayBlack_otf;
+            resourceSize = BinaryData::SFProDisplayBlack_otfSize;
+        }
+        else if (fontKey == "SF-Pro-Display-Thin") {
+            resourceData = BinaryData::SFProDisplayThin_otf;
+            resourceSize = BinaryData::SFProDisplayThin_otfSize;
+        }
+        else if (fontKey == "SF-Pro-Display-Ultralight") {
+            resourceData = BinaryData::SFProDisplayUltralight_otf;
+            resourceSize = BinaryData::SFProDisplayUltralight_otfSize;
+        }
         else if (fontKey == "SF-Pro-Text-Regular") {
             resourceData = BinaryData::SFProTextRegular_otf;
             resourceSize = BinaryData::SFProTextRegular_otfSize;
@@ -67,6 +96,14 @@ juce::FontOptions FontManager::getFont(const std::string& family, float size, Fo
             resourceData = BinaryData::SFProTextMedium_otf;
             resourceSize = BinaryData::SFProTextMedium_otfSize;
         }
+        else if (fontKey == "SF-Pro-Text-Bold") {
+            resourceData = BinaryData::SFProTextBold_otf;
+            resourceSize = BinaryData::SFProTextBold_otfSize;
+        }
+        else if (fontKey == "SF-Pro-Text-Semibold") {
+            resourceData = BinaryData::SFProTextSemibold_otf;
+            resourceSize = BinaryData::SFProTextSemibold_otfSize;
+        }
         else if (fontKey == "SF-Pro-Rounded-Bold") {
             resourceData = BinaryData::SFProRoundedBold_otf;
             resourceSize = BinaryData::SFProRoundedBold_otfSize;
@@ -74,6 +111,10 @@ juce::FontOptions FontManager::getFont(const std::string& family, float size, Fo
         else if (fontKey == "SF-Pro-Rounded-Regular") {
             resourceData = BinaryData::SFProRoundedRegular_otf;
             resourceSize = BinaryData::SFProRoundedRegular_otfSize;
+        }
+        else if (fontKey == "SF-Pro-Rounded-Medium") {
+            resourceData = BinaryData::SFProRoundedMedium_otf;
+            resourceSize = BinaryData::SFProRoundedMedium_otfSize;
         }
         // Ajouter d'autres mappings au besoin...
         
