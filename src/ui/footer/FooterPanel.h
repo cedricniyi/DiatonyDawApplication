@@ -12,6 +12,9 @@ public:
         : midiPianoArea(),
           actionsArea()
     {
+        // Configurer le callback pour le bouton de redimensionnement
+        midiPianoArea.onResizeToggle = [this] { if (onRequestResize) onRequestResize(); };
+        
         addAndMakeVisible (midiPianoArea);    
         addAndMakeVisible (actionsArea);
     }
@@ -40,6 +43,9 @@ public:
 
         fb.performLayout(area);
     }
+    
+    /** Callback déclenché quand une animation de redimensionnement est demandée */
+    std::function<void()> onRequestResize;
     
 private:
     MidiPianoArea       midiPianoArea;

@@ -20,6 +20,12 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     
     setSize(1500, 750);
 
+    // Configuration du callback pour l'animation
+    footerPanel.onRequestResize = [this] { startFlexAnimation(); };
+    
+    // Initialiser le timer d'animation
+    animationTimer = std::make_unique<AnimationTimer>(*this);
+
     addAndMakeVisible (headerPanel);
     addAndMakeVisible (sectionPanel);
     addAndMakeVisible (footerPanel);
@@ -67,10 +73,53 @@ void AudioPluginAudioProcessorEditor::resized()
     fb.flexDirection = juce::FlexBox::Direction::column;  // empile verticalement
 
     fb.items = {
-        juce::FlexItem (headerPanel).withFlex (7.5f).withMargin ({ 0, 0, 4, 0 }),
-        juce::FlexItem (sectionPanel).withFlex (47.5f).withMargin ({ 4, 0, 4, 0 }),
-        juce::FlexItem (footerPanel).withFlex (25.0f).withMargin ({ 4, 0, 0, 0 })
+        juce::FlexItem (headerPanel).withFlex (headerFlex).withMargin ({ 0, 0, 4, 0 }),
+        juce::FlexItem (sectionPanel).withFlex (sectionFlex).withMargin ({ 4, 0, 4, 0 }),
+        juce::FlexItem (footerPanel).withFlex (footerFlex).withMargin ({ 4, 0, 0, 0 })
     };
 
     fb.performLayout (content);
+}
+
+void AudioPluginAudioProcessorEditor::startFlexAnimation()
+{
+    // Valeur de départ et cible (toggle)
+    targetFooterFlex = (footerFlex < 30.0f) ? 40.0f : 25.0f;
+    
+    // Enregistrer le temps de début
+    animationStart = juce::Time::getMillisecondCounterHiRes();
+    
+    // Démarrer le timer d'animation (60 FPS)
+    animationTimer->startTimer(16);
+}
+
+void AudioPluginAudioProcessorEditor::updateFlexAnimation()
+{
+    double currentTime = juce::Time::getMillisecondCounterHiRes();
+    double elapsed = currentTime - animationStart;
+    
+    if (elapsed >= animationDuration)
+    {
+        // Animation terminée
+        footerFlex = targetFooterFlex;
+        animationTimer->stopTimer();
+        resized();
+        return;
+    }
+    
+    // Calcul du progrès (0.0 à 1.0)
+    double progress = elapsed / animationDuration;
+    
+    // Easing ease-in-out quadratic
+    if (progress < 0.5)
+        progress = 2.0 * progress * progress;
+    else
+        progress = -1.0 + (4.0 - 2.0 * progress) * progress;
+    
+    // Interpolarion entre la valeur actuelle et la cible
+    float startValue = (targetFooterFlex == 40.0f) ? 25.0f : 40.0f;
+    footerFlex = startValue + (targetFooterFlex - startValue) * static_cast<float>(progress);
+    
+    // Mettre à jour le layout
+    resized();
 }

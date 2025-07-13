@@ -2,6 +2,7 @@
 
 #include <JuceHeader.h>
 #include "../../extra/ColoredPanel.h"
+#include "../../extra/StyledButton.h"
 #include "../../../utils/FontManager.h"
 #include "MidiPianoContentArea.h"
 
@@ -11,7 +12,12 @@ class MidiPianoArea : public ColoredPanel
 public:
     MidiPianoArea() 
         : ColoredPanel(juce::Colours::white),
-          contentArea()
+          contentArea(),
+          resizeButton(juce::String::fromUTF8("📏 Resize Footer"), 
+                      juce::Colour(0xff4a90e2),  // Couleur normale (bleu)
+                      juce::Colour(0xff357abd),  // Couleur highlight (bleu plus foncé)
+                      14.0f,                     // Taille de police
+                      FontManager::FontWeight::Medium)
     {
         // Label "Midi Piano"
         headerLabel.setText(juce::String::fromUTF8("Midi Piano"), juce::dontSendNotification);
@@ -22,8 +28,12 @@ public:
         auto fontOptions = fontManager->getSFProDisplay(24.0f, FontManager::FontWeight::Bold);
         headerLabel.setFont(juce::Font(fontOptions));
         
+        // Configuration du bouton de redimensionnement
+        resizeButton.onClick = [this] { if (onResizeToggle) onResizeToggle(); };
+        
         addAndMakeVisible (headerLabel);
         addAndMakeVisible (contentArea);
+        addAndMakeVisible (resizeButton);
     }
     
     void paint(juce::Graphics& g) override
@@ -40,8 +50,13 @@ public:
         auto headerHeight = juce::jmax(30, static_cast<int>(headerLabel.getFont().getHeight() + 10)); // hauteur du texte + marge
         auto headerArea = area.removeFromTop(headerHeight);
         
-        // Positionner le label "Midi Piano"
-        headerLabel.setBounds(headerArea);
+        // Positionner le label "Midi Piano" et le bouton dans le header
+        auto labelArea = headerArea;
+        auto buttonWidth = 120;
+        auto buttonArea = labelArea.removeFromRight(buttonWidth);
+        
+        headerLabel.setBounds(labelArea);
+        resizeButton.setBounds(buttonArea);
 
         int headerBottomMargin = 8;
         area.removeFromTop (headerBottomMargin);
@@ -50,10 +65,14 @@ public:
         contentArea.setBounds(area);
     }
     
+    /** Callback déclenché quand le bouton de redimensionnement est cliqué */
+    std::function<void()> onResizeToggle;
+    
 private:
     juce::SharedResourcePointer<FontManager> fontManager;
     juce::Label headerLabel;
     MidiPianoContentArea contentArea;
+    StyledButton resizeButton;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MidiPianoArea)
 }; 

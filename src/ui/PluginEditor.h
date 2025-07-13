@@ -42,6 +42,36 @@ private:
 
     // Constrainer pour la taille
     std::unique_ptr<juce::ComponentBoundsConstrainer> constrainer;
+    
+    // Animation pour les valeurs flex
+    void startFlexAnimation();
+    float headerFlex  = 7.5f;
+    float sectionFlex = 47.5f;
+    float footerFlex  = 25.0f;
+    
+    // Timer pour l'animation
+    class AnimationTimer : public juce::Timer
+    {
+    public:
+        AnimationTimer(AudioPluginAudioProcessorEditor& editor) : owner(editor) {}
+        
+        void timerCallback() override
+        {
+            owner.updateFlexAnimation();
+        }
+        
+    private:
+        AudioPluginAudioProcessorEditor& owner;
+    };
+    
+    void updateFlexAnimation();
+    std::unique_ptr<AnimationTimer> animationTimer;
+    
+    // Variables d'animation
+    float targetFooterFlex = 25.0f;
+    float animationSpeed = 0.1f;
+    double animationStart = 0.0;
+    double animationDuration = 300.0; // ms
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessorEditor)
 }; 
