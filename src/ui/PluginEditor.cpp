@@ -10,13 +10,13 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
       middlePanel(),
       bottomPanel()
 {
-    // Initialiser les fonts SF Pro
-    FontManager::getInstance().initializeFonts();
-
+    // Les fonts sont maintenant initialisées automatiquement via SharedResourcePointer
+    // Plus besoin d'appeler initializeFonts() manuellement
+    
     constrainer = std::make_unique<juce::ComponentBoundsConstrainer>();
     constrainer->setSizeLimits(1125, 562, 1694, 847);      // tailles min/max
     constrainer->setFixedAspectRatio(1500.0 / 750.0);     // ratio constant
-    setConstrainer(constrainer.get());                    // lie le constrainer à l’éditeur
+    setConstrainer(constrainer.get());                    // lie le constrainer à l'éditeur
     
     setSize(1500, 750);
 
