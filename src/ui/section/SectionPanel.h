@@ -6,10 +6,10 @@
 #include "../../utils/FontManager.h"
 
 //==============================================================================
-class MiddlePanel : public ColoredPanel
+class SectionPanel : public ColoredPanel
 {
 public:
-    MiddlePanel() 
+    SectionPanel() 
         : ColoredPanel(juce::Colours::white),
           addSectionButton  (juce::String::fromUTF8("+ New Section"),
                              juce::Colour::fromString ("#ff27ae60"),
@@ -84,5 +84,5 @@ private:
     juce::Label      headerLabel;
     StyledButton     addSectionButton;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MiddlePanel)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SectionPanel)
 }; 

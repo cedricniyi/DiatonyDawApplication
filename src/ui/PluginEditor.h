@@ -4,9 +4,9 @@
 #include "../core/PluginProcessor.h"
 #include "extra/SimpleToastComponent.h"
 #include "extra/DiatonyAlertWindow.h"
-#include "panels/TopPanel.h"
-#include "panels/MiddlePanel.h"
-#include "panels/BottomPanel.h"
+#include "header/HeaderPanel.h"
+#include "section/SectionPanel.h"
+#include "footer/FooterPanel.h"
 #include "melatonin_inspector/melatonin_inspector.h"
 
 //==============================================================================
@@ -36,9 +36,9 @@ private:
     juce::TextButton testButton;
 
     // 3 Parties de l'interface 
-    TopPanel topPanel;
-    MiddlePanel middlePanel;
-    BottomPanel bottomPanel;
+    HeaderPanel headerPanel;
+    SectionPanel sectionPanel;
+    FooterPanel footerPanel;
 
     // Constrainer pour la taille
     std::unique_ptr<juce::ComponentBoundsConstrainer> constrainer;

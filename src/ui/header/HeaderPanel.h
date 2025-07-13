@@ -5,10 +5,10 @@
 #include "../extra/StyledButton.h"
 #include "../../utils/FontManager.h"
 
-class TopPanel : public ColoredPanel
+class HeaderPanel : public ColoredPanel
 {
 public:
-    TopPanel()
+    HeaderPanel()
         : ColoredPanel (juce::Colours::white),
           settingsButton (juce::String::fromUTF8("⚙️ Settings"),
                           juce::Colour::fromString ("ff2980b9"),
@@ -20,7 +20,7 @@ public:
                           14.0f, FontManager::FontWeight::Medium)
     {
         // Label gauche
-        mainLabel.setText(juce::String::fromUTF8("DiatonyDAW – Prototype"),juce::dontSendNotification);
+        mainLabel.setText(juce::String::fromUTF8("DiatonyDAWPlugin"),juce::dontSendNotification);
         mainLabel.setJustificationType (juce::Justification::centredLeft);
         mainLabel.setColour (juce::Label::textColourId, juce::Colours::black);
         
@@ -70,5 +70,5 @@ private:
     StyledButton     settingsButton;
     StyledButton     historyButton;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TopPanel)
-};
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (HeaderPanel)
+}; 

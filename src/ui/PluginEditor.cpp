@@ -6,9 +6,9 @@
 //==============================================================================
 AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAudioProcessor& p)
     : AudioProcessorEditor (&p), audioProcessor (p),
-      topPanel(),
-      middlePanel(),
-      bottomPanel()
+      headerPanel(),
+      sectionPanel(),
+      footerPanel()
 {
     // Les fonts sont maintenant initialisées automatiquement via SharedResourcePointer
     // Plus besoin d'appeler initializeFonts() manuellement
@@ -20,9 +20,9 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     
     setSize(1500, 750);
 
-    addAndMakeVisible (topPanel);
-    addAndMakeVisible (middlePanel);
-    addAndMakeVisible (bottomPanel);
+    addAndMakeVisible (headerPanel);
+    addAndMakeVisible (sectionPanel);
+    addAndMakeVisible (footerPanel);
 
 }
 
@@ -67,9 +67,9 @@ void AudioPluginAudioProcessorEditor::resized()
     fb.flexDirection = juce::FlexBox::Direction::column;  // empile verticalement
 
     fb.items = {
-        juce::FlexItem (topPanel   ).withFlex (7.5f).withMargin ({ 0, 0, 4, 0 }),
-        juce::FlexItem (middlePanel).withFlex (47.5f).withMargin ({ 4, 0, 4, 0 }),
-        juce::FlexItem (bottomPanel).withFlex (25.0f).withMargin ({ 4, 0, 0, 0 })
+        juce::FlexItem (headerPanel).withFlex (7.5f).withMargin ({ 0, 0, 4, 0 }),
+        juce::FlexItem (sectionPanel).withFlex (47.5f).withMargin ({ 4, 0, 4, 0 }),
+        juce::FlexItem (footerPanel).withFlex (25.0f).withMargin ({ 4, 0, 0, 0 })
     };
 
     fb.performLayout (content);

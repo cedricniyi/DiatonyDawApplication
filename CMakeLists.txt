@@ -78,9 +78,9 @@ target_sources(DiatonyDawApplication
         src/ui/extra/StyledButton.h
         src/ui/extra/SimpleToastComponent.h
         src/ui/extra/DiatonyAlertWindow.h
-        src/ui/panels/TopPanel.h
-        src/ui/panels/MiddlePanel.h
-        src/ui/panels/BottomPanel.h
+        src/ui/footer/FooterPanel.h
+        src/ui/header/HeaderPanel.h
+        src/ui/section/SectionPanel.h
         src/ui/style/DiatonyLookAndFeel.h
         
         # Fichiers header only (à inclure pour être sûr qu'ils sont pris en compte)
