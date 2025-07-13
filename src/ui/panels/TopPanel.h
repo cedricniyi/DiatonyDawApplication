@@ -24,8 +24,9 @@ public:
         mainLabel.setJustificationType (juce::Justification::centredLeft);
         mainLabel.setColour (juce::Label::textColourId, juce::Colours::black);
         
-        // Utiliser les fonts SF Pro via SharedResourcePointer
-        mainLabel.setFont(fontManager->getSFProDisplay(24.0f, FontManager::FontWeight::Bold));
+        // Correction : Convertir FontOptions en Font
+        auto fontOptions = fontManager->getSFProDisplay(24.0f, FontManager::FontWeight::Bold);
+        mainLabel.setFont(juce::Font(fontOptions));
        
         addAndMakeVisible (mainLabel);
 
