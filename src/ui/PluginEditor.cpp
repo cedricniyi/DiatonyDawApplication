@@ -91,7 +91,7 @@ void AudioPluginAudioProcessorEditor::startFlexAnimation()
     DBG("PluginEditor: footerFlex actuel = " << footerFlex << ", target = " << targetFooterFlex);
     
     // Utiliser l'AnimationManager modernisé avec l'API juce_animation
-    AnimationManager::getInstance().animateValueSimple(
+    AnimationManager::getInstance()->animateValueSimple(
         footerFlex,
         targetFooterFlex,
         300.0, // durée en ms
