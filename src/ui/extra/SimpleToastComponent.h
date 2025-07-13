@@ -39,9 +39,9 @@ public:
         
         auto bounds = getLocalBounds().reduced(20, 0);
         
-        // Calculer la largeur du texte
+        // Calculer la largeur du texte avec GlyphArrangement
         juce::Font font(juce::FontOptions(14.0f));
-        int textWidth = font.getStringWidth(toastMessage);
+        int textWidth = juce::GlyphArrangement::getStringWidthInt(font, toastMessage);
         int toastWidth = textWidth + 40; // Marge supplémentaire
         
         // Créer un rectangle aligné à droite pour le toast
