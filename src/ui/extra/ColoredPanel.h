@@ -29,6 +29,23 @@ public:
     {
     }
     
+    void setAlpha(float alpha)
+    {
+        panelColor = panelColor.withAlpha(alpha);
+        repaint();
+    }
+    
+    void setColor(juce::Colour color)
+    {
+        panelColor = color;
+        repaint();
+    }
+    
+    juce::Colour getColor() const
+    {
+        return panelColor;
+    }
+    
 private:
     juce::Colour panelColor;
 
