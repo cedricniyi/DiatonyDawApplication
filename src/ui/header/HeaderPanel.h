@@ -10,14 +10,10 @@ class HeaderPanel : public ColoredPanel
 public:
     HeaderPanel()
         : ColoredPanel (juce::Colours::white),
-          settingsButton (juce::String::fromUTF8("⚙️ Settings"),
-                          juce::Colour::fromString ("ff2980b9"),
-                          juce::Colour::fromString ("ff3498db"),
-                          14.0f, FontManager::FontWeight::Medium),
-          historyButton  (juce::String::fromUTF8("📋 History"),
-                          juce::Colour::fromString ("ff2980b9"),
-                          juce::Colour::fromString ("ff3498db"),
-                          14.0f, FontManager::FontWeight::Medium)
+          dButton (juce::String::fromUTF8("D"),
+                   juce::Colour::fromString ("ff808080"), // Gris
+                   juce::Colour::fromString ("ff606060"), // Gris plus foncé au survol
+                   14.0f, FontManager::FontWeight::Black)
     {
         // Label gauche
         mainLabel.setText(juce::String::fromUTF8("DiatonyDAWPlugin"),juce::dontSendNotification);
@@ -30,31 +26,33 @@ public:
        
         addAndMakeVisible (mainLabel);
 
-        // Boutons droite (fonts déjà configurées dans le constructeur)
-        addAndMakeVisible (settingsButton);
-        addAndMakeVisible (historyButton);
+        // Bouton D à droite
+        addAndMakeVisible (dButton);
     }
 
     void resized() override
     {
         auto area = getLocalBounds().reduced (20, 10);
 
-        // Positionner le label à gauche
-        auto labelWidth = area.getWidth() / 2;
-        mainLabel.setBounds (area.removeFromLeft (labelWidth));
+        // 1) Mesurer la largeur exacte du texte avec GlyphArrangement
+        juce::GlyphArrangement ga;
+        ga.addLineOfText (mainLabel.getFont(),
+                          mainLabel.getText(),
+                          0, 0);
+        auto labelWidth = static_cast<int>(std::ceil(ga.getBoundingBox(0, -1, false).getWidth()));
 
-        // FlexBox pour les deux boutons à droite
-        juce::FlexBox buttonsFlex;
-        buttonsFlex.flexDirection = juce::FlexBox::Direction::row;
-        buttonsFlex.justifyContent = juce::FlexBox::JustifyContent::flexEnd;
-        buttonsFlex.alignItems    = juce::FlexBox::AlignItems::center;
-        buttonsFlex.items = {
-            juce::FlexItem (settingsButton).withMinWidth (100).withMinHeight (30)
-                                            .withMargin ({ 0, 5, 0, 0 }),
-            juce::FlexItem (historyButton).withMinWidth (100).withMinHeight (30)
-        };
+        // 2) Positionner le label à gauche avec sa largeur exacte
+        mainLabel.setBounds(area.removeFromLeft(labelWidth));
 
-        buttonsFlex.performLayout (area);
+        // 3) Positionner le bouton D à droite avec FlexBox (bouton carré)
+        auto buttonSize = area.getHeight(); // Bouton carré basé sur la hauteur
+        juce::FlexBox buttonFlex;
+        buttonFlex.flexDirection = juce::FlexBox::Direction::row;
+        buttonFlex.justifyContent = juce::FlexBox::JustifyContent::flexEnd;
+        buttonFlex.alignItems = juce::FlexBox::AlignItems::center;
+        buttonFlex.items.add(juce::FlexItem(dButton).withMinWidth(buttonSize).withMinHeight(buttonSize));
+        
+        buttonFlex.performLayout(area);
     }
 
     void paint (juce::Graphics& g) override
@@ -67,8 +65,7 @@ private:
     juce::SharedResourcePointer<FontManager> fontManager;
     
     juce::Label      mainLabel;
-    StyledButton     settingsButton;
-    StyledButton     historyButton;
+    StyledButton     dButton;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (HeaderPanel)
 }; 
