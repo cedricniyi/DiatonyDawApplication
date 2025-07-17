@@ -1,7 +1,7 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "../../utils/FontManager.h"
+#include "utils/FontManager.h"
 
 // Classe LookAndFeel personnalisée pour dessiner un bouton avec contour uniquement
 class OutlineButtonLookAndFeel : public juce::LookAndFeel_V4
