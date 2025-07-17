@@ -64,9 +64,9 @@ public:
     {
         auto bounds = getLocalBounds();
         
-        // Marges adaptatives basées sur la taille disponible
-        int horizontalMargin = juce::jmin(10, bounds.getWidth() / 15);
-        int verticalMargin = juce::jmin(10, bounds.getHeight() / 15);
+        // Marges adaptatives basées sur la taille disponible (réduites pour plus d'espace)
+        int horizontalMargin = juce::jmin(8, bounds.getWidth() / 18);
+        int verticalMargin = juce::jmin(4, bounds.getHeight() / 25);
         
         auto area = bounds.reduced(horizontalMargin, verticalMargin);
         flexBox.performLayout(area.toFloat());
