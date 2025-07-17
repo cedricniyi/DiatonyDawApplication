@@ -1,7 +1,6 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "components/ActionsArea.h"
 #include "components/MidiPianoArea.h"
 
 //==============================================================================
@@ -9,8 +8,7 @@ class FooterPanel : public juce::Component
 {
 public:
     FooterPanel() 
-        : midiPianoArea(),
-          actionsArea()
+        : midiPianoArea()
     {
         // Configurer le callback pour le bouton de redimensionnement
         midiPianoArea.onResizeToggle = [this] { 
@@ -24,7 +22,6 @@ public:
         };
         
         addAndMakeVisible (midiPianoArea);    
-        addAndMakeVisible (actionsArea);
     }
     
     void paint(juce::Graphics& g) override
@@ -34,22 +31,30 @@ public:
     
     void resized() override
     {
-        // Appliquer le padding à toute la zone
         auto area = getLocalBounds();
 
-        // Diviser la zone en deux avec FlexBox
-        juce::FlexBox fb;
-        fb.flexDirection = juce::FlexBox::Direction::row;
-        fb.justifyContent = juce::FlexBox::JustifyContent::spaceBetween;
-        fb.alignItems = juce::FlexBox::AlignItems::stretch;
-
-        // Midi piano à gauche (25% de l'espace)
-        fb.items.add(juce::FlexItem(midiPianoArea).withFlex(0.25f).withMargin({0, 4, 0, 0}));
+        // Utiliser Grid pour centrer le MidiPianoArea
+        juce::Grid grid;
         
-        // Actions à droite (75% de l'espace restant)
-        fb.items.add(juce::FlexItem(actionsArea).withFlex(0.75f).withMargin({0, 0, 0, 4}));
-
-        fb.performLayout(area);
+        // Définir une seule ligne et trois colonnes
+        grid.templateRows = { juce::Grid::TrackInfo(juce::Grid::Fr(1)) };
+        grid.templateColumns = { 
+            juce::Grid::TrackInfo(juce::Grid::Fr(1)),      // Colonne gauche (flexible)
+            juce::Grid::TrackInfo(juce::Grid::Px(400)),    // Colonne centre (largeur fixe 400px)
+            juce::Grid::TrackInfo(juce::Grid::Fr(1))       // Colonne droite (flexible)
+        };
+        
+        // Centrer le contenu
+        grid.justifyContent = juce::Grid::JustifyContent::center;
+        grid.alignContent = juce::Grid::AlignContent::center;
+        grid.alignItems = juce::Grid::AlignItems::stretch;
+        
+        // Ajouter le MidiPianoArea dans la colonne du centre
+        grid.items.add(juce::GridItem(midiPianoArea)
+                      .withArea(1, 2));  // Ligne 1, Colonne 2 (centre)
+        
+        // Appliquer le layout
+        grid.performLayout(area);
     }
     
     /** Callback déclenché quand une animation de redimensionnement est demandée */
@@ -57,7 +62,6 @@ public:
     
 private:
     MidiPianoArea       midiPianoArea;
-    ActionsArea         actionsArea;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(FooterPanel)
 }; 
