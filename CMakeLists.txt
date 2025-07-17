@@ -76,6 +76,7 @@ target_sources(DiatonyDawApplication
         src/ui/PluginEditor.h
         src/ui/extra/ColoredPanel.h
         src/ui/extra/StyledButton.h
+        src/ui/extra/OutlineTextButton.h
         src/ui/extra/SimpleToastComponent.h
         src/ui/extra/DiatonyAlertWindow.h
         src/ui/footer/FooterPanel.h
