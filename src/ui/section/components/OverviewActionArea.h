@@ -24,8 +24,12 @@ public:
         flexBox.alignItems = juce::FlexBox::AlignItems::center;
         flexBox.flexWrap = juce::FlexBox::Wrap::noWrap;
         
-        // Ajouter les éléments au FlexBox
-        flexBox.items.add(juce::FlexItem(playbackActionArea).withMinWidth(130.0f).withMinHeight(40.0f).withMargin(juce::FlexItem::Margin(0, 20, 0, 0)));
+        // Ajouter les éléments au FlexBox - taille adaptée au contenu
+        auto preferredSize = playbackActionArea.getPreferredSize();
+        flexBox.items.add(juce::FlexItem(playbackActionArea)
+            .withWidth(preferredSize.getWidth())
+            .withHeight(preferredSize.getHeight())
+            .withMargin(juce::FlexItem::Margin(0, 20, 0, 0)));
     }
     
     void paint(juce::Graphics& g) override
@@ -36,11 +40,17 @@ public:
     
     void resized() override
     {
-        auto area = getLocalBounds().reduced(20, 10);
+        auto bounds = getLocalBounds();
+        
+        // Marges adaptatives basées sur la taille disponible
+        int horizontalMargin = juce::jmin(20, bounds.getWidth() / 25);  // Max 20px, min selon largeur
+        int verticalMargin = juce::jmin(10, bounds.getHeight() / 15);   // Max 10px, min selon hauteur
+        
+        auto area = bounds.reduced(horizontalMargin, verticalMargin);
         flexBox.performLayout(area.toFloat());
     }
     
-    // Accès aux boutons pour les callbacks
+    // Accès au composant playback pour les callbacks
     PlaybackActionArea& getPlaybackActionArea() { return playbackActionArea; }
     
 private:
