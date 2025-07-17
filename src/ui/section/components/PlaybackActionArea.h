@@ -9,16 +9,11 @@ class PlaybackActionArea : public ColoredPanel
 {
 public:
     PlaybackActionArea() 
-        : ColoredPanel(juce::Colours::transparentBlack),
-          playButton(juce::String::fromUTF8("▶"), juce::Colour::fromString("#ff4CAF50"), juce::Colour::fromString("#ff45A049"), 20.0f, FontManager::FontWeight::Bold),
-          pauseButton(juce::String::fromUTF8("⏸"), juce::Colour::fromString("#ffFFC107"), juce::Colour::fromString("#ffFFB300"), 20.0f, FontManager::FontWeight::Bold),
-          stopButton(juce::String::fromUTF8("⏹"), juce::Colour::fromString("#ff9C27B0"), juce::Colour::fromString("#ff8E24AA"), 20.0f, FontManager::FontWeight::Bold)
+        : ColoredPanel(juce::Colours::white),
+          playButton(juce::String::fromUTF8("▶"), juce::Colour::fromString("#ff4CAF50"), juce::Colour::fromString("#ff45A049"), 16.0f, FontManager::FontWeight::Bold),
+          pauseButton(juce::String::fromUTF8("⏸"), juce::Colour::fromString("#ffFFC107"), juce::Colour::fromString("#ffFFB300"), 16.0f, FontManager::FontWeight::Bold),
+          stopButton(juce::String::fromUTF8("⏹"), juce::Colour::fromString("#ff9C27B0"), juce::Colour::fromString("#ff8E24AA"), 16.0f, FontManager::FontWeight::Bold)
     {
-        // Configuration des boutons
-        setupButton(playButton);
-        setupButton(pauseButton);
-        setupButton(stopButton);
-        
         // Ajouter les boutons
         addAndMakeVisible(playButton);
         addAndMakeVisible(pauseButton);
@@ -26,28 +21,48 @@ public:
         
         // Configuration du FlexBox
         flexBox.flexDirection = juce::FlexBox::Direction::row;
-        flexBox.justifyContent = juce::FlexBox::JustifyContent::flexStart;
+        flexBox.justifyContent = juce::FlexBox::JustifyContent::center;
         flexBox.alignItems = juce::FlexBox::AlignItems::center;
         flexBox.flexWrap = juce::FlexBox::Wrap::noWrap;
         
-        // Ajouter les éléments au FlexBox avec un espacement
-        flexBox.items.add(juce::FlexItem(playButton).withMinWidth(40.0f).withMinHeight(40.0f).withMargin(juce::FlexItem::Margin(0, 5, 0, 0)));
-        flexBox.items.add(juce::FlexItem(pauseButton).withMinWidth(40.0f).withMinHeight(40.0f).withMargin(juce::FlexItem::Margin(0, 5, 0, 0)));
-        flexBox.items.add(juce::FlexItem(stopButton).withMinWidth(40.0f).withMinHeight(40.0f).withMargin(juce::FlexItem::Margin(0, 0, 0, 0)));
+        // Ajouter les boutons au FlexBox avec espacement
+        flexBox.items.add(juce::FlexItem(playButton).withWidth(32.0f).withHeight(32.0f).withMargin(juce::FlexItem::Margin(0, 4, 0, 0)));
+        flexBox.items.add(juce::FlexItem(pauseButton).withWidth(32.0f).withHeight(32.0f).withMargin(juce::FlexItem::Margin(0, 4, 0, 0)));
+        flexBox.items.add(juce::FlexItem(stopButton).withWidth(32.0f).withHeight(32.0f).withMargin(juce::FlexItem::Margin(0, 0, 0, 0)));
     }
     
     void paint(juce::Graphics& g) override
     {
-        // Pas de fond visible pour ce conteneur
+        ColoredPanel::paint(g);
     }
     
     void resized() override
     {
         auto bounds = getLocalBounds();
-        flexBox.performLayout(bounds.toFloat());
+        
+        // Marges adaptatives pour éviter les problèmes aux petites tailles
+        int horizontalMargin = juce::jmin(4, bounds.getWidth() / 15);
+        int verticalMargin = juce::jmin(6, bounds.getHeight() / 8);
+        
+        auto area = bounds.reduced(horizontalMargin, verticalMargin);
+        flexBox.performLayout(area.toFloat());
     }
     
-    // Méthodes pour accéder aux boutons (si nécessaire pour les callbacks)
+    // Méthode pour calculer la taille préférée du composant
+    juce::Rectangle<int> getPreferredSize() const
+    {
+        // Calcul basé sur le nombre de boutons et leurs dimensions
+        int buttonWidth = 32;
+        int buttonSpacing = 4;
+        int padding = 16; // 8px de chaque côté
+        
+        int totalWidth = (3 * buttonWidth) + (2 * buttonSpacing) + padding; // 3 boutons, 2 espaces
+        int totalHeight = 32 + 12; // hauteur bouton + padding vertical
+        
+        return juce::Rectangle<int>(0, 0, totalWidth, totalHeight);
+    }
+    
+    // Accès aux boutons
     StyledButton& getPlayButton() { return playButton; }
     StyledButton& getPauseButton() { return pauseButton; }
     StyledButton& getStopButton() { return stopButton; }
@@ -57,12 +72,6 @@ private:
     StyledButton pauseButton;
     StyledButton stopButton;
     juce::FlexBox flexBox;
-    
-    void setupButton(StyledButton& button)
-    {
-        // Rendre les boutons carrés
-        button.setSize(40, 40);
-    }
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PlaybackActionArea)
 }; 
