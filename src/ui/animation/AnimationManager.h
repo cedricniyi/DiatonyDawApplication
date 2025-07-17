@@ -42,6 +42,32 @@ public:
                           double durationMs = 300.0,
                           std::function<void()> onUpdate = nullptr);
     
+    /** 
+     * Anime l'opacité d'un composant JUCE
+     * 
+     * @param component         Référence vers le composant à animer
+     * @param targetAlpha       Opacité cible (0.0f = transparent, 1.0f = opaque)
+     * @param durationMs        Durée de l'animation en millisecondes
+     * @param easingFn          Fonction d'easing (optionnel, par défaut ease-in-out)
+     * @param onUpdate          Callback appelé à chaque mise à jour (optionnel)
+     * @param onComplete        Callback appelé à la fin de l'animation (optionnel)
+     * @return                  ID de l'animation pour pouvoir l'arrêter si nécessaire
+     */
+    int animateComponentAlpha(juce::Component& component,
+                             float targetAlpha,
+                             double durationMs = 300.0,
+                             std::function<double(double)> easingFn = nullptr,
+                             std::function<void()> onUpdate = nullptr,
+                             std::function<void()> onComplete = nullptr);
+    
+    /** 
+     * Version simplifiée pour fade in/out d'un composant
+     */
+    int fadeComponent(juce::Component& component, 
+                     bool fadeIn = true, 
+                     double durationMs = 300.0,
+                     std::function<void()> onComplete = nullptr);
+    
     //==============================================================================
     /** Arrête une animation spécifique par son ID */
     void stopAnimation(int animationId);

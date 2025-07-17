@@ -105,6 +105,99 @@ int AnimationManager::animateValueSimple(float& valueToAnimate,
 }
 
 //==============================================================================
+int AnimationManager::animateComponentAlpha(juce::Component& component,
+                                           float targetAlpha,
+                                           double durationMs,
+                                           std::function<double(double)> easingFn,
+                                           std::function<void()> onUpdate,
+                                           std::function<void()> onComplete)
+{
+    int animationId = nextAnimationId++;
+    
+    // Stocker l'opacité initiale en utilisant la méthode native de JUCE
+    float initialAlpha = component.getAlpha();
+    
+    // Assurer que le composant est visible si on fait un fade-in
+    if (targetAlpha > 0.0f && !component.isVisible())
+    {
+        component.setVisible(true);
+    }
+    
+    DBG("AnimationManager: Animation alpha ID=" << animationId << ", initial=" << initialAlpha << ", target=" << targetAlpha);
+    
+    // Créer l'animation avec ValueAnimatorBuilder
+    auto builder = juce::ValueAnimatorBuilder()
+        .withDurationMs(durationMs)
+        .withValueChangedCallback([&component, initialAlpha, targetAlpha, onUpdate](float progress) {
+            // Interpoler entre l'opacité initiale et la cible
+            float newAlpha = initialAlpha + (targetAlpha - initialAlpha) * progress;
+            
+            // Utiliser la méthode native de JUCE Component::setAlpha()
+            // Cette méthode sera appelée sur le Component directement, pas sur ColoredPanel
+            component.juce::Component::setAlpha(newAlpha);
+            
+            DBG("AnimationManager: Alpha animation progress=" << progress << ", newAlpha=" << newAlpha);
+            
+            if (onUpdate)
+                onUpdate();
+        })
+        .withOnCompleteCallback([this, animationId, &component, targetAlpha, onComplete]() {
+            DBG("AnimationManager: Animation alpha ID=" << animationId << " terminée");
+            
+            // S'assurer que l'opacité finale est bien définie avec la méthode native
+            component.juce::Component::setAlpha(targetAlpha);
+            
+            // Masquer le composant si fade-out complet
+            if (targetAlpha <= 0.0f)
+            {
+                component.setVisible(false);
+            }
+            
+            // Nettoyer l'animation terminée
+            activeAnimators.erase(animationId);
+            
+            if (onComplete)
+                onComplete();
+        });
+    
+    // Appliquer l'easing si fourni
+    if (easingFn)
+    {
+        builder = std::move(builder).withEasing([easingFn](float t) -> float {
+            return static_cast<float>(easingFn(static_cast<double>(t)));
+        });
+    }
+    
+    // Construire l'animateur
+    auto animator = std::move(builder).build();
+    
+    // Stocker l'animation et la démarrer
+    activeAnimators[animationId] = std::make_unique<juce::Animator>(std::move(animator));
+    animatorUpdater->addAnimator(*activeAnimators[animationId]);
+    activeAnimators[animationId]->start();
+    
+    // Démarrer le timer pour les mises à jour (60 FPS)
+    if (!isTimerRunning())
+    {
+        DBG("AnimationManager: Démarrage du timer pour les mises à jour");
+        startTimer(16); // 60 FPS
+    }
+    
+    DBG("AnimationManager: Animation alpha ID=" << animationId << " démarrée");
+    
+    return animationId;
+}
+
+int AnimationManager::fadeComponent(juce::Component& component, 
+                                   bool fadeIn, 
+                                   double durationMs,
+                                   std::function<void()> onComplete)
+{
+    float targetAlpha = fadeIn ? 1.0f : 0.0f;
+    return animateComponentAlpha(component, targetAlpha, durationMs, nullptr, nullptr, onComplete);
+}
+
+//==============================================================================
 void AnimationManager::stopAnimation(int animationId)
 {
     auto it = activeAnimators.find(animationId);
