@@ -39,7 +39,7 @@ public:
         ga.addLineOfText (mainLabel.getFont(),
                           mainLabel.getText(),
                           0, 0);
-        auto labelWidth = static_cast<int>(std::ceil(ga.getBoundingBox(0, -1, false).getWidth()));
+        auto labelWidth = static_cast<int>(std::ceil(ga.getBoundingBox(0, -1, false).getWidth()+10));
 
         // 2) Positionner le label à gauche avec sa largeur exacte
         mainLabel.setBounds(area.removeFromLeft(labelWidth));
