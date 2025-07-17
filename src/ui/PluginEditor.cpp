@@ -15,7 +15,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     // Plus besoin d'appeler initializeFonts() manuellement
     
     constrainer = std::make_unique<juce::ComponentBoundsConstrainer>();
-    constrainer->setSizeLimits(1125, 562, 1694, 847);      // tailles min/max
+    constrainer->setSizeLimits(1300, 569, 1694, 847);      // tailles min/max
     constrainer->setFixedAspectRatio(1500.0 / 750.0);     // ratio constant
     setConstrainer(constrainer.get());                    // lie le constrainer à l'éditeur
     
