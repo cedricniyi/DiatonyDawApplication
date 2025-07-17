@@ -4,6 +4,7 @@
 #include "ui/extra/ColoredPanel.h"
 #include "ui/extra/OutlineTextButton.h"
 #include "utils/FontManager.h"
+#include "OverviewContentArea.h"
 
 //==============================================================================
 class OverviewArea : public ColoredPanel
@@ -26,6 +27,9 @@ public:
         overviewLabel.setFont(juce::Font(fontOptions));
         
         addAndMakeVisible(overviewLabel);
+        
+        // Ajouter la zone de contenu
+        addAndMakeVisible(contentArea);
         
         // Ajouter le bouton à l'interface
         addAndMakeVisible(actionButton);
@@ -54,7 +58,14 @@ public:
         // 2) Positionner le label à gauche avec sa largeur exacte
         overviewLabel.setBounds(contentArea.removeFromLeft(labelWidth));
         
-        // 3) Positionner le bouton à droite avec FlexBox
+        // 3) Réserver l'espace pour le bouton à droite
+        auto buttonWidth = 80;
+        auto buttonArea = contentArea.removeFromRight(buttonWidth);
+        
+        // 4) La zone de contenu prend l'espace restant au centre
+        this->contentArea.setBounds(contentArea.reduced(5, 0)); // Petit padding horizontal
+        
+        // 5) Positionner le bouton à droite avec FlexBox
         juce::FlexBox flexContainer;
         flexContainer.flexDirection = juce::FlexBox::Direction::row;
         flexContainer.justifyContent = juce::FlexBox::JustifyContent::flexEnd;
@@ -69,8 +80,8 @@ public:
         // Ajouter le bouton au FlexBox
         flexContainer.items.add(buttonItem);
         
-        // Appliquer le layout sur l'espace restant
-        flexContainer.performLayout(contentArea.toFloat());
+        // Appliquer le layout sur l'espace du bouton
+        flexContainer.performLayout(buttonArea.toFloat());
     }
     
     // Méthode pour obtenir la taille préférée
@@ -82,6 +93,7 @@ public:
 private:
     juce::SharedResourcePointer<FontManager> fontManager;
     juce::Label      overviewLabel;
+    OverviewContentArea contentArea;
     OutlineTextButton actionButton;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(OverviewArea)
