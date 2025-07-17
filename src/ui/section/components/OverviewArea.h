@@ -10,11 +10,22 @@ class OverviewArea : public ColoredPanel
 {
 public:
     OverviewArea() 
-        : ColoredPanel(juce::Colour::fromString("#f5f5f5ff")),
+        : ColoredPanel(juce::Colour::fromString("#ffd4d4ff")),
           actionButton("+", juce::Colour::fromString("#FF4747b5"), juce::Colour::fromString("#FF4747b5"), 2.5f, 
           16.0f, FontManager::FontWeight::Bold)
     {
         setAlpha(0.9f);
+        
+        // Configuration du label Overview
+        overviewLabel.setText("OVERVIEW", juce::dontSendNotification);
+        overviewLabel.setJustificationType(juce::Justification::centredLeft);
+        overviewLabel.setColour(juce::Label::textColourId, juce::Colours::darkblue);
+        
+        // Convertir FontOptions en Font
+        auto fontOptions = fontManager->getSFProText(16.0f, FontManager::FontWeight::Bold);
+        overviewLabel.setFont(juce::Font(fontOptions));
+        
+        addAndMakeVisible(overviewLabel);
         
         // Ajouter le bouton à l'interface
         addAndMakeVisible(actionButton);
@@ -24,33 +35,30 @@ public:
     {
         // Dessiner le fond coloré via ColoredPanel
         ColoredPanel::paint(g);
-        
-        // Optionnel: ajouter du contenu visuel avec padding interne
-        g.setColour(juce::Colours::darkblue);
-        g.setFont(fontManager->getSFProText(16.0f, FontManager::FontWeight::Bold));
-        
-        // Appliquer un padding interne pour le texte (zone réduite car le bouton prend de la place)
-        auto textArea = getLocalBounds().reduced(12, 8);
-        // textArea.removeFromRight(100); // Laisser de la place pour le bouton
-        g.drawText("OVERVIEW", textArea, juce::Justification::left);
     }
     
     void resized() override
     {
         ColoredPanel::resized();
         
-        // Utiliser FlexBox pour le layout horizontal (1D)
-        juce::FlexBox flexContainer;
-        flexContainer.flexDirection = juce::FlexBox::Direction::row;
-        flexContainer.justifyContent = juce::FlexBox::JustifyContent::spaceBetween;
-        flexContainer.alignItems = juce::FlexBox::AlignItems::center;
-        
         // Zone de contenu avec padding
         auto contentArea = getLocalBounds().reduced(12, 8);
         
-        // Créer un espace flexible pour pousser le bouton à droite
-        juce::FlexItem spacer;
-        spacer.flexGrow = 1.0f; // Prend tout l'espace disponible
+        // 1) Mesurer la largeur exacte du texte avec GlyphArrangement
+        juce::GlyphArrangement ga;
+        ga.addLineOfText(overviewLabel.getFont(),
+                         overviewLabel.getText(),
+                         0, 0);
+        auto labelWidth = static_cast<int>(std::ceil(ga.getBoundingBox(0, -1, false).getWidth()+10));
+        
+        // 2) Positionner le label à gauche avec sa largeur exacte
+        overviewLabel.setBounds(contentArea.removeFromLeft(labelWidth));
+        
+        // 3) Positionner le bouton à droite avec FlexBox
+        juce::FlexBox flexContainer;
+        flexContainer.flexDirection = juce::FlexBox::Direction::row;
+        flexContainer.justifyContent = juce::FlexBox::JustifyContent::flexEnd;
+        flexContainer.alignItems = juce::FlexBox::AlignItems::center;
         
         // Créer le FlexItem pour le bouton
         juce::FlexItem buttonItem(actionButton);
@@ -58,11 +66,10 @@ public:
         buttonItem.height = 30.0f;
         buttonItem.flexGrow = 0.0f; // Taille fixe
         
-        // Ajouter les éléments au FlexBox
-        flexContainer.items.add(spacer);
+        // Ajouter le bouton au FlexBox
         flexContainer.items.add(buttonItem);
         
-        // Appliquer le layout
+        // Appliquer le layout sur l'espace restant
         flexContainer.performLayout(contentArea.toFloat());
     }
     
@@ -74,6 +81,7 @@ public:
     
 private:
     juce::SharedResourcePointer<FontManager> fontManager;
+    juce::Label      overviewLabel;
     OutlineTextButton actionButton;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(OverviewArea)
