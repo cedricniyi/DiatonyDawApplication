@@ -1,7 +1,7 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "../../extra/ColoredPanel.h"
+#include "ui/extra/ColoredPanel.h"
 
 //==============================================================================
 class ContentAreaPanel : public ColoredPanel
