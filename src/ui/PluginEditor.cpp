@@ -86,7 +86,7 @@ void AudioPluginAudioProcessorEditor::startFlexAnimation()
     DBG("PluginEditor: startFlexAnimation() appelée !"); // Debug
     
     // Valeur de départ et cible (toggle)
-    float targetFooterFlex = (footerFlex < 30.0f) ? 40.0f : 25.0f;
+    float targetFooterFlex = (footerFlex < 30.0f) ? 30.0f : 15.0f;
     
     DBG("PluginEditor: footerFlex actuel = " << footerFlex << ", target = " << targetFooterFlex);
     

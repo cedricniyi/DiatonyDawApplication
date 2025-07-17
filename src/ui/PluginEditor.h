@@ -46,8 +46,8 @@ private:
     // Animation pour les valeurs flex (utilise AnimationManager)
     void startFlexAnimation();
     float headerFlex  = 7.5f;
-    float sectionFlex = 47.5f;
-    float footerFlex  = 25.0f;
+    float sectionFlex = 57.5f;
+    float footerFlex  = 15.0f;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessorEditor)
 }; 
