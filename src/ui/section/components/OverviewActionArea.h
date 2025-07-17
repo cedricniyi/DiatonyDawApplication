@@ -4,6 +4,7 @@
 #include "ui/extra/ColoredPanel.h"
 #include "utils/FontManager.h"
 #include "PlaybackActionArea.h"
+#include "GenerationButtons.h"
 
 //==============================================================================
 class OverviewActionArea : public ColoredPanel
@@ -15,21 +16,29 @@ public:
         // Définir l'alpha pour que le composant en dessous soit visible
         setAlpha(0.85f); 
         
-        // Ajouter les boutons de contrôle média
+        // Ajouter les composants
+        addAndMakeVisible(generationButtons);
         addAndMakeVisible(playbackActionArea);
         
         // Configuration du FlexBox
         flexBox.flexDirection = juce::FlexBox::Direction::row;
-        flexBox.justifyContent = juce::FlexBox::JustifyContent::flexStart;
+        flexBox.justifyContent = juce::FlexBox::JustifyContent::spaceBetween;
         flexBox.alignItems = juce::FlexBox::AlignItems::center;
         flexBox.flexWrap = juce::FlexBox::Wrap::noWrap;
         
-        // Ajouter les éléments au FlexBox - taille adaptée au contenu
+        // Ajouter les éléments au FlexBox - PlaybackActionArea à gauche
         auto preferredSize = playbackActionArea.getPreferredSize();
         flexBox.items.add(juce::FlexItem(playbackActionArea)
             .withWidth(preferredSize.getWidth())
             .withHeight(preferredSize.getHeight())
-            .withMargin(juce::FlexItem::Margin(0, 20, 0, 0)));
+            .withMargin(juce::FlexItem::Margin(0, 0, 0, 0)));
+        
+        // Puis GenerationButtons à droite
+        auto generationSize = generationButtons.getPreferredSize();
+        flexBox.items.add(juce::FlexItem(generationButtons)
+            .withWidth(generationSize.getWidth())
+            .withHeight(generationSize.getHeight())
+            .withMargin(juce::FlexItem::Margin(0, 0, 0, 0)));
     }
     
     void paint(juce::Graphics& g) override
@@ -50,11 +59,13 @@ public:
         flexBox.performLayout(area.toFloat());
     }
     
-    // Accès au composant playback pour les callbacks
+    // Accès aux composants pour les callbacks
+    GenerationButtons& getGenerationButtons() { return generationButtons; }
     PlaybackActionArea& getPlaybackActionArea() { return playbackActionArea; }
     
 private:
     juce::SharedResourcePointer<FontManager> fontManager;
+    GenerationButtons generationButtons;
     PlaybackActionArea playbackActionArea;
     juce::FlexBox flexBox;
 
