@@ -10,9 +10,9 @@ class PlaybackActionArea : public ColoredPanel
 public:
     PlaybackActionArea() 
         : ColoredPanel(juce::Colours::white),
-          playButton(juce::String::fromUTF8("▶"), juce::Colour::fromString("#ff4CAF50"), juce::Colour::fromString("#ff45A049"), 16.0f, FontManager::FontWeight::Bold),
-          pauseButton(juce::String::fromUTF8("⏸"), juce::Colour::fromString("#ffFFC107"), juce::Colour::fromString("#ffFFB300"), 16.0f, FontManager::FontWeight::Bold),
-          stopButton(juce::String::fromUTF8("⏹"), juce::Colour::fromString("#ff9C27B0"), juce::Colour::fromString("#ff8E24AA"), 16.0f, FontManager::FontWeight::Bold)
+          playButton(juce::String::fromUTF8("▶"), juce::Colours::black, juce::Colour::fromString("#ff666666"), 16.0f, FontManager::FontWeight::Bold),
+          pauseButton(juce::String::fromUTF8("⏸"), juce::Colours::black, juce::Colour::fromString("#ff666666"), 16.0f, FontManager::FontWeight::Bold),
+          stopButton(juce::String::fromUTF8("⏹"), juce::Colours::black, juce::Colour::fromString("#ff666666"), 16.0f, FontManager::FontWeight::Bold)
     {
         // Ajouter les boutons
         addAndMakeVisible(playButton);
