@@ -5,20 +5,22 @@
 #include "utils/FontManager.h"
 #include "PlaybackActionArea.h"
 #include "GenerationButtons.h"
+#include "OverviewArea.h"
 
 //==============================================================================
 class OverviewActionArea : public ColoredPanel
 {
 public:
     OverviewActionArea() 
-        : ColoredPanel(juce::Colour::fromString("#fff0faff"))
+        : ColoredPanel(juce::Colours::white)
     {
         // Définir l'alpha pour que le composant en dessous soit visible
         setAlpha(0.85f); 
         
         // Ajouter les composants
-        addAndMakeVisible(generationButtons);
         addAndMakeVisible(playbackActionArea);
+        addAndMakeVisible(overviewArea);
+        addAndMakeVisible(generationButtons);
         
         // Configuration du FlexBox
         flexBox.flexDirection = juce::FlexBox::Direction::row;
@@ -26,19 +28,30 @@ public:
         flexBox.alignItems = juce::FlexBox::AlignItems::center;
         flexBox.flexWrap = juce::FlexBox::Wrap::noWrap;
         
-        // Ajouter les éléments au FlexBox - PlaybackActionArea à gauche
-        auto preferredSize = playbackActionArea.getPreferredSize();
+        // Ajouter les éléments au FlexBox
+        // PlaybackActionArea à gauche (taille fixe)
+        auto playbackSize = playbackActionArea.getPreferredSize();
         flexBox.items.add(juce::FlexItem(playbackActionArea)
-            .withWidth(preferredSize.getWidth())
-            .withHeight(preferredSize.getHeight())
-            .withMargin(juce::FlexItem::Margin(0, 0, 0, 0)));
+            .withWidth(playbackSize.getWidth())
+            .withHeight(playbackSize.getHeight())
+            .withFlex(0, 0, playbackSize.getWidth())
+            .withMargin(juce::FlexItem::Margin(0, 10, 0, 0)));
         
-        // Puis GenerationButtons à droite
+        // OverviewArea au centre (responsive en largeur)
+        auto overviewSize = overviewArea.getPreferredSize();
+        flexBox.items.add(juce::FlexItem(overviewArea)
+            .withMinWidth(150.0f)
+            .withHeight(overviewSize.getHeight())
+            .withFlex(1, 1, 200.0f) // Flexible en largeur
+            .withMargin(juce::FlexItem::Margin(0, 10, 0, 10)));
+        
+        // GenerationButtons à droite (taille fixe)
         auto generationSize = generationButtons.getPreferredSize();
         flexBox.items.add(juce::FlexItem(generationButtons)
             .withWidth(generationSize.getWidth())
             .withHeight(generationSize.getHeight())
-            .withMargin(juce::FlexItem::Margin(0, 0, 0, 0)));
+            .withFlex(0, 0, generationSize.getWidth())
+            .withMargin(juce::FlexItem::Margin(0, 0, 0, 10)));
     }
     
     void paint(juce::Graphics& g) override
@@ -62,11 +75,13 @@ public:
     // Accès aux composants pour les callbacks
     GenerationButtons& getGenerationButtons() { return generationButtons; }
     PlaybackActionArea& getPlaybackActionArea() { return playbackActionArea; }
+    OverviewArea& getOverviewArea() { return overviewArea; }
     
 private:
     juce::SharedResourcePointer<FontManager> fontManager;
-    GenerationButtons generationButtons;
     PlaybackActionArea playbackActionArea;
+    OverviewArea overviewArea;
+    GenerationButtons generationButtons;
     juce::FlexBox flexBox;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(OverviewActionArea)
