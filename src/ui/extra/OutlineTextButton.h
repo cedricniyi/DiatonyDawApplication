@@ -1,8 +1,7 @@
 #pragma once
 
 #include <JuceHeader.h>
-
-namespace extra {
+#include "../../utils/FontManager.h"
 
 // Classe LookAndFeel personnalisée pour dessiner un bouton avec contour uniquement
 class OutlineButtonLookAndFeel : public juce::LookAndFeel_V4
@@ -27,12 +26,17 @@ public:
     OutlineTextButton(const juce::String& buttonText,
                       juce::Colour textColourToUse,
                       juce::Colour borderColourToUse,
-                      float borderThicknessToUse)
+                      float borderThicknessToUse,
+                      float fontSize = 14.0f,
+                      FontManager::FontWeight fontWeight = FontManager::FontWeight::Regular)
         : juce::TextButton(buttonText),
           borderThickness(borderThicknessToUse),
           normalTextColour(textColourToUse),
           normalBorderColour(borderColourToUse)
     {
+        // Initialiser la font après que fontManager soit disponible
+        customFont = fontManager->getSFProDisplay(fontSize, fontWeight);
+        
         setColour(juce::TextButton::textColourOnId, textColourToUse);
         setColour(juce::TextButton::textColourOffId, textColourToUse);
         // Utiliser buttonColourId pour passer la couleur du contour au LookAndFeel
@@ -53,11 +57,16 @@ public:
     // Permet de connaître les couleurs normales (non-désactivées)
     juce::Colour getNormalTextColour() const { return normalTextColour; }
     juce::Colour getNormalBorderColour() const { return normalBorderColour; }
+    
+    // Permet d'accéder à la font personnalisée
+    juce::FontOptions getCustomFont() const { return customFont; }
 
 private:
     float borderThickness;
     juce::Colour normalTextColour;    // Stockage des couleurs normales pour les comparer
     juce::Colour normalBorderColour;  // quand le bouton est désactivé
+    juce::FontOptions customFont;     // Font personnalisée
+    juce::SharedResourcePointer<FontManager> fontManager;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(OutlineTextButton)
 };
@@ -104,7 +113,16 @@ inline void OutlineButtonLookAndFeel::drawButtonText (juce::Graphics& g, juce::T
                                                      bool /*shouldDrawButtonAsHighlighted*/, 
                                                      bool /*shouldDrawButtonAsDown*/)
 {
-    g.setFont(getTextButtonFont(button, button.getHeight()));
+    // Utiliser la font personnalisée si disponible
+    auto* outlineButton = dynamic_cast<OutlineTextButton*>(&button);
+    if (outlineButton)
+    {
+        g.setFont(juce::Font(outlineButton->getCustomFont()));
+    }
+    else
+    {
+        g.setFont(getTextButtonFont(button, button.getHeight()));
+    }
     
     // Choisir la couleur du texte selon l'état du bouton
     juce::Colour textColour = button.findColour(button.getToggleState() ? 
@@ -130,5 +148,3 @@ inline void OutlineButtonLookAndFeel::drawButtonText (juce::Graphics& g, juce::T
                      leftIndent, yIndent, textWidth, button.getHeight() - yIndent * 2,
                      juce::Justification::centred, 2);
 }
-
-} // namespace extra 
