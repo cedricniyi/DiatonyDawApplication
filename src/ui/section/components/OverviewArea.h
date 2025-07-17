@@ -19,10 +19,13 @@ public:
         // Dessiner le fond coloré via ColoredPanel
         ColoredPanel::paint(g);
         
-        // Optionnel: ajouter du contenu visuel
-        g.setColour(juce::Colours::darkgrey);
-        g.setFont(fontManager->getSFProText(16.0f, FontManager::FontWeight::Regular));
-        g.drawText("Overview", getLocalBounds(), juce::Justification::centred);
+        // Optionnel: ajouter du contenu visuel avec padding interne
+        g.setColour(juce::Colours::darkblue);
+        g.setFont(fontManager->getSFProText(16.0f, FontManager::FontWeight::Bold));
+        
+        // Appliquer un padding interne pour le texte
+        auto textArea = getLocalBounds().reduced(12, 8);
+        g.drawText("OVERVIEW", textArea, juce::Justification::left);
     }
     
     void resized() override
@@ -33,7 +36,7 @@ public:
     // Méthode pour obtenir la taille préférée
     juce::Rectangle<int> getPreferredSize() const
     {
-        return juce::Rectangle<int>(0, 0, 200, 40); // Largeur flexible, hauteur fixe
+        return juce::Rectangle<int>(0, 0, 200, 55); // Largeur flexible, hauteur fixe
     }
     
 private:
