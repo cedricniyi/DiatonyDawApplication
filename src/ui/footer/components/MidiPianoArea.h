@@ -33,7 +33,7 @@ public:
             DBG("Bouton de redimensionnement cliqué !"); // Debug
             if (onResizeToggle) {
                 DBG("Callback onResizeToggle trouvé, appel en cours...");
-                onResizeToggle(); 
+                onResizeToggle(); // Déclenche l'animation de redimensionnement
             } else {
                 DBG("ERREUR: Callback onResizeToggle est null !");
             }
