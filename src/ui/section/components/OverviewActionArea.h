@@ -12,7 +12,7 @@ class OverviewActionArea : public ColoredPanel
 {
 public:
     OverviewActionArea() 
-        : ColoredPanel(juce::Colours::white)
+        : ColoredPanel(juce::Colour::fromString("#fffcfcff"))
     {
         // Définir l'alpha pour que le composant en dessous soit visible
         setAlpha(0.85f); 

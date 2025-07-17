@@ -9,7 +9,7 @@ class PlaybackActionArea : public ColoredPanel
 {
 public:
     PlaybackActionArea() 
-        : ColoredPanel(juce::Colour::fromString("#ffddebf0")),
+        : ColoredPanel(juce::Colour::fromString("#ffededfc")),
           playButton(juce::String::fromUTF8("▶"), juce::Colours::black, juce::Colour::fromString("#ff666666"), 16.0f, FontManager::FontWeight::Bold),
           pauseButton(juce::String::fromUTF8("⏸"), juce::Colours::black, juce::Colour::fromString("#ff666666"), 16.0f, FontManager::FontWeight::Bold),
           stopButton(juce::String::fromUTF8("⏹"), juce::Colours::black, juce::Colour::fromString("#ff666666"), 16.0f, FontManager::FontWeight::Bold)

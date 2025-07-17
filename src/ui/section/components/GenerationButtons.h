@@ -10,7 +10,7 @@ class GenerationButtons : public ColoredPanel
 {
 public:
     GenerationButtons()
-        : ColoredPanel(juce::Colour::fromString("#ffddebf0")),
+        : ColoredPanel(juce::Colour::fromString("#ffededfc")),
           generateButton("Generate", 
                         juce::Colour::fromString("#ff22c55e"), // Vert
                         juce::Colour::fromString("#ff16a34a"), // Vert plus foncé pour highlight
