@@ -1,7 +1,7 @@
 // StyledButton.h
 #pragma once
 #include <JuceHeader.h>
-#include "../../utils/FontManager.h"
+#include "utils/FontManager.h"
 
 /// Un TextButton réutilisable, où l'on ne précise que le texte et 2 couleurs
 class StyledButton : public juce::TextButton
