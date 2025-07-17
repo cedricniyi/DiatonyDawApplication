@@ -1,8 +1,9 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "../../extra/ColoredPanel.h"
-#include "../../../utils/FontManager.h"
+#include "ui/extra/ColoredPanel.h"
+#include "utils/FontManager.h"
+#include "PlaybackActionArea.h"
 
 //==============================================================================
 class OverviewActionArea : public ColoredPanel
@@ -14,16 +15,17 @@ public:
         // Définir l'alpha pour que le composant en dessous soit visible
         setAlpha(0.85f); 
         
-        // Label "Overview & Actions"
-        headerLabel.setText(juce::String::fromUTF8("Overview & Actions"), juce::dontSendNotification);
-        headerLabel.setJustificationType (juce::Justification::centredLeft);
-        headerLabel.setColour (juce::Label::textColourId, juce::Colours::black);
+        // Ajouter les boutons de contrôle média
+        addAndMakeVisible(playbackActionArea);
         
-        // Correction : Convertir FontOptions en Font
-        auto fontOptions = fontManager->getSFProDisplay(18.0f, FontManager::FontWeight::Bold);
-        headerLabel.setFont(juce::Font(fontOptions));
+        // Configuration du FlexBox
+        flexBox.flexDirection = juce::FlexBox::Direction::row;
+        flexBox.justifyContent = juce::FlexBox::JustifyContent::flexStart;
+        flexBox.alignItems = juce::FlexBox::AlignItems::center;
+        flexBox.flexWrap = juce::FlexBox::Wrap::noWrap;
         
-        addAndMakeVisible (headerLabel);
+        // Ajouter les éléments au FlexBox
+        flexBox.items.add(juce::FlexItem(playbackActionArea).withMinWidth(130.0f).withMinHeight(40.0f).withMargin(juce::FlexItem::Margin(0, 20, 0, 0)));
     }
     
     void paint(juce::Graphics& g) override
@@ -35,12 +37,16 @@ public:
     void resized() override
     {
         auto area = getLocalBounds().reduced(20, 10);
-        headerLabel.setBounds(area);
+        flexBox.performLayout(area.toFloat());
     }
+    
+    // Accès aux boutons pour les callbacks
+    PlaybackActionArea& getPlaybackActionArea() { return playbackActionArea; }
     
 private:
     juce::SharedResourcePointer<FontManager> fontManager;
-    juce::Label headerLabel;
+    PlaybackActionArea playbackActionArea;
+    juce::FlexBox flexBox;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(OverviewActionArea)
 }; 
