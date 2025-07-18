@@ -12,7 +12,7 @@ class FooterPanel : public juce::Component
 public:
     FooterPanel() 
         : midiPianoArea(),
-          interactivePiano(juce::Colours::white), // Couleur blanche
+          interactivePiano(juce::Colours::white.withAlpha(0.50f)), // Couleur blanche
           isExpanded(false),
           gridTransitionFraction(0.0f) // Paramètre d'interpolation (0 = compact, 1 = élargi)
     {
@@ -26,10 +26,6 @@ public:
                 DBG("FooterPanel: ERREUR: Callback onToggleRequest est null !");
             }
         };
-        
-        // Configurer le composant qui va fade in/out
-        interactivePiano.setAlpha(1.0f);
-        interactivePiano.setVisible(true);
         
         addAndMakeVisible(midiPianoArea);
         addAndMakeVisible(interactivePiano);
