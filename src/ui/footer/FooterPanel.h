@@ -3,7 +3,6 @@
 #include <JuceHeader.h>
 #include "components/MidiPianoArea.h"
 #include "../extra/ColoredPanel.h"
-#include "../animation/AnimationManager.h"
 #include "../../utils/FontManager.h"
 
 //==============================================================================
@@ -13,34 +12,30 @@ public:
     FooterPanel() 
         : midiPianoArea(),
           fadingDemoPanel(juce::Colour(0xff6c5ce7)), // Couleur violette
-          isFadingComponentVisible(false),
-          isGridExpanded(false), // État initial : grille compacte
+          isExpanded(false),
           gridTransitionFraction(0.0f) // Paramètre d'interpolation (0 = compact, 1 = élargi)
     {
         // Configurer le callback pour le bouton de redimensionnement
         midiPianoArea.onResizeToggle = [this] { 
-            DBG("FooterPanel: Callback onResizeToggle reçu !"); // Debug
-            if (onRequestResize) {
-                DBG("FooterPanel: Callback onRequestResize trouvé, appel en cours...");
-                onRequestResize(); // Déclenche l'animation de redimensionnement du footer
+            DBG("FooterPanel: Callback onResizeToggle reçu !");
+            if (onToggleRequest) {
+                DBG("FooterPanel: Callback onToggleRequest trouvé, appel en cours...");
+                onToggleRequest(); // Déclenche la demande d'animation
             } else {
-                DBG("FooterPanel: ERREUR: Callback onRequestResize est null !");
+                DBG("FooterPanel: ERREUR: Callback onToggleRequest est null !");
             }
-            
-            // EN PLUS : Déclencher l'animation de fade + toggle de la grille
-            triggerGridToggleAnimation();
         };
         
         // Configurer le composant qui va fade in/out
         setupFadingComponent();
         
-        addAndMakeVisible (midiPianoArea);
-        addAndMakeVisible (fadingDemoPanel);
+        addAndMakeVisible(midiPianoArea);
+        addAndMakeVisible(fadingDemoPanel);
     }
     
     void paint(juce::Graphics& g) override
     {
-
+        // Pas de peinture spéciale nécessaire
     }
     
     void resized() override
@@ -99,8 +94,41 @@ public:
         grid.performLayout(area);
     }
     
-    /** Callback déclenché quand une animation de redimensionnement est demandée */
-    std::function<void()> onRequestResize;
+    // === Interface publique pour contrôler l'état ===
+    
+    /** Met à jour la fraction d'interpolation de la grille (0 = compact, 1 = élargi) */
+    void setGridFraction(float fraction)
+    {
+        gridTransitionFraction = juce::jlimit(0.0f, 1.0f, fraction);
+        resized(); // Redessiner le layout
+    }
+    
+    /** Met à jour l'état d'expansion */
+    void setExpanded(bool expanded)
+    {
+        isExpanded = expanded;
+    }
+    
+    /** Retourne l'état d'expansion actuel */
+    bool getExpanded() const
+    {
+        return isExpanded;
+    }
+    
+    /** Retourne une référence au composant qui fade in/out */
+    juce::Component& getFadingComponent()
+    {
+        return fadingDemoPanel;
+    }
+    
+    /** Retourne une référence à la fraction de grille pour l'animation */
+    float& getGridFractionRef()
+    {
+        return gridTransitionFraction;
+    }
+    
+    /** Callback déclenché quand une animation de toggle est demandée */
+    std::function<void()> onToggleRequest;
     
 private:
     MidiPianoArea midiPianoArea;
@@ -149,8 +177,7 @@ private:
     };
     
     FadingDemoPanel fadingDemoPanel;
-    bool isFadingComponentVisible;
-    bool isGridExpanded; // État du toggle de la grille
+    bool isExpanded; // État du toggle de la grille
     float gridTransitionFraction; // Paramètre d'interpolation (0 = compact, 1 = élargi)
     
     void setupFadingComponent()
@@ -158,78 +185,6 @@ private:
         // Initialiser le composant comme invisible
         fadingDemoPanel.setAlpha(0.0f);
         fadingDemoPanel.setVisible(false);
-        isFadingComponentVisible = false;
-    }
-    
-    void triggerGridToggleAnimation()
-    {
-        DBG("FooterPanel: Déclenchement du toggle de grille, état actuel : " << (isGridExpanded ? "élargi" : "compact"));
-        
-        if (isGridExpanded)
-        {
-            // MASQUER : fade out → puis rétrécir la grille progressivement
-            DBG("FooterPanel: Séquence MASQUER - Étape 1: Fade out du composant");
-            
-            // Étape 1 : Faire disparaître le composant
-            isFadingComponentVisible = false;
-            AnimationManager::getInstance()->fadeComponent(
-                fadingDemoPanel, 
-                false, // fade out
-                300.0, // durée
-                [this]() { // callback : quand le fade out est terminé
-                    DBG("FooterPanel: Séquence MASQUER - Étape 2: Animer la grille (rétrécissement)");
-                    
-                    // Étape 2 : Animer la grille progressivement (1.0f → 0.0f)
-                    AnimationManager::getInstance()->animateValueSimple(
-                        gridTransitionFraction,
-                        0.0f, // target : grille compacte
-                        350.0, // durée
-                        [this]() { // onUpdate : redessiner la grille à chaque frame
-                            resized();
-                        }
-                    );
-                    
-                    // Marquer l'état comme compact
-                    isGridExpanded = false;
-                    
-                    DBG("FooterPanel: Séquence MASQUER terminée");
-                }
-            );
-        }
-        else
-        {
-            // RÉVÉLER : élargir la grille progressivement → puis fade in
-            DBG("FooterPanel: Séquence RÉVÉLER - Étape 1: Animer la grille (élargissement)");
-            
-            // Étape 1 : Animer la grille progressivement (0.0f → 1.0f)
-            AnimationManager::getInstance()->animateValueSimple(
-                gridTransitionFraction,
-                1.0f, // target : grille élargie
-                350.0, // durée
-                [this]() { // onUpdate : redessiner la grille à chaque frame
-                    resized();
-                }
-            );
-            
-            // Marquer l'état comme élargi
-            isGridExpanded = true;
-            
-            // Petite pause pour laisser la grille se déployer un peu
-            juce::Timer::callAfterDelay(150, [this]() {
-                DBG("FooterPanel: Séquence RÉVÉLER - Étape 2: Fade in du composant");
-                
-                // Étape 2 : Faire apparaître le composant
-                isFadingComponentVisible = true;
-                AnimationManager::getInstance()->fadeComponent(
-                    fadingDemoPanel, 
-                    true, // fade in
-                    300.0, // durée
-                    [this]() { // callback : quand le fade in est terminé
-                        DBG("FooterPanel: Séquence RÉVÉLER terminée");
-                    }
-                );
-            });
-        }
     }
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(FooterPanel)

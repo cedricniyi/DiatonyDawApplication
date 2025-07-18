@@ -3,6 +3,7 @@
 #include "melatonin_inspector/melatonin_inspector.h"
 #include "utils/FontManager.h"
 #include "ui/animation/AnimationManager.h"
+#include "ui/footer/animator/FooterAnimator.h"
 
 //==============================================================================
 AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAudioProcessor& p)
@@ -21,10 +22,15 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     
     setSize(1500, 750);
 
-    // Configuration du callback pour l'animation moderne
-    footerPanel.onRequestResize = [this] { startFlexAnimation(); };
+    // Créer le FooterAnimator avec les références nécessaires pour l'animation flex
+    footerAnimator = std::make_unique<FooterAnimator>(
+        footerPanel, 
+        *AnimationManager::getInstance(),
+        footerFlex,                    // Référence vers la variable flex
+        [this]() { resized(); }        // Callback pour redessiner le layout
+    );
     
-    DBG("PluginEditor: Callback onRequestResize assigné au FooterPanel"); // Debug
+    DBG("PluginEditor: FooterAnimator créé avec animation flex intégrée");
 
     addAndMakeVisible (headerPanel);
     addAndMakeVisible (sectionPanel);
@@ -79,25 +85,4 @@ void AudioPluginAudioProcessorEditor::resized()
     };
 
     fb.performLayout (content);
-}
-
-void AudioPluginAudioProcessorEditor::startFlexAnimation()
-{
-    DBG("PluginEditor: startFlexAnimation() appelée !"); // Debug
-    
-    // Valeur de départ et cible (toggle)
-    float targetFooterFlex = (footerFlex < 30.0f) ? 30.0f : 15.0f;
-    
-    DBG("PluginEditor: footerFlex actuel = " << footerFlex << ", target = " << targetFooterFlex);
-    
-    // Utiliser l'AnimationManager modernisé avec l'API juce_animation
-    AnimationManager::getInstance()->animateValueSimple(
-        footerFlex,
-        targetFooterFlex,
-        300.0, // durée en ms
-        [this]() { 
-            // Callback appelé à chaque frame pour redessiner le layout
-            resized(); 
-        }
-    );
 }

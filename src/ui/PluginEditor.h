@@ -9,6 +9,9 @@
 #include "footer/FooterPanel.h"
 #include "melatonin_inspector/melatonin_inspector.h"
 
+// Forward declaration pour éviter les dépendances circulaires
+class FooterAnimator;
+
 //==============================================================================
 class AudioPluginAudioProcessorEditor : public juce::AudioProcessorEditor
 {
@@ -40,11 +43,13 @@ private:
     SectionPanel sectionPanel;
     FooterPanel footerPanel;
 
+    // Animator pour gérer les animations du footer
+    std::unique_ptr<FooterAnimator> footerAnimator;
+
     // Constrainer pour la taille
     std::unique_ptr<juce::ComponentBoundsConstrainer> constrainer;
     
-    // Animation pour les valeurs flex (utilise AnimationManager)
-    void startFlexAnimation();
+    // Valeurs flex (animation maintenant gérée par FooterAnimator)
     float headerFlex  = 7.5f;
     float sectionFlex = 57.5f;
     float footerFlex  = 15.0f;
