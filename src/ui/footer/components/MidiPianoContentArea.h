@@ -2,38 +2,10 @@
 
 #include <JuceHeader.h>
 #include "../../extra/StyledButton.h"
+#include "../../extra/TextPill.h"
 #include "../../../utils/FontManager.h"
 
 //==============================================================================
-// Composant simple coloré pour les zones
-class SimpleColoredZone : public juce::Component
-{
-public:
-    SimpleColoredZone(juce::Colour color, const juce::String& name) 
-        : zoneColor(color), zoneName(name)
-    {
-        setOpaque(false);
-    }
-    
-    void paint(juce::Graphics& g) override
-    {
-        // Fond coloré avec coins arrondis
-        auto bounds = getLocalBounds().toFloat();
-        g.setColour(zoneColor);
-        g.fillRoundedRectangle(bounds, 4.0f);
-        
-        // Texte de debug au centre
-        g.setColour(zoneColor.contrasting(0.8f));
-        g.setFont(14.0f);
-        g.drawText(zoneName, bounds.toNearestInt(), juce::Justification::centred);
-    }
-    
-private:
-    juce::Colour zoneColor;
-    juce::String zoneName;
-    
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SimpleColoredZone)
-};
 
 //==============================================================================
 class MidiPianoContentArea : public juce::Component
@@ -45,11 +17,10 @@ public:
                       juce::Colour(0xff357abd),  // Couleur highlight (bleu plus foncé)
                       14.0f,                     // Taille de police
                       FontManager::FontWeight::Medium),
-          zone1(juce::Colours::lightblue, "Zone 1"),
-          zone2(juce::Colours::lightcoral, "Zone 2"),
-          zone3(juce::Colours::lightgreen, "Zone 3"),
-          zone4(juce::Colours::lightyellow, "Zone 4"),
-          zone5(juce::Colours::lightpink, "Zone 5"),
+          selectedSecPill(juce::Colour::fromString("#ff3498db").withAlpha(0.35f)),
+          pianoModePill(juce::Colours::lightgreen),
+          midiInfoPill(juce::Colours::lightyellow),
+          moreInfoPill(juce::Colours::lightpink),
           isZone5Visible(false)
     {
         // Configuration du bouton de redimensionnement
@@ -60,10 +31,10 @@ public:
             isZone5Visible = !isZone5Visible;
             
             if (isZone5Visible) {
-                addAndMakeVisible(zone5);
+                addAndMakeVisible(moreInfoPill);
                 DBG("Zone 5 affichée");
             } else {
-                removeChildComponent(&zone5);
+                removeChildComponent(&moreInfoPill);
                 DBG("Zone 5 masquée");
             }
             
@@ -77,25 +48,19 @@ public:
             }
         };
         
-        // Le bouton remplace la zone 2 (en haut à droite)
         addAndMakeVisible(resizeButton);
+        addAndMakeVisible(selectedSecPill);
+        addAndMakeVisible(pianoModePill);
+        addAndMakeVisible(midiInfoPill);
+        addChildComponent(moreInfoPill);
         
-        // Ajout des 3 zones colorées (zone2 remplacée par le bouton)
-        addAndMakeVisible(zone1);
-        addChildComponent(zone2); // Zone 2 masquée car remplacée par le bouton
-        addAndMakeVisible(zone3);
-        addAndMakeVisible(zone4);
-        
-        // Zone 5 initialement masquée
-        addChildComponent(zone5);
+        // Configuration des TextPill avec styles variés
+        setupTextPills();
     }
     
     void paint(juce::Graphics& g) override
     {
-        // Fond général
         g.fillAll(juce::Colours::white);
-        
-        // Bordure pour délimiter clairement le conteneur
     }
     
     void resized() override
@@ -115,23 +80,23 @@ public:
         // Calculer les pourcentages pour chaque ligne
         calculateRowPercentages(topRow, bottomRow);
         
-        // Première ligne : Zone 1 et resizeButton (remplace zone 2)
+        // Première ligne : selectedSecPill et resizeButton
         juce::FlexBox topFlexBox;
         topFlexBox.flexDirection = juce::FlexBox::Direction::row;
-        topFlexBox.items.add(juce::FlexItem(zone1).withFlex(topLeftPercentage / 100.0f).withMargin(5));
+        topFlexBox.items.add(juce::FlexItem(selectedSecPill).withFlex(topLeftPercentage / 100.0f).withMargin(5));
         topFlexBox.items.add(juce::FlexItem(resizeButton).withFlex(topRightPercentage / 100.0f).withMargin(5));
         topFlexBox.performLayout(topRow);
         
-        // Deuxième ligne : Zone 3 et Zone 4
+        // Deuxième ligne : pianoModePill et midiInfoPill
         juce::FlexBox bottomFlexBox;
         bottomFlexBox.flexDirection = juce::FlexBox::Direction::row;
-        bottomFlexBox.items.add(juce::FlexItem(zone3).withFlex(bottomLeftPercentage / 100.0f).withMargin(5));
-        bottomFlexBox.items.add(juce::FlexItem(zone4).withFlex(bottomRightPercentage / 100.0f).withMargin(5));
+        bottomFlexBox.items.add(juce::FlexItem(pianoModePill).withFlex(bottomLeftPercentage / 100.0f).withMargin(5));
+        bottomFlexBox.items.add(juce::FlexItem(midiInfoPill).withFlex(bottomRightPercentage / 100.0f).withMargin(5));
         bottomFlexBox.performLayout(bottomRow);
         
-        // Troisième ligne : Zone 5 (si visible, prend toute la largeur avec margin de 5)
+        // Troisième ligne : moreInfoPill (si visible, prend toute la largeur avec margin de 5)
         if (isZone5Visible) {
-            zone5.setBounds(zone5Area.reduced(5));
+            moreInfoPill.setBounds(zone5Area.reduced(5));
         }
     }
     
@@ -151,7 +116,34 @@ public:
         DBG("Ligne du bas - Zone 3: " << bottomLeftPercentage << "%, Zone 4: " << bottomRightPercentage << "%");
     }
     
-    /** Callback déclenché quand le bouton de redimensionnement est cliqué */
+    void setupTextPills()
+    {
+        selectedSecPill.setText("Active Section : ", "None", 
+                         14.0f, FontManager::FontWeight::Medium,
+                         14.0f, FontManager::FontWeight::Bold);
+        selectedSecPill.setTextColor(juce::Colours::lightblue.contrasting(0.8f));
+
+        selectedSecPill.setBorder(juce::Colour::fromString("#ff3498db"), 1.5f);
+        
+
+        pianoModePill.setText("Mode:", "", 
+                         14.0f, FontManager::FontWeight::Semibold,
+                         14.0f, FontManager::FontWeight::Regular);
+        pianoModePill.setTextColor(juce::Colours::lightgreen.contrasting(0.8f));
+        pianoModePill.setBorder(juce::Colours::lightgreen.darker(0.4f), 1.0f);
+        
+        midiInfoPill.setText(juce::String::fromUTF8("● "), "Midi Active", 
+                         14.0f, FontManager::FontWeight::Bold,
+                         14.0f, FontManager::FontWeight::Semibold);
+        midiInfoPill.setTextColor(juce::Colours::lightyellow.contrasting(0.8f));
+        midiInfoPill.setBorder(juce::Colours::lightyellow.darker(0.5f), 2.0f);
+        
+        moreInfoPill.setText("Zone 5 ", "- Hidden Area", 
+                         14.0f, FontManager::FontWeight::Bold,
+                         14.0f, FontManager::FontWeight::Regular);
+        moreInfoPill.setTextColor(juce::Colours::lightpink.contrasting(0.8f));
+    }
+    
     std::function<void()> onResizeToggle;
     
 private:
@@ -160,12 +152,11 @@ private:
     // Bouton de redimensionnement (masqué mais gardé dans le code)
     StyledButton resizeButton;
     
-    // Les 5 zones colorées (maintenant des juce::Component simples)
-    SimpleColoredZone zone1;
-    SimpleColoredZone zone2;
-    SimpleColoredZone zone3;
-    SimpleColoredZone zone4;
-    SimpleColoredZone zone5;
+    // Les 5 zones colorées avec TextPill (gèrent fond et texte)
+    TextPill selectedSecPill;
+    TextPill pianoModePill;
+    TextPill midiInfoPill;
+    TextPill moreInfoPill;
     
     // État de visibilité de la zone 5
     bool isZone5Visible;
