@@ -3,25 +3,19 @@
 #include <JuceHeader.h>
 #include "../../extra/ColoredPanel.h"
 #include "../../../utils/FontManager.h"
+#include "InteractivePianoContentArea.h"
 
 //==============================================================================
+// Conteneur principal avec padding
 class InteractivePiano : public ColoredPanel
 {
 public:
     InteractivePiano(juce::Colour color) 
         : ColoredPanel(color),
-          fontManager()
+          fontManager(),
+          contentArea()
     {
-        // Texte de démonstration
-        label.setText(juce::String::fromUTF8("🎹 Interactive Piano 🎹"), juce::dontSendNotification);
-        label.setJustificationType(juce::Justification::centred);
-        label.setColour(juce::Label::textColourId, juce::Colours::darkgrey);
-        
-        // Configurer la police
-        auto fontOptions = fontManager->getSFProDisplay(16.0f, FontManager::FontWeight::Medium);
-        label.setFont(juce::Font(fontOptions));
-        
-        addAndMakeVisible(label);
+        addAndMakeVisible(contentArea);
     }
     
     void paint(juce::Graphics& g) override
@@ -32,12 +26,16 @@ public:
     
     void resized() override
     {
-        label.setBounds(getLocalBounds());
+        // Appliquer un padding de 10px tout autour
+        auto bounds = getLocalBounds();
+        auto contentBounds = bounds.reduced(10);
+        
+        contentArea.setBounds(contentBounds);
     }
     
 private:
-    juce::Label label;
     juce::SharedResourcePointer<FontManager> fontManager;
+    InteractivePianoContentArea contentArea;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(InteractivePiano)
 }; 
