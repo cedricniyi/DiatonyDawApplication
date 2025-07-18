@@ -2,7 +2,6 @@
 
 #include <JuceHeader.h>
 #include "../../extra/ColoredPanel.h"
-#include "../../extra/StyledButton.h"
 #include "../../../utils/FontManager.h"
 #include "MidiPianoContentArea.h"
 
@@ -13,14 +12,10 @@ public:
     MidiPianoArea() 
         : ColoredPanel(juce::Colours::white),
           contentArea(),
-          resizeButton(juce::String::fromUTF8("📏 Resize Footer"), 
-                      juce::Colour(0xff4a90e2),  // Couleur normale (bleu)
-                      juce::Colour(0xff357abd),  // Couleur highlight (bleu plus foncé)
-                      14.0f,                     // Taille de police
-                      FontManager::FontWeight::Medium)
+          onResizeToggle(*this)
     {
         // Label "Midi Piano"
-        headerLabel.setText(juce::String::fromUTF8("Midi Piano"), juce::dontSendNotification);
+        headerLabel.setText(juce::String::fromUTF8("INFO + CONTROL"), juce::dontSendNotification);
         headerLabel.setJustificationType (juce::Justification::centredLeft);
         headerLabel.setColour (juce::Label::textColourId, juce::Colours::black);
         
@@ -28,20 +23,8 @@ public:
         auto fontOptions = fontManager->getSFProDisplay(24.0f, FontManager::FontWeight::Bold);
         headerLabel.setFont(juce::Font(fontOptions));
         
-        // Configuration du bouton de redimensionnement
-        resizeButton.onClick = [this] { 
-            DBG("Bouton de redimensionnement cliqué !"); // Debug
-            if (onResizeToggle) {
-                DBG("Callback onResizeToggle trouvé, appel en cours...");
-                onResizeToggle(); // Déclenche l'animation de redimensionnement
-            } else {
-                DBG("ERREUR: Callback onResizeToggle est null !");
-            }
-        };
-        
         addAndMakeVisible (headerLabel);
         addAndMakeVisible (contentArea);
-        addAndMakeVisible (resizeButton);
     }
     
     void paint(juce::Graphics& g) override
@@ -55,16 +38,11 @@ public:
         auto area = getLocalBounds().reduced(20, 10);
 
         // Calculer la hauteur nécessaire pour le header
-        auto headerHeight = juce::jmax(30, static_cast<int>(headerLabel.getFont().getHeight() + 10)); // hauteur du texte + marge
+        auto headerHeight = juce::jmax(30, static_cast<int>(headerLabel.getFont().getHeight() + 5)); // hauteur du texte + marge
         auto headerArea = area.removeFromTop(headerHeight);
         
-        // Positionner le label "Midi Piano" et le bouton dans le header
-        auto labelArea = headerArea;
-        auto buttonWidth = 120;
-        auto buttonArea = labelArea.removeFromRight(buttonWidth);
-        
-        headerLabel.setBounds(labelArea);
-        resizeButton.setBounds(buttonArea);
+        // Positionner le label "Midi Piano" dans le header
+        headerLabel.setBounds(headerArea);
 
         int headerBottomMargin = 8;
         area.removeFromTop (headerBottomMargin);
@@ -73,14 +51,38 @@ public:
         contentArea.setBounds(area);
     }
     
-    /** Callback déclenché quand le bouton de redimensionnement est cliqué */
-    std::function<void()> onResizeToggle;
+    /** Property pour le callback qui propage automatiquement au contentArea */
+    class OnResizeToggleProperty {
+    public:
+        OnResizeToggleProperty(MidiPianoArea& parent) : parent_(parent) {}
+        
+        // Opérateur d'assignation qui propage automatiquement
+        OnResizeToggleProperty& operator=(const std::function<void()>& callback) {
+            callback_ = callback;
+            parent_.contentArea.onResizeToggle = callback;
+            return *this;
+        }
+        
+        // Opérateur de conversion pour utiliser comme std::function
+        operator std::function<void()>() const { return callback_; }
+        
+        // Opérateur d'appel
+        void operator()() const { if (callback_) callback_(); }
+        
+    private:
+        MidiPianoArea& parent_;
+        std::function<void()> callback_;
+    };
+    
+    OnResizeToggleProperty onResizeToggle;
+    
+    /** Getter pour accéder au contentArea directement */
+    MidiPianoContentArea& getContentArea() { return contentArea; }
     
 private:
     juce::SharedResourcePointer<FontManager> fontManager;
     juce::Label headerLabel;
     MidiPianoContentArea contentArea;
-    StyledButton resizeButton;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MidiPianoArea)
 }; 
