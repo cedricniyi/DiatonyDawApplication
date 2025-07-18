@@ -2,7 +2,7 @@
 
 #include <JuceHeader.h>
 #include "components/MidiPianoArea.h"
-#include "components/InteractivePiano.h"
+#include "components/InteractivePiano/InteractivePiano.h"
 #include "../extra/ColoredPanel.h"
 #include "../../utils/FontManager.h"
 
