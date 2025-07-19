@@ -3,7 +3,6 @@
 #include <JuceHeader.h>
 #include "ui/extra/ColoredPanel.h"
 #include "utils/FontManager.h"
-#include "utils/ColorGenerator.h"
 #include "ScrollableContentPanel.h"
 
 //==============================================================================
@@ -57,7 +56,7 @@ public:
             return;
         
         // Créer un nouveau petit ColoredPanel avec une couleur aléatoire
-        auto newPanel = std::make_unique<ColoredPanel>(ColorGenerator::generateRandomColor());
+        auto newPanel = std::make_unique<ColoredPanel>(juce::Colours::black);
         
         // L'ajouter au contenu scrollable
         scrollableContent->addSmallPanel(std::move(newPanel));
