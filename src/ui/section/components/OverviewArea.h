@@ -33,6 +33,11 @@ public:
         
         // Ajouter le bouton à l'interface
         addAndMakeVisible(actionButton);
+        
+        // Connecter le bouton à la création de nouveaux panels
+        actionButton.onClick = [this]() {
+            contentArea.addSmallPanel();
+        };
     }
     
     void paint(juce::Graphics& g) override
@@ -87,7 +92,7 @@ public:
     // Méthode pour obtenir la taille préférée
     juce::Rectangle<int> getPreferredSize() const
     {
-        return juce::Rectangle<int>(0, 0, 200, 55); // Largeur flexible, hauteur fixe
+        return juce::Rectangle<int>(0, 0, 200, 75); // Hauteur augmentée à 75 pour assurer l'espace
     }
     
 private:
