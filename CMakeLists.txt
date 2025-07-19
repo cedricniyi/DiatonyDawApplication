@@ -102,6 +102,14 @@ target_sources(DiatonyDawApplication
         # Font Manager
         src/utils/FontManager.cpp
         src/utils/FontManager.h
+        
+        # Color Generator
+        src/utils/ColorGenerator.cpp
+        src/utils/ColorGenerator.h
+        
+        # UI Components
+        src/ui/section/components/ScrollableContentPanel.h
+        src/ui/section/components/OverviewContentArea.h
 )
 
 # === Configuration des Fonts SF Pro ===
