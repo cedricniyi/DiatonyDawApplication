@@ -7,6 +7,7 @@
 #include "header/HeaderPanel.h"
 #include "section/SectionPanel.h"
 #include "footer/FooterPanel.h"
+#include "controller/RootUIController.h"
 #include "melatonin_inspector/melatonin_inspector.h"
 
 // Forward declaration pour éviter les dépendances circulaires
@@ -27,6 +28,9 @@ private:
     // Référence au processeur
     AudioPluginAudioProcessor& audioProcessor;
     
+    // NOUVEAU: État global de l'application (source de vérité unique)
+    juce::ValueTree appState;
+    
     // Melatonin Inspector pour déboguer l'interface
     melatonin::Inspector inspector { *this, false };
 
@@ -43,6 +47,9 @@ private:
     SectionPanel sectionPanel;
     FooterPanel footerPanel;
 
+    // MODIFIÉ: Contrôleur principal qui orchestre l'état (ne le crée plus)
+    std::unique_ptr<RootUIController> uiController;
+    
     // Animator pour gérer les animations du footer
     std::unique_ptr<FooterAnimator> footerAnimator;
 

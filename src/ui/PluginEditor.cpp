@@ -8,13 +8,26 @@
 //==============================================================================
 AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAudioProcessor& p)
     : AudioProcessorEditor (&p), audioProcessor (p),
+      appState(UIStateIdentifiers::APP_STATE),  // NOUVEAU: Initialiser le ValueTree ici
       headerPanel(),
       sectionPanel(),
       footerPanel()
-{
-    // Les fonts sont maintenant initialisées automatiquement via SharedResourcePointer
-    // Plus besoin d'appeler initializeFonts() manuellement
+{   
+    // =================================================================================
+    // 1. Initialiser l'état global de l'application (maintenant dans PluginEditor)
+    appState.setProperty(UIStateIdentifiers::selectedSection, -1, nullptr);
+    appState.setProperty(UIStateIdentifiers::footerExpanded, false, nullptr);
     
+    DBG("PluginEditor: État global initialisé - section:" << 
+        static_cast<int>(appState.getProperty(UIStateIdentifiers::selectedSection, -1)) 
+        << ", footer:" << (static_cast<bool>(appState.getProperty(UIStateIdentifiers::footerExpanded, false)) ? "true" : "false"));
+
+    // =================================================================================
+    // 2. Initialiser le contrôleur UI avec référence au ValueTree
+    uiController = std::make_unique<RootUIController>(audioProcessor, appState);
+    
+    // =================================================================================
+    // 3. Contrainte de taille
     constrainer = std::make_unique<juce::ComponentBoundsConstrainer>();
     constrainer->setSizeLimits(1300, 569, 1694, 847);      // tailles min/max
     constrainer->setFixedAspectRatio(1500.0 / 750.0);     // ratio constant
@@ -22,7 +35,12 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     
     setSize(1500, 750);
 
-    // Créer le FooterAnimator avec les références nécessaires pour l'animation flex
+    // =================================================================================
+    // 4. Lier les panels au contrôleur (injection de dépendances)
+    uiController->initializePanels(headerPanel, sectionPanel, footerPanel);
+
+    // =================================================================================
+    // 5. Créer le FooterAnimator avec les références nécessaires pour l'animation flex
     footerAnimator = std::make_unique<FooterAnimator>(
         footerPanel, 
         *AnimationManager::getInstance(),
@@ -31,7 +49,10 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     );
     
     DBG("PluginEditor: FooterAnimator créé avec animation flex intégrée");
+    DBG("PluginEditor: Architecture mise à jour - PluginEditor possède l'état, Controller l'orchestre");
 
+    // =================================================================================
+    // 6. Rendre les panels visibles
     addAndMakeVisible (headerPanel);
     addAndMakeVisible (sectionPanel);
     addAndMakeVisible (footerPanel);
