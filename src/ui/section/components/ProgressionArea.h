@@ -4,6 +4,7 @@
 #include "ui/extra/ColoredPanel.h"
 #include "ui/extra/StyledButton.h"
 #include "utils/FontManager.h"
+#include "WelcomeView.h"
 
 //==============================================================================
 class ProgressionArea : public ColoredPanel
@@ -12,7 +13,8 @@ public:
     ProgressionArea() 
         : ColoredPanel(juce::Colours::white)
     {
-       
+        // Ajouter la vue de bienvenue
+        addAndMakeVisible(welcomeView);
     }
     
     void paint(juce::Graphics& g) override
@@ -26,11 +28,12 @@ public:
         // Appliquer le padding à toute la zone
         auto area = getLocalBounds().reduced(20, 10);
         
-        // Le reste de l'espace est disponible pour le contenu futur
-        // contentArea.setBounds(area); // À implémenter plus tard
+        // Positionner la vue de bienvenue dans toute la zone disponible
+        welcomeView.setBounds(area);
     }
     
 private:
+    WelcomeView welcomeView;
     juce::SharedResourcePointer<FontManager> fontManager;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ProgressionArea)
