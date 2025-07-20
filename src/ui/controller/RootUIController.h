@@ -9,15 +9,14 @@ class FooterPanel;
 class AudioPluginAudioProcessor;
 
 // =================================================================================
-// Identifiants pour les propriétés ValueTree (maintenant dans le header)
+// Identifiants pour les propriétés ValueTree (seulement ce qui est utilisé)
 
 namespace UIStateIdentifiers
 {
     // Nom de l'arbre principal
     const juce::Identifier APP_STATE { "APP_STATE" };
     
-    // Propriétés UI principales (seulement celles qu'on utilise vraiment)
-    const juce::Identifier selectedSection { "selectedSection" };
+    // NETTOYÉ: Seulement les propriétés vraiment utilisées
     const juce::Identifier footerExpanded { "footerExpanded" };
 }
 
@@ -25,8 +24,7 @@ namespace UIStateIdentifiers
  * @brief Contrôleur simple qui gère l'état UI via ValueTree
  * 
  * NOUVEAU: Ne crée plus le ValueTree - reçoit une référence depuis le PluginEditor.
- * Gère seulement l'orchestration des propriétés :
- * - selectedSection : section actuellement sélectionnée
+ * Gère seulement l'orchestration des propriétés réellement utilisées :
  * - footerExpanded : état d'expansion du footer
  */
 class RootUIController : public juce::ValueTree::Listener
@@ -59,15 +57,13 @@ public:
     void valueTreeParentChanged(juce::ValueTree& treeWhoseParentHasChanged) override;
 
     // =================================================================================
-    // Actions principales
+    // Actions principales (NETTOYÉ: seulement ce qui est utilisé)
     
-    void setSelectedSection(int sectionIndex);
     void setFooterExpanded(bool expanded);
 
     // =================================================================================
-    // Accesseurs
+    // Accesseurs (NETTOYÉ: seulement ce qui est utilisé)
     
-    int getCurrentSelectedSection() const;
     bool isFooterExpanded() const;
 
 private:
@@ -78,7 +74,6 @@ private:
     SectionPanel* sectionPanel = nullptr;
     FooterPanel* footerPanel = nullptr;
     
-    // SUPPRIMÉ: initializeAppState() - plus la responsabilité du controller
     void setupStateListeners();
     void notifyPanelsOfStateChange(const juce::Identifier& property);
 

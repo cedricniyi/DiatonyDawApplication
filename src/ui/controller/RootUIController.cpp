@@ -33,21 +33,13 @@ void RootUIController::initializePanels(HeaderPanel& header, SectionPanel& secti
     DBG("RootUIController: Panels initialisés");
 }
 
-// SUPPRIMÉ: initializeAppState() - maintenant fait par PluginEditor
-
 void RootUIController::setupStateListeners()
 {
     appState.addListener(this);
 }
 
 // =================================================================================
-// Actions publiques (appelées par les panels)
-
-void RootUIController::setSelectedSection(int sectionIndex)
-{
-    appState.setProperty(UIStateIdentifiers::selectedSection, sectionIndex, nullptr);
-    DBG("RootUIController: Section -> " << sectionIndex);
-}
+// Actions publiques (NETTOYÉ: seulement ce qui est utilisé)
 
 void RootUIController::setFooterExpanded(bool expanded)
 {
@@ -73,30 +65,20 @@ void RootUIController::valueTreeChildOrderChanged(juce::ValueTree&, int, int) {}
 void RootUIController::valueTreeParentChanged(juce::ValueTree&) {}
 
 // =================================================================================
-// Notification des panels
+// Notification des panels (IMPLÉMENTÉ: vraies notifications)
 
 void RootUIController::notifyPanelsOfStateChange(const juce::Identifier& property)
 {
-    if (property == UIStateIdentifiers::selectedSection && headerPanel != nullptr)
-    {
-        // TODO: headerPanel->onSectionChanged(getCurrentSelectedSection());
-        DBG("RootUIController: -> HeaderPanel: section " << getCurrentSelectedSection());
-    }
-    
     if (property == UIStateIdentifiers::footerExpanded && footerPanel != nullptr)
     {
-        // TODO: footerPanel->onFooterExpandedChanged(isFooterExpanded());
-        DBG("RootUIController: -> FooterPanel: " << (isFooterExpanded() ? "étendu" : "réduit"));
+        bool expanded = isFooterExpanded();
+        footerPanel->setExpanded(expanded);
+        DBG("RootUIController: -> FooterPanel: " << (expanded ? "étendu" : "réduit") << " (notification envoyée)");
     }
 }
 
 // =================================================================================
-// Méthodes utilitaires
-
-int RootUIController::getCurrentSelectedSection() const
-{
-    return static_cast<int>(appState.getProperty(UIStateIdentifiers::selectedSection, -1));
-}
+// Méthodes utilitaires (NETTOYÉ: seulement ce qui est utilisé)
 
 bool RootUIController::isFooterExpanded() const
 {

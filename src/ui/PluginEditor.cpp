@@ -15,12 +15,10 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
 {   
     // =================================================================================
     // 1. Initialiser l'état global de l'application (maintenant dans PluginEditor)
-    appState.setProperty(UIStateIdentifiers::selectedSection, -1, nullptr);
     appState.setProperty(UIStateIdentifiers::footerExpanded, false, nullptr);
     
-    DBG("PluginEditor: État global initialisé - section:" << 
-        static_cast<int>(appState.getProperty(UIStateIdentifiers::selectedSection, -1)) 
-        << ", footer:" << (static_cast<bool>(appState.getProperty(UIStateIdentifiers::footerExpanded, false)) ? "true" : "false"));
+    DBG("PluginEditor: État global initialisé - footer:" << 
+        (static_cast<bool>(appState.getProperty(UIStateIdentifiers::footerExpanded, false)) ? "true" : "false"));
 
     // =================================================================================
     // 2. Initialiser le contrôleur UI avec référence au ValueTree
@@ -48,7 +46,6 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
         [this]() { resized(); }        // Callback pour redessiner le layout
     );
     
-    DBG("PluginEditor: FooterAnimator créé avec animation flex intégrée");
     DBG("PluginEditor: Architecture mise à jour - PluginEditor possède l'état, Controller l'orchestre");
 
     // =================================================================================
