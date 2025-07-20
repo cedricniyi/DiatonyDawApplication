@@ -74,6 +74,8 @@ target_sources(DiatonyDawApplication
         # UI
         src/ui/PluginEditor.cpp
         src/ui/PluginEditor.h
+        src/ui/controller/RootUIController.cpp
+        src/ui/controller/RootUIController.h
         src/ui/extra/ColoredPanel.h
         src/ui/extra/StyledButton.h
         src/ui/extra/OutlineTextButton.h
@@ -172,6 +174,7 @@ target_link_libraries(DiatonyDawApplication
         melatonin_blur
         juce::juce_audio_utils
         juce::juce_animation
+        juce::juce_data_structures # Ajouté pour support du ValueTree
         nlohmann_json::nlohmann_json
     PUBLIC
         juce::juce_recommended_config_flags
