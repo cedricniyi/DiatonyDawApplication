@@ -140,15 +140,15 @@ private:
         bool hasContentNow = hasContent();
         
         // Debug temporaire
-        DBG("updateVisibility: hasContent=" + juce::String(hasContentNow ? "true" : "false"));
-        DBG("  - numPanels=" + juce::String(scrollableContent ? scrollableContent->getNumPanels() : -1));
+        // DBG("updateVisibility: hasContent=" + juce::String(hasContentNow ? "true" : "false"));
+        // DBG("  - numPanels=" + juce::String(scrollableContent ? scrollableContent->getNumPanels() : -1));
         
         viewport.setVisible(hasContentNow);
         emptyLabel.setVisible(!hasContentNow);
         
         // Debug temporaire
-        DBG("  - viewport visible=" + juce::String(viewport.isVisible() ? "true" : "false"));
-        DBG("  - label visible=" + juce::String(emptyLabel.isVisible() ? "true" : "false"));
+        // DBG("  - viewport visible=" + juce::String(viewport.isVisible() ? "true" : "false"));
+        // DBG("  - label visible=" + juce::String(emptyLabel.isVisible() ? "true" : "false"));
     }
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(OverviewContentArea)
