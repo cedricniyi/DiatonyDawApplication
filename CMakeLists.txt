@@ -74,8 +74,9 @@ target_sources(DiatonyDawApplication
         # UI
         src/ui/PluginEditor.cpp
         src/ui/PluginEditor.h
-        src/ui/controller/RootUIController.cpp
-        src/ui/controller/RootUIController.h
+        src/ui/UIStateIdentifiers.h
+        src/ui/RootAnimator.h
+        src/ui/MainContentComponent.h
         src/ui/extra/ColoredPanel.h
         src/ui/extra/StyledButton.h
         src/ui/extra/OutlineTextButton.h
