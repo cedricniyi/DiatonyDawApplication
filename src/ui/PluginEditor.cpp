@@ -3,26 +3,30 @@
 #include "melatonin_inspector/melatonin_inspector.h"
 #include "utils/FontManager.h"
 #include "ui/animation/AnimationManager.h"
+#include "ui/RootAnimator.h"
 #include "ui/footer/animator/FooterAnimator.h"
 
 //==============================================================================
 AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAudioProcessor& p)
     : AudioProcessorEditor (&p), audioProcessor (p),
-      appState(UIStateIdentifiers::APP_STATE),  // NOUVEAU: Initialiser le ValueTree ici
-      headerPanel(),
-      sectionPanel(),
-      footerPanel()
+      appState(UIStateIdentifiers::APP_STATE)  // Initialiser le ValueTree
 {   
     // =================================================================================
-    // 1. Initialiser l'état global de l'application (maintenant dans PluginEditor)
+    // 1. Initialiser l'état global de l'application
     appState.setProperty(UIStateIdentifiers::footerExpanded, false, nullptr);
+    appState.setProperty(UIStateIdentifiers::dockVisible, false, nullptr);
+    appState.setProperty(UIStateIdentifiers::interactivePianoVisible, false, nullptr);
     
     DBG("PluginEditor: État global initialisé - footer:" << 
-        (static_cast<bool>(appState.getProperty(UIStateIdentifiers::footerExpanded, false)) ? "true" : "false"));
+        (static_cast<bool>(appState.getProperty(UIStateIdentifiers::footerExpanded, false)) ? "true" : "false") <<
+        ", dock:" << (static_cast<bool>(appState.getProperty(UIStateIdentifiers::dockVisible, false)) ? "true" : "false") <<
+        ", piano:" << (static_cast<bool>(appState.getProperty(UIStateIdentifiers::interactivePianoVisible, false)) ? "true" : "false"));
 
     // =================================================================================
-    // 2. Initialiser le contrôleur UI avec référence au ValueTree
-    uiController = std::make_unique<RootUIController>(audioProcessor, appState);
+    // 2. Créer et configurer le composant principal
+    mainContent = std::make_unique<MainContentComponent>();
+    mainContent->setAppState(appState);
+    addAndMakeVisible(*mainContent);
     
     // =================================================================================
     // 3. Contrainte de taille
@@ -34,25 +38,25 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     setSize(1500, 750);
 
     // =================================================================================
-    // 4. Lier les panels au contrôleur (injection de dépendances)
-    uiController->initializePanels(headerPanel, sectionPanel, footerPanel);
-
-    // =================================================================================
-    // 5. Créer le FooterAnimator avec les références nécessaires pour l'animation flex
-    footerAnimator = std::make_unique<FooterAnimator>(
-        footerPanel, 
-        *AnimationManager::getInstance(),
-        footerFlex,                    // Référence vers la variable flex
-        [this]() { resized(); }        // Callback pour redessiner le layout
+    // 4. Créer les Animators pour gérer les animations à différents niveaux
+    
+    // RootAnimator : gère les animations de niveau élevé (flex du layout global)
+    rootAnimator = std::make_unique<RootAnimator>(
+        *mainContent,                 // Référence vers MainContentComponent
+        *AnimationManager::getInstance()
     );
     
-    DBG("PluginEditor: Architecture mise à jour - PluginEditor possède l'état, Controller l'orchestre");
+    // FooterAnimator : gère les animations internes au FooterPanel (grid + fade)
+    footerAnimator = std::make_unique<FooterAnimator>(
+        mainContent->getFooterPanel(), 
+        *AnimationManager::getInstance()
+    );
+    
+    DBG("PluginEditor: Architecture hiérarchique activée - RootAnimator (flex) + FooterAnimator (contenu)");
 
     // =================================================================================
-    // 6. Rendre les panels visibles
-    addAndMakeVisible (headerPanel);
-    addAndMakeVisible (sectionPanel);
-    addAndMakeVisible (footerPanel);
+    // 5. Le MainContentComponent est déjà rendu visible plus haut
+    DBG("PluginEditor: Configuration terminée avec MainContentComponent");
 
 }
 
@@ -64,43 +68,13 @@ AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
 //==============================================================================
 void AudioPluginAudioProcessorEditor::paint (juce::Graphics& g)
 {   
-    // Dégradé linéaire à 135 degrés
-    auto bounds = getLocalBounds().toFloat();
-    
-    // Calculer les points de départ et d'arrivée pour un angle de 135°
-    // 135° = direction vers le bas-droite
-    auto center = bounds.getCentre();
-    auto diagonal = std::sqrt(bounds.getWidth() * bounds.getWidth() + bounds.getHeight() * bounds.getHeight()) * 0.5f;
-    
-    // Convertir 135° en radians et calculer les points
-    auto angleRad = juce::MathConstants<float>::pi * 135.0f / 180.0f;
-    auto startPoint = center - juce::Point<float>(std::cos(angleRad), std::sin(angleRad)) * diagonal;
-    auto endPoint = center + juce::Point<float>(std::cos(angleRad), std::sin(angleRad)) * diagonal;
-    
-    // Créer le dégradé
-    juce::ColourGradient gradient(
-        juce::Colour::fromString("fff5f7fa"), startPoint,  // #f5f7fa à 0%
-        juce::Colour::fromString("ffc3cfe2"), endPoint,    // #c3cfe2 à 100%
-        false // pas radial
-    );
-    
-    g.setGradientFill(gradient);
-    g.fillRect(bounds);
+    // La peinture est maintenant déléguée au MainContentComponent
+    // Pas besoin de peindre ici car MainContentComponent remplit toute la zone
 }
 
 void AudioPluginAudioProcessorEditor::resized()
 {
-    int padding = 8;
-    auto content = getLocalBounds().reduced(padding);
-
-    juce::FlexBox fb;
-    fb.flexDirection = juce::FlexBox::Direction::column;  // empile verticalement
-
-    fb.items = {
-        juce::FlexItem (headerPanel).withFlex (headerFlex).withMargin ({ 0, 0, 4, 0 }),
-        juce::FlexItem (sectionPanel).withFlex (sectionFlex).withMargin ({ 4, 0, 4, 0 }),
-        juce::FlexItem (footerPanel).withFlex (footerFlex).withMargin ({ 4, 0, 0, 0 })
-    };
-
-    fb.performLayout (content);
+    // Redimensionner le MainContentComponent pour qu'il occupe toute la zone
+    if (mainContent)
+        mainContent->setBounds(getLocalBounds());
 }
