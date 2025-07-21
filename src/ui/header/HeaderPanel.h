@@ -3,9 +3,10 @@
 #include <JuceHeader.h>
 #include "../extra/ColoredPanel.h"
 #include "../extra/StyledButton.h"
+#include "../UIStateIdentifiers.h"
 #include "../../utils/FontManager.h"
 
-class HeaderPanel : public ColoredPanel
+class HeaderPanel : public ColoredPanel, public juce::ValueTree::Listener
 {
 public:
     HeaderPanel()
@@ -26,8 +27,38 @@ public:
        
         addAndMakeVisible (mainLabel);
 
-        // Bouton D à droite
+        // Bouton D à droite - toggle direct du ValueTree
+        dButton.onClick = [this]() {
+            if (!appState.isValid()) {
+                DBG("HeaderPanel: ERREUR: ValueTree non initialisé !");
+                return;
+            }
+            
+            bool currentState = static_cast<bool>(appState.getProperty(UIStateIdentifiers::dockVisible, false));
+            appState.setProperty(UIStateIdentifiers::dockVisible, !currentState, nullptr);
+            DBG("HeaderPanel: Toggle dock -> " << (!currentState ? "visible" : "caché"));
+        };
         addAndMakeVisible (dButton);
+    }
+
+    ~HeaderPanel() override
+    {
+        if (appState.isValid())
+            appState.removeListener(this);
+    }
+
+    /** Initialise le ValueTree et commence l'écoute des changements */
+    void setAppState(juce::ValueTree& state)
+    {
+        if (appState.isValid())
+            appState.removeListener(this);
+            
+        appState = state;
+        appState.addListener(this);
+        
+        // Synchroniser l'état initial
+        updateDockState();
+        DBG("HeaderPanel: ValueTree connecté et état initial synchronisé");
     }
 
     void resized() override
@@ -61,11 +92,40 @@ public:
         ColoredPanel::paint (g);
     }
 
+    // =================================================================================
+    // ValueTree::Listener interface
+    void valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged,
+                                  const juce::Identifier& property) override
+    {
+        if (property == UIStateIdentifiers::dockVisible)
+        {
+            updateDockState();
+        }
+    }
+
+    void valueTreeChildAdded(juce::ValueTree&, juce::ValueTree&) override {}
+    void valueTreeChildRemoved(juce::ValueTree&, juce::ValueTree&, int) override {}
+    void valueTreeChildOrderChanged(juce::ValueTree&, int, int) override {}
+    void valueTreeParentChanged(juce::ValueTree&) override {}
+
 private:
     juce::SharedResourcePointer<FontManager> fontManager;
     
     juce::Label      mainLabel;
     StyledButton     dButton;
+    juce::ValueTree  appState;  // Référence au ValueTree global
+
+    /** Met à jour l'état visuel du dock selon le ValueTree */
+    void updateDockState()
+    {
+        if (!appState.isValid()) return;
+        
+        bool dockVisible = static_cast<bool>(appState.getProperty(UIStateIdentifiers::dockVisible, false));
+        
+        // TODO: Quand le composant dock sera implémenté, ajouter la logique ici
+        // Par exemple: mettre à jour la couleur du bouton D selon l'état
+        DBG("HeaderPanel: État dock mis à jour -> " << (dockVisible ? "visible" : "caché"));
+    }
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (HeaderPanel)
 }; 
