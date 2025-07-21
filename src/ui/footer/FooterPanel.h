@@ -2,12 +2,14 @@
 
 #include <JuceHeader.h>
 #include "components/MidiPianoArea.h"
+#include "components/MidiPianoContentArea.h"
 #include "components/InteractivePiano/InteractivePiano.h"
 #include "../extra/ColoredPanel.h"
+#include "../UIStateIdentifiers.h"
 #include "../../utils/FontManager.h"
 
 //==============================================================================
-class FooterPanel : public juce::Component
+class FooterPanel : public juce::Component, public juce::ValueTree::Listener
 {
 public:
     FooterPanel() 
@@ -15,25 +17,45 @@ public:
           interactivePiano(juce::Colours::white.withAlpha(0.50f)), // Couleur blanche
           isExpanded(false),
           gridTransitionFraction(0.0f) // Paramètre d'interpolation (0 = compact, 1 = élargi)
-    {
-        // Configurer le callback pour le bouton de redimensionnement
-        midiPianoArea.onResizeToggle = [this] { 
-            DBG("FooterPanel: Callback onResizeToggle reçu !");
-            if (onToggleRequest) {
-                DBG("FooterPanel: Callback onToggleRequest trouvé, appel en cours...");
-                onToggleRequest(); // Déclenche la demande d'animation
-            } else {
-                DBG("FooterPanel: ERREUR: Callback onToggleRequest est null !");
-            }
-        };
-        
+    {        
         addAndMakeVisible(midiPianoArea);
         addAndMakeVisible(interactivePiano);
+        
+        // Configuration du callback pour le toggle du piano interactif
+        getMidiPianoContentArea().onResizeToggle = [this]() {
+            if (!appState.isValid()) {
+                DBG("FooterPanel: ERREUR: ValueTree non initialisé !");
+                return;
+            }
+            
+            bool currentState = static_cast<bool>(appState.getProperty(UIStateIdentifiers::interactivePianoVisible, false));
+            appState.setProperty(UIStateIdentifiers::interactivePianoVisible, !currentState, nullptr);
+            DBG("FooterPanel: Toggle InteractivePiano -> " << (!currentState ? "visible" : "caché"));
+        };
+    }
+    
+    ~FooterPanel() override
+    {
+        if (appState.isValid())
+            appState.removeListener(this);
+    }
+
+    /** Initialise le ValueTree et commence l'écoute des changements */
+    void setAppState(juce::ValueTree& state)
+    {
+        if (appState.isValid())
+            appState.removeListener(this);
+            
+        appState = state;
+        appState.addListener(this);
+        
+        // Synchroniser l'état initial
+        updateFooterState();
+        DBG("FooterPanel: ValueTree connecté et état initial synchronisé");
     }
     
     void paint(juce::Graphics& g) override
     {
-        // Pas de peinture spéciale nécessaire
     }
     
     void resized() override
@@ -92,20 +114,15 @@ public:
         grid.performLayout(area);
     }
     
-    // === Interface publique pour contrôler l'état ===
-    
-    /** Met à jour la fraction d'interpolation de la grille (0 = compact, 1 = élargi) */
-    void setGridFraction(float fraction)
-    {
-        gridTransitionFraction = juce::jlimit(0.0f, 1.0f, fraction);
-        resized(); // Redessiner le layout
-    }
+    // === Setters publics pour que l'Animator puisse les appeler ===
     
     /** Met à jour l'état d'expansion */
     void setExpanded(bool expanded)
     {
         isExpanded = expanded;
     }
+    
+    // === Accesseurs publics pour que l'Animator puisse les lire ===
     
     /** Retourne l'état d'expansion actuel */
     bool getExpanded() const
@@ -125,14 +142,75 @@ public:
         return gridTransitionFraction;
     }
     
-    /** Callback déclenché quand une animation de toggle est demandée */
-    std::function<void()> onToggleRequest;
+    /** Accès au MidiPianoContentArea pour configuration des callbacks */
+    MidiPianoContentArea& getMidiPianoContentArea()
+    {
+        return midiPianoArea.getContentArea();
+    }
+
+    // === Callbacks pour que l'Animator puisse s'y abonner ===
+    
+    /** Callback déclenché quand interactivePianoVisible change dans le ValueTree */
+    std::function<void(bool)> onInteractivePianoVisibilityChange;
+
+    // =================================================================================
+    // ValueTree::Listener interface
+    void valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged,
+                                  const juce::Identifier& property) override
+    {
+        if (property == UIStateIdentifiers::footerExpanded)
+        {
+            updateFooterState();
+        }
+        else if (property == UIStateIdentifiers::interactivePianoVisible)
+        {
+            updateInteractivePianoState();
+        }
+    }
+
+    void valueTreeChildAdded(juce::ValueTree&, juce::ValueTree&) override {}
+    void valueTreeChildRemoved(juce::ValueTree&, juce::ValueTree&, int) override {}
+    void valueTreeChildOrderChanged(juce::ValueTree&, int, int) override {}
+    void valueTreeParentChanged(juce::ValueTree&) override {}
     
 private:
     MidiPianoArea midiPianoArea;
     InteractivePiano interactivePiano;
     bool isExpanded; // État du toggle de la grille
     float gridTransitionFraction; // Paramètre d'interpolation (0 = compact, 1 = élargi)
+    
+    juce::ValueTree appState;      // Référence au ValueTree global
+
+    /** Met à jour l'état d'expansion du footer selon le ValueTree */
+    void updateFooterState()
+    {
+        if (!appState.isValid()) return;
+        
+        bool expanded = static_cast<bool>(appState.getProperty(UIStateIdentifiers::footerExpanded, false));
+        setExpanded(expanded);
+        DBG("FooterPanel: État footer mis à jour -> " << (expanded ? "étendu" : "réduit"));
+    }
+
+    /** Met à jour l'état du piano interactif et notifie via callback */
+    void updateInteractivePianoState()
+    {
+        if (!appState.isValid()) return;
+        
+        bool visible = static_cast<bool>(appState.getProperty(UIStateIdentifiers::interactivePianoVisible, false));
+        
+        // Notifier via callback si l'Animator s'est abonné
+        if (onInteractivePianoVisibilityChange)
+        {
+            onInteractivePianoVisibilityChange(visible);
+            DBG("FooterPanel: Notifie Animator via callback -> " << (visible ? "visible" : "caché"));
+        }
+        else
+        {
+            // Fallback : mise à jour directe sans animation
+            setExpanded(visible);
+            DBG("FooterPanel: Mise à jour directe InteractivePiano (pas d'Animator) -> " << (visible ? "visible" : "caché"));
+        }
+    }
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(FooterPanel)
 }; 

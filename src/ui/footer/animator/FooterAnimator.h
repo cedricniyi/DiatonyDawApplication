@@ -9,31 +9,30 @@ class FooterAnimator
 {
 public:
     FooterAnimator(FooterPanel& panel, 
-                   AnimationManager& animationManager,
-                   float& footerFlexRef,
-                   std::function<void()> onLayoutUpdate)
+                   AnimationManager& animationManager)
         : footerPanel(panel), 
-          animManager(animationManager),
-          footerFlex(footerFlexRef),
-          onLayoutChanged(onLayoutUpdate)
-    {
-        // S'abonner au callback de toggle du FooterPanel
-        footerPanel.onToggleRequest = [this]() {
-            toggleSequence();
+          animManager(animationManager)
+    {        
+        // S'abonner au callback du FooterPanel pour les changements de visibilité du piano
+        footerPanel.onInteractivePianoVisibilityChange = [this](bool visible) {
+            setInteractivePianoVisible(visible);
         };
         
-        DBG("FooterAnimator: Initialisé avec animation flex intégrée");
+        DBG("FooterAnimator: Initialisé et abonné aux callbacks du FooterPanel");
     }
     
-    ~FooterAnimator() = default;
+    /** Destructeur */
+    ~FooterAnimator()
+    {
+        // Désabonner le callback
+        if (footerPanel.onInteractivePianoVisibilityChange)
+            footerPanel.onInteractivePianoVisibilityChange = nullptr;
+    }
     
-    /** Déclenche la séquence d'animation complète (flex + contenu) */
+    /** Déclenche la séquence d'animation du contenu (grid + fade uniquement) */
     void toggleSequence()
     {
-        DBG("FooterAnimator: Déclenchement du toggle complet, état actuel : " << (footerPanel.getExpanded() ? "élargi" : "compact"));
-        
-        // Déclencher l'animation de flex du footer DIRECTEMENT
-        startFlexAnimation();
+        DBG("FooterAnimator: Déclenchement du toggle contenu, état actuel : " << (footerPanel.getExpanded() ? "élargi" : "compact"));
         
         if (footerPanel.getExpanded())
         {
@@ -47,35 +46,29 @@ public:
         }
     }
     
+    /** Appelée automatiquement via callback quand FooterPanel détecte changement ValueTree */
+    void setInteractivePianoVisible(bool visible)
+    {
+        DBG("FooterAnimator: Callback reçu - Animation InteractivePiano -> " << (visible ? "visible" : "caché"));
+        
+        // Synchroniser l'état du FooterPanel avec le ValueTree
+        footerPanel.setExpanded(visible);
+        
+        if (visible)
+        {
+            // RÉVÉLER : élargir la grille progressivement → puis fade in
+            showSequence();
+        }
+        else
+        {
+            // MASQUER : fade out → puis rétrécir la grille progressivement
+            hideSequence();
+        }
+    }
+    
 private:
     FooterPanel& footerPanel;
     AnimationManager& animManager;
-    float& footerFlex;                    // Référence vers la valeur flex du PluginEditor
-    std::function<void()> onLayoutChanged; // Callback pour redessiner le layout
-    
-    /** Animation de la valeur flex du footer (maintenant intégrée) */
-    void startFlexAnimation()
-    {
-        DBG("FooterAnimator: Animation flex déclenchée ! footerFlex actuel = " << footerFlex);
-        
-        // Valeur de départ et cible (toggle)
-        float targetFooterFlex = (footerFlex < 30.0f) ? 30.0f : 15.0f;
-        
-        DBG("FooterAnimator: Target footerFlex = " << targetFooterFlex);
-        
-        // Animer la valeur flex
-        animManager.animateValueSimple(
-            footerFlex,
-            targetFooterFlex,
-            300.0, // durée
-            [this]() { 
-                // Callback pour redessiner le layout à chaque frame
-                if (onLayoutChanged) {
-                    onLayoutChanged();
-                }
-            }
-        );
-    }
     
     void hideSequence()
     {

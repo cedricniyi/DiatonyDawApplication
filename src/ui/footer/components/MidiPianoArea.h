@@ -11,8 +11,7 @@ class MidiPianoArea : public ColoredPanel
 public:
     MidiPianoArea() 
         : ColoredPanel(juce::Colours::white),
-          contentArea(),
-          onResizeToggle(*this)
+          contentArea()
     {
         // Label "Midi Piano"
         headerLabel.setText(juce::String::fromUTF8("INFO + CONTROL"), juce::dontSendNotification);
@@ -50,31 +49,6 @@ public:
         // Le reste de l'espace va au contentArea
         contentArea.setBounds(area);
     }
-    
-    /** Property pour le callback qui propage automatiquement au contentArea */
-    class OnResizeToggleProperty {
-    public:
-        OnResizeToggleProperty(MidiPianoArea& parent) : parent_(parent) {}
-        
-        // Opérateur d'assignation qui propage automatiquement
-        OnResizeToggleProperty& operator=(const std::function<void()>& callback) {
-            callback_ = callback;
-            parent_.contentArea.onResizeToggle = callback;
-            return *this;
-        }
-        
-        // Opérateur de conversion pour utiliser comme std::function
-        operator std::function<void()>() const { return callback_; }
-        
-        // Opérateur d'appel
-        void operator()() const { if (callback_) callback_(); }
-        
-    private:
-        MidiPianoArea& parent_;
-        std::function<void()> callback_;
-    };
-    
-    OnResizeToggleProperty onResizeToggle;
     
     /** Getter pour accéder au contentArea directement */
     MidiPianoContentArea& getContentArea() { return contentArea; }

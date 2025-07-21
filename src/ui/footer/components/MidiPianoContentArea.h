@@ -112,8 +112,8 @@ public:
         bottomRightPercentage = 35.0f;
         
         // Debug : afficher les pourcentages calculés
-        DBG("Ligne du haut - Zone 1: " << topLeftPercentage << "%, ResizeButton: " << topRightPercentage << "%");
-        DBG("Ligne du bas - Zone 3: " << bottomLeftPercentage << "%, Zone 4: " << bottomRightPercentage << "%");
+        // DBG("Ligne du haut - Zone 1: " << topLeftPercentage << "%, ResizeButton: " << topRightPercentage << "%");
+        // DBG("Ligne du bas - Zone 3: " << bottomLeftPercentage << "%, Zone 4: " << bottomRightPercentage << "%");
     }
     
     void setupTextPills()
