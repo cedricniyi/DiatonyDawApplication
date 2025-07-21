@@ -27,7 +27,7 @@ void AnimationManager::timerCallback()
     // Arrêter le timer s'il n'y a plus d'animations actives
     if (activeAnimators.empty())
     {
-        DBG("AnimationManager: Arrêt du timer, plus d'animations actives");
+        // DBG("AnimationManager: Arrêt du timer, plus d'animations actives");
         stopTimer();
     }
 }
@@ -45,7 +45,7 @@ int AnimationManager::animateValue(float& valueToAnimate,
     // Stocker la valeur initiale
     float initialValue = valueToAnimate;
     
-    DBG("AnimationManager: Création animation ID=" << animationId << ", initial=" << initialValue << ", target=" << targetValue);
+    // DBG("AnimationManager: Création animation ID=" << animationId << ", initial=" << initialValue << ", target=" << targetValue);
     
     // Créer l'animation avec ValueAnimatorBuilder
     auto builder = juce::ValueAnimatorBuilder()
@@ -55,13 +55,13 @@ int AnimationManager::animateValue(float& valueToAnimate,
             float newValue = initialValue + (targetValue - initialValue) * progress;
             valueToAnimate = newValue;
             
-            DBG("AnimationManager: Animation progress=" << progress << ", newValue=" << newValue);
+            // DBG("AnimationManager: Animation progress=" << progress << ", newValue=" << newValue);
             
             if (onUpdate)
                 onUpdate();
         })
         .withOnCompleteCallback([this, animationId, onComplete]() {
-            DBG("AnimationManager: Animation ID=" << animationId << " terminée");
+            // DBG("AnimationManager: Animation ID=" << animationId << " terminée");
             // Nettoyer l'animation terminée
             activeAnimators.erase(animationId);
             if (onComplete)
@@ -87,11 +87,11 @@ int AnimationManager::animateValue(float& valueToAnimate,
     // Démarrer le timer pour les mises à jour (60 FPS)
     if (!isTimerRunning())
     {
-        DBG("AnimationManager: Démarrage du timer pour les mises à jour");
+        // DBG("AnimationManager: Démarrage du timer pour les mises à jour");
         startTimer(16); // 60 FPS
     }
     
-    DBG("AnimationManager: Animation ID=" << animationId << " démarrée");
+    // DBG("AnimationManager: Animation ID=" << animationId << " démarrée");
     
     return animationId;
 }
@@ -123,7 +123,7 @@ int AnimationManager::animateComponentAlpha(juce::Component& component,
         component.setVisible(true);
     }
     
-    DBG("AnimationManager: Animation alpha ID=" << animationId << ", initial=" << initialAlpha << ", target=" << targetAlpha);
+    // DBG("AnimationManager: Animation alpha ID=" << animationId << ", initial=" << initialAlpha << ", target=" << targetAlpha);
     
     // Créer l'animation avec ValueAnimatorBuilder
     auto builder = juce::ValueAnimatorBuilder()
@@ -136,13 +136,13 @@ int AnimationManager::animateComponentAlpha(juce::Component& component,
             // Cette méthode sera appelée sur le Component directement, pas sur ColoredPanel
             component.juce::Component::setAlpha(newAlpha);
             
-            DBG("AnimationManager: Alpha animation progress=" << progress << ", newAlpha=" << newAlpha);
+            // DBG("AnimationManager: Alpha animation progress=" << progress << ", newAlpha=" << newAlpha);
             
             if (onUpdate)
                 onUpdate();
         })
         .withOnCompleteCallback([this, animationId, &component, targetAlpha, onComplete]() {
-            DBG("AnimationManager: Animation alpha ID=" << animationId << " terminée");
+            // DBG("AnimationManager: Animation alpha ID=" << animationId << " terminée");
             
             // S'assurer que l'opacité finale est bien définie avec la méthode native
             component.juce::Component::setAlpha(targetAlpha);
@@ -179,11 +179,11 @@ int AnimationManager::animateComponentAlpha(juce::Component& component,
     // Démarrer le timer pour les mises à jour (60 FPS)
     if (!isTimerRunning())
     {
-        DBG("AnimationManager: Démarrage du timer pour les mises à jour");
+        // DBG("AnimationManager: Démarrage du timer pour les mises à jour");
         startTimer(16); // 60 FPS
     }
     
-    DBG("AnimationManager: Animation alpha ID=" << animationId << " démarrée");
+    // DBG("AnimationManager: Animation alpha ID=" << animationId << " démarrée");
     
     return animationId;
 }
@@ -219,7 +219,7 @@ void AnimationManager::stopAllAnimations()
     // Arrêter le timer
     if (isTimerRunning())
     {
-        DBG("AnimationManager: Arrêt du timer (stopAllAnimations)");
+        // DBG("AnimationManager: Arrêt du timer (stopAllAnimations)");
         stopTimer();
     }
 }
