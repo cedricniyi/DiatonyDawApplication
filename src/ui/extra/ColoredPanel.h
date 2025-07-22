@@ -35,7 +35,7 @@ public:
         repaint();
     }
     
-    void setColor(juce::Colour color)
+    virtual void setColor(juce::Colour color)
     {
         panelColor = color;
         repaint();
