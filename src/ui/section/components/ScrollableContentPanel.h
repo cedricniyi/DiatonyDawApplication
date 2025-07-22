@@ -1,11 +1,10 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "ui/extra/ColoredPanel.h"
 
 //==============================================================================
 /**
- * Panneau de contenu scrollable gérant une collection horizontale de petits panels colorés
+ * Panneau de contenu scrollable gérant une collection horizontale de petits composants
  */
 class ScrollableContentPanel : public juce::Component
 {
@@ -25,14 +24,14 @@ public:
         layoutSmallPanels();
     }
     
-    // Gestion des panels
-    void addSmallPanel(std::unique_ptr<ColoredPanel> panel)
+    // Gestion des composants - accepte n'importe quel juce::Component
+    void addSmallPanel(std::unique_ptr<juce::Component> component)
     {
-        if (!panel)
+        if (!component)
             return;
             
-        addAndMakeVisible(*panel);
-        smallPanels.push_back(std::move(panel));
+        addAndMakeVisible(*component);
+        smallPanels.push_back(std::move(component));
         updateContentSize();
     }
     
@@ -64,7 +63,7 @@ public:
     }
     
 private:
-    std::vector<std::unique_ptr<ColoredPanel>> smallPanels;
+    std::vector<std::unique_ptr<juce::Component>> smallPanels;
     
     // Configuration des dimensions
     static constexpr int PANEL_WIDTH = 40;

@@ -2,6 +2,7 @@
 
 #include <JuceHeader.h>
 #include "ui/extra/ColoredPanel.h"
+#include "ui/extra/ButtonColoredPanel.h"
 #include "utils/FontManager.h"
 #include "ScrollableContentPanel.h"
 
@@ -55,11 +56,33 @@ public:
         if (!scrollableContent)
             return;
         
-        // Créer un nouveau petit ColoredPanel avec une couleur aléatoire
-        auto newPanel = std::make_unique<ColoredPanel>(juce::Colours::black);
+        // Créer un nouveau ButtonColoredPanel avec une couleur bleue
+        auto newPanel = std::make_unique<ButtonColoredPanel>(juce::Colours::blue);
         
-        // L'ajouter au contenu scrollable
-        scrollableContent->addSmallPanel(std::move(newPanel));
+        // Associer des données utilisateur (ex: ID de progression)
+        newPanel->setUserData(nextPanelId++);
+        
+        // Désélectionner l'ancien panel sélectionné
+        if (selectedPanel)
+        {
+            selectedPanel->setSelected(false);
+        }
+        
+        // Garder une référence au nouveau panel avant de le transférer
+        ButtonColoredPanel* newPanelPtr = newPanel.get();
+        
+        // ✅ Utiliser le système onClick natif de JUCE !
+        newPanel->onClick = [this, newPanelPtr]() {
+            this->onPanelClicked(newPanelPtr);
+        };
+        
+        // L'ajouter au contenu scrollable (conversion vers juce::Component)
+        std::unique_ptr<juce::Component> component(newPanel.release());
+        scrollableContent->addSmallPanel(std::move(component));
+        
+        // Sélectionner automatiquement le nouveau panel
+        newPanelPtr->setSelected(true);
+        selectedPanel = newPanelPtr;
         
         // Mettre à jour la visibilité
         updateVisibility();
@@ -72,6 +95,7 @@ public:
     {
         if (scrollableContent)
         {
+            selectedPanel = nullptr; // Réinitialiser la sélection
             scrollableContent->clearAllPanels();
             updateVisibility();
             resized();
@@ -88,6 +112,17 @@ public:
     {
         return juce::Rectangle<int>(0, 0, PREFERRED_WIDTH, PREFERRED_HEIGHT);
     }
+    
+    // Gestion de la sélection
+    ButtonColoredPanel* getSelectedPanel() const
+    {
+        return selectedPanel;
+    }
+    
+    bool hasSelectedPanel() const
+    {
+        return selectedPanel != nullptr;
+    }
 
 private:
     // Composants UI
@@ -99,6 +134,12 @@ private:
     static constexpr int PREFERRED_WIDTH = 300;
     static constexpr int PREFERRED_HEIGHT = 35;
     static constexpr int CONTENT_MARGIN = 5;
+    
+    // Gestion des IDs de panels
+    int nextPanelId = 1;
+    
+    // Gestion de la sélection
+    ButtonColoredPanel* selectedPanel = nullptr;
     
     // Méthodes privées
     void setupViewport()
@@ -149,6 +190,39 @@ private:
         // Debug temporaire
         // DBG("  - viewport visible=" + juce::String(viewport.isVisible() ? "true" : "false"));
         // DBG("  - label visible=" + juce::String(emptyLabel.isVisible() ? "true" : "false"));
+    }
+    
+    // Gestionnaire de clic sur les panels
+    void onPanelClicked(ButtonColoredPanel* clickedPanel)
+    {
+        if (!clickedPanel)
+            return;
+            
+        auto panelId = clickedPanel->getUserData().toString();
+        
+        // Debug temporaire pour voir les clics
+        DBG(juce::String::fromUTF8("Panel cliqué - ID: ") + panelId);
+        
+        // Gestion de la sélection
+        if (selectedPanel != clickedPanel)
+        {
+            // Désélectionner l'ancien panel
+            if (selectedPanel)
+            {
+                selectedPanel->setSelected(false);
+            }
+            
+            // Sélectionner le nouveau panel
+            clickedPanel->setSelected(true);
+            selectedPanel = clickedPanel;
+            
+            DBG(juce::String::fromUTF8("Panel sélectionné - ID: ") + panelId);
+        }
+        
+        // TODO: Autres actions possibles
+        // - Déclencher la lecture de la progression
+        // - Ouvrir un éditeur de progression
+        // - Envoyer un event à un listener parent
     }
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(OverviewContentArea)
