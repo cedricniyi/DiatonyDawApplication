@@ -29,19 +29,17 @@ void Progression::setChord(size_t index, const Chord& chord) {
 
 // Accesseurs
 const Chord& Progression::getChord(size_t index) const {
-    static Chord emptyChord; // Chord par défaut en cas d'index invalide
-    if (index < chords.size()) {
-        return chords[index];
+    if (index >= chords.size()) {
+        throw std::out_of_range("Chord index out of range");
     }
-    return emptyChord;
+    return chords[index];
 }
 
 Chord& Progression::getChord(size_t index) {
-    static Chord emptyChord; // Chord par défaut en cas d'index invalide
-    if (index < chords.size()) {
-        return chords[index];
+    if (index >= chords.size()) {
+        throw std::out_of_range("Chord index out of range");
     }
-    return emptyChord;
+    return chords[index];
 }
 
 // Méthodes utilitaires
