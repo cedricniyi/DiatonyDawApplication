@@ -31,6 +31,7 @@ public:
     
     // Méthodes utilitaires simples
     bool isEmpty() const;
+    bool isValid() const;  // Vérifie si la section est valide
     juce::String toString() const;
     
     // Callback pour notifier les changements
