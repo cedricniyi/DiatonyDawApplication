@@ -2,6 +2,7 @@
 
 #include <juce_core/juce_core.h>
 #include <functional>
+#include "DiatonyTypes.h"
 
 /**
  * Représente une modulation entre deux sections ou accords
@@ -11,15 +12,15 @@ class Modulation {
 public:
     // Constructeurs
     Modulation();
-    Modulation(int type, int fromChordIndex, int toChordIndex);
+    Modulation(Diatony::ModulationType type, int fromChordIndex, int toChordIndex);
     
     // Setters
-    void setModulationType(int newType);
+    void setModulationType(Diatony::ModulationType newType);
     void setFromChordIndex(int newFromChordIndex);
     void setToChordIndex(int newToChordIndex);
     
     // Getters
-    int getModulationType() const { return modulationType; }
+    Diatony::ModulationType getModulationType() const { return modulationType; }
     int getFromChordIndex() const { return fromChordIndex; }
     int getToChordIndex() const { return toChordIndex; }
     
@@ -30,7 +31,7 @@ public:
     std::function<void()> onModulationChanged;
     
 private:
-    int modulationType;  // Type de modulation (0-3 : PERFECT_CADENCE, PIVOT_CHORD, ALTERATION, CHROMATIC)
+    Diatony::ModulationType modulationType;  // Type de modulation fortement typé
     int fromChordIndex;  // Index de l'accord de départ
     int toChordIndex;    // Index de l'accord d'arrivée
     
