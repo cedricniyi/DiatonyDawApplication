@@ -123,6 +123,11 @@ target_sources(DiatonyDawApplication
         src/model/Piece.cpp
         src/model/Section.h
         src/model/Section.cpp
+        src/model/DiatonyTypes.h
+
+        # Services
+        src/services/GenerationService.h
+        src/services/GenerationService.cpp
 )
 
 # === Configuration des Fonts SF Pro ===
