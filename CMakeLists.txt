@@ -92,8 +92,6 @@ target_sources(DiatonyDawApplication
         src/ui/animation/AnimationManager.h
         
         # Fichiers header only (à inclure pour être sûr qu'ils sont pris en compte)
-        src/model/Progression.h
-        src/model/ChordSequence.h
         src/audio/SimpleSound.h
         src/audio/SimpleVoice.h
 
@@ -113,6 +111,18 @@ target_sources(DiatonyDawApplication
         # UI Components
         src/ui/section/components/ScrollableContentPanel.h
         src/ui/section/components/OverviewContentArea.h
+
+        # Model
+        src/model/Progression.h
+        src/model/Progression.cpp
+        src/model/Chord.h
+        src/model/Chord.cpp
+        src/model/Modulation.h
+        src/model/Modulation.cpp
+        src/model/Piece.h
+        src/model/Piece.cpp
+        src/model/Section.h
+        src/model/Section.cpp
 )
 
 # === Configuration des Fonts SF Pro ===
