@@ -1,25 +1,21 @@
 #include "Section.h"
 
 Section::Section() 
-    : note(0), alteration(0), isMajor(true), name("Untitled Section") {
+    : note(Diatony::Note::C), alteration(Diatony::Alteration::Natural), isMajor(true), name("Untitled Section") {
 }
 
 Section::Section(const juce::String& sectionName) 
-    : note(0), alteration(0), isMajor(true), name(sectionName) {
+    : note(Diatony::Note::C), alteration(Diatony::Alteration::Natural), isMajor(true), name(sectionName) {
 }
 
-void Section::setNote(int newNote) {
-    if (newNote >= 0 && newNote <= 6) {
-        note = newNote;
-        notifyChange();
-    }
+void Section::setNote(Diatony::Note newNote) {
+    note = newNote;
+    notifyChange();
 }
 
-void Section::setAlteration(int newAlteration) {
-    if (newAlteration >= 0 && newAlteration <= 2) {
-        alteration = newAlteration;
-        notifyChange();
-    }
+void Section::setAlteration(Diatony::Alteration newAlteration) {
+    alteration = newAlteration;
+    notifyChange();
 }
 
 void Section::setIsMajor(bool newIsMajor) {
@@ -51,25 +47,34 @@ bool Section::isValid() const {
     // Une section est valide si :
     // - Elle a un nom non vide
     // - Sa progression n'est pas vide
-    // - Les paramètres tonals sont dans les bonnes plages
-    return !name.isEmpty() && 
-           !progression.isEmpty() && 
-           note >= 0 && note <= 6 && 
-           alteration >= 0 && alteration <= 2;
+    // Les paramètres tonals sont maintenant toujours valides grâce aux types fortement typés
+    return !name.isEmpty() && !progression.isEmpty();
 }
 
 juce::String Section::toString() const {
     juce::String result = name + " (";
     
-    // Afficher la note
-    const char* noteNames[] = {"C", "D", "E", "F", "G", "A", "B"};
-    result += noteNames[note];
+    // Afficher la note avec correspondance aux enum class
+    switch (note) {
+        case Diatony::Note::C: result += "C"; break;
+        case Diatony::Note::CSharp: result += "C#"; break;
+        case Diatony::Note::D: result += "D"; break;
+        case Diatony::Note::DSharp: result += "D#"; break;
+        case Diatony::Note::E: result += "E"; break;
+        case Diatony::Note::F: result += "F"; break;
+        case Diatony::Note::FSharp: result += "F#"; break;
+        case Diatony::Note::G: result += "G"; break;
+        case Diatony::Note::GSharp: result += "G#"; break;
+        case Diatony::Note::A: result += "A"; break;
+        case Diatony::Note::ASharp: result += "A#"; break;
+        case Diatony::Note::B: result += "B"; break;
+    }
     
     // Afficher l'altération
-    if (alteration == 1) {
-        result += "#";
-    } else if (alteration == 2) {
-        result += "b";
+    switch (alteration) {
+        case Diatony::Alteration::Flat: result += "b"; break;
+        case Diatony::Alteration::Sharp: result += "#"; break;
+        case Diatony::Alteration::Natural: break; // Pas d'ajout pour naturel
     }
     
     // Afficher le mode
