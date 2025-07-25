@@ -24,7 +24,7 @@ void Piece::addSection(const Section& section) {
             fromChordGlobalIndex = 0;
         }
         
-        Modulation newModulation(0, fromChordGlobalIndex, toChordGlobalIndex);
+        Modulation newModulation(Diatony::ModulationType::PerfectCadence, fromChordGlobalIndex, toChordGlobalIndex);
         modulations.push_back(newModulation);
         
         // Connecter le callback de la modulation ajoutée
