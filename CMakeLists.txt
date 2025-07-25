@@ -69,7 +69,8 @@ juce_generate_juce_header(DiatonyDawApplication)
 target_sources(DiatonyDawApplication
     PRIVATE
         # Core
-        src/core/PluginProcessor.cpp
+        src/controller/core/PluginProcessor.cpp
+        src/controller/core/PluginProcessor.h
         
         # UI
         src/ui/PluginEditor.cpp

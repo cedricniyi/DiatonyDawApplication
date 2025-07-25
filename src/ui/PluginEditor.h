@@ -1,7 +1,7 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "../core/PluginProcessor.h"
+#include "../controller/core/PluginProcessor.h"
 #include "extra/SimpleToastComponent.h"
 #include "extra/DiatonyAlertWindow.h"
 #include "MainContentComponent.h"

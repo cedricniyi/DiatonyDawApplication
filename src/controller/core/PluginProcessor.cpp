@@ -1,5 +1,5 @@
 #include "PluginProcessor.h"
-#include "../ui/PluginEditor.h"
+#include "../../ui/PluginEditor.h"
 
 #ifndef  JucePlugin_Name
  #define JucePlugin_Name    "DiatonyDawApplication"
