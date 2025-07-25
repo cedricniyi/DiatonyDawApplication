@@ -1,27 +1,27 @@
 #include "Chord.h"
 
 // Constructeurs
-Chord::Chord() : degree(0), quality(0), state(0) {}
+Chord::Chord() : degree(Diatony::ChordDegree::First), quality(Diatony::ChordQuality::Major), state(Diatony::ChordState::Fundamental) {}
 
-Chord::Chord(int degree, int quality, int state) 
+Chord::Chord(Diatony::ChordDegree degree, Diatony::ChordQuality quality, Diatony::ChordState state) 
     : degree(degree), quality(quality), state(state) {}
 
 // Setters
-void Chord::setDegree(int newDegree) {
+void Chord::setDegree(Diatony::ChordDegree newDegree) {
     if (degree != newDegree) {
         degree = newDegree;
         notifyChange();
     }
 }
 
-void Chord::setQuality(int newQuality) {
+void Chord::setQuality(Diatony::ChordQuality newQuality) {
     if (quality != newQuality) {
         quality = newQuality;
         notifyChange();
     }
 }
 
-void Chord::setState(int newState) {
+void Chord::setState(Diatony::ChordState newState) {
     if (state != newState) {
         state = newState;
         notifyChange();
@@ -30,9 +30,9 @@ void Chord::setState(int newState) {
 
 // Affichage simple
 juce::String Chord::toString() const {
-    return "Chord(degree:" + juce::String(degree) + 
-           ", quality:" + juce::String(quality) + 
-           ", state:" + juce::String(state) + ")";
+    return "Chord(degree:" + juce::String(static_cast<int>(degree)) + 
+           ", quality:" + juce::String(static_cast<int>(quality)) + 
+           ", state:" + juce::String(static_cast<int>(state)) + ")";
 }
 
 // Méthodes privées

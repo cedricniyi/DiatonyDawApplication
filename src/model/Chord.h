@@ -2,6 +2,7 @@
 
 #include <juce_core/juce_core.h>
 #include <functional>
+#include "DiatonyTypes.h"
 
 /**
  * Représente un accord avec son degré, sa qualité et son état (renversement)
@@ -11,17 +12,17 @@ class Chord {
 public:
     // Constructeurs
     Chord();
-    Chord(int degree, int quality, int state);
+    Chord(Diatony::ChordDegree degree, Diatony::ChordQuality quality, Diatony::ChordState state);
     
     // Setters
-    void setDegree(int newDegree);
-    void setQuality(int newQuality);
-    void setState(int newState);
+    void setDegree(Diatony::ChordDegree newDegree);
+    void setQuality(Diatony::ChordQuality newQuality);
+    void setState(Diatony::ChordState newState);
     
     // Getters
-    int getDegree() const { return degree; }
-    int getQuality() const { return quality; }
-    int getState() const { return state; }
+    Diatony::ChordDegree getDegree() const { return degree; }
+    Diatony::ChordQuality getQuality() const { return quality; }
+    Diatony::ChordState getState() const { return state; }
     
     // Affichage simple
     juce::String toString() const;
@@ -30,9 +31,9 @@ public:
     std::function<void()> onChordChanged;
     
 private:
-    int degree;
-    int quality;
-    int state;
+    Diatony::ChordDegree degree;
+    Diatony::ChordQuality quality;
+    Diatony::ChordState state;
     
     void notifyChange();
 }; 
