@@ -2,24 +2,29 @@
 
 Modulation::Modulation() 
     : modulationType(Diatony::ModulationType::PerfectCadence), fromChordIndex(-1), toChordIndex(-1) {
+    updateName();
 }
 
 Modulation::Modulation(Diatony::ModulationType type, int fromChordIndex, int toChordIndex) 
     : modulationType(type), fromChordIndex(fromChordIndex), toChordIndex(toChordIndex) {
+    updateName();
 }
 
 void Modulation::setModulationType(Diatony::ModulationType newType) {
     modulationType = newType;
+    updateName();
     notifyChange();
 }
 
 void Modulation::setFromChordIndex(int newFromChordIndex) {
     fromChordIndex = newFromChordIndex;
+    updateName();
     notifyChange();
 }
 
 void Modulation::setToChordIndex(int newToChordIndex) {
     toChordIndex = newToChordIndex;
+    updateName();
     notifyChange();
 }
 
@@ -64,8 +69,28 @@ juce::String Modulation::toString() const {
     return result;
 }
 
-void Modulation::notifyChange() {
-    if (onModulationChanged) {
-        onModulationChanged();
+void Modulation::updateName() {
+    // Générer le nom basé sur le type de modulation
+    switch (modulationType) {
+        case Diatony::ModulationType::PerfectCadence:
+            name = "Perfect Cadence";
+            break;
+        case Diatony::ModulationType::PivotChord:
+            name = "Pivot Chord";
+            break;
+        case Diatony::ModulationType::Alteration:
+            name = "Alteration";
+            break;
+        case Diatony::ModulationType::Chromatic:
+            name = "Chromatic";
+            break;
+        default:
+            name = "Unknown Modulation";
+            break;
     }
+}
+
+void Modulation::notifyChange() {
+    // Appeler le callback unifié de PieceElement
+    PieceElement::notifyChange();
 } 

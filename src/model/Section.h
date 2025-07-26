@@ -3,13 +3,14 @@
 #include <juce_core/juce_core.h>
 #include "Progression.h"
 #include "DiatonyTypes.h"
+#include "PieceElement.h"
 #include <functional>
 
 /**
  * Représente une section tonale complète avec sa tonalité, son mode et sa progression
  * Version avec types fortement typés utilisant DiatonyTypes.h
  */
-class Section {
+class Section : public PieceElement {
 public:
     // Constructeurs
     Section();
@@ -26,17 +27,17 @@ public:
     Diatony::Note getNote() const { return note; }
     Diatony::Alteration getAlteration() const { return alteration; }
     bool getIsMajor() const { return isMajor; }
-    const juce::String& getName() const { return name; }
     const Progression& getProgression() const { return progression; }
     Progression& getProgression() { return progression; }
+    
+    // Implémentation des méthodes virtuelles de PieceElement
+    Type getType() const override { return Type::Section; }
+    const juce::String& getName() const override { return name; }
     
     // Méthodes utilitaires simples
     bool isEmpty() const;
     bool isValid() const;  // Vérifie si la section est valide
     juce::String toString() const;
-    
-    // Callback pour notifier les changements
-    std::function<void()> onSectionChanged;
     
 private:
     Diatony::Note note;            // Note principale fortement typée

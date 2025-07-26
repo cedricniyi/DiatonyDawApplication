@@ -92,7 +92,6 @@ juce::String Section::toString() const {
 }
 
 void Section::notifyChange() {
-    if (onSectionChanged) {
-        onSectionChanged();
-    }
+    // Appeler le callback unifié de PieceElement
+    PieceElement::notifyChange();
 } 
