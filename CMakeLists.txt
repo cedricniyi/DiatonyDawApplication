@@ -114,6 +114,7 @@ target_sources(DiatonyDawApplication
         src/ui/section/components/OverviewContentArea.h
 
         # Model
+        src/model/PieceElement.h
         src/model/Progression.h
         src/model/Progression.cpp
         src/model/Chord.h
