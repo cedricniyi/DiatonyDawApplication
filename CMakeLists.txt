@@ -90,6 +90,7 @@ target_sources(DiatonyDawApplication
         src/ui/footer/FooterPanel.h
         src/ui/header/HeaderPanel.h
         src/ui/section/SectionPanel.h
+        src/ui/section/SectionPanel.cpp
         src/ui/style/DiatonyLookAndFeel.h
         
         # Animation
@@ -113,9 +114,29 @@ target_sources(DiatonyDawApplication
         src/utils/ColorGenerator.cpp
         src/utils/ColorGenerator.h
         
-        # UI Components
-        src/ui/section/components/ScrollableContentPanel.h
-        src/ui/section/components/OverviewContentArea.h
+        # UI Components - EditZone
+        src/ui/section/components/EditZone/ProgressionArea.h
+        src/ui/section/components/EditZone/ProgressionArea.cpp
+        src/ui/section/components/EditZone/WelcomeView.h
+        src/ui/section/components/EditZone/WelcomeView.cpp
+        
+        # UI Components - OverviewZone/PlayBack
+        src/ui/section/components/OverviewZone/PlayBack/PlaybackActionArea.h
+        src/ui/section/components/OverviewZone/PlayBack/PlaybackActionArea.cpp
+        
+        # UI Components - OverviewZone/GenerateAndMore
+        src/ui/section/components/OverviewZone/GenerateAndMore/GenerationButtons.h
+        src/ui/section/components/OverviewZone/GenerateAndMore/GenerationButtons.cpp
+        
+        # UI Components - OverviewZone/Overview
+        src/ui/section/components/OverviewZone/Overview/ScrollableContentPanel.h
+        src/ui/section/components/OverviewZone/Overview/ScrollableContentPanel.cpp
+        src/ui/section/components/OverviewZone/Overview/OverviewContentArea.h
+        src/ui/section/components/OverviewZone/Overview/OverviewContentArea.cpp
+        src/ui/section/components/OverviewZone/Overview/OverviewArea.h
+        src/ui/section/components/OverviewZone/Overview/OverviewArea.cpp
+        src/ui/section/components/OverviewZone/Overview/OverviewActionArea.h
+        src/ui/section/components/OverviewZone/Overview/OverviewActionArea.cpp
 
         # Model
         src/model/Identifiers.h
