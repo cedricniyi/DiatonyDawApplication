@@ -1,345 +1,319 @@
 #include "Piece.h"
 
-Piece::Piece() : title("Untitled Piece") {
+// Constructeurs
+Piece::Piece()
+{
+    state = createPieceNode("Untitled Piece");
 }
 
-Piece::Piece(const juce::String& pieceTitle) : title(pieceTitle) {
+Piece::Piece(const juce::String& pieceTitle)
+{
+    state = createPieceNode(pieceTitle);
 }
 
-void Piece::addSection(const Section& section) {
-    // Créer une copie de la section
-    auto newSection = std::make_unique<Section>(section);
-    addSection(std::move(newSection));
+// Gestion des sections
+void Piece::addSection(const Section& section)
+{
+    // Si ce n'est pas la première section, on doit d'abord ajouter une modulation
+    if (getSectionCount() > 0)
+    {
+        // Ajoute une modulation par défaut entre les sections
+        // Les index -1 indiquent une modulation symbolique à définir ultérieurement
+        addModulation(Diatony::ModulationType::PerfectCadence, -1, -1);
+    }
+    
+    state.appendChild(section.getState().createCopy(), &undoManager);
 }
 
-void Piece::addSection(std::unique_ptr<Section> section) {
-    // Si c'est la deuxième section ou plus, ajouter d'abord une modulation
-    if (getSectionCount() > 0) {
-        // Calculer les index globaux d'accords pour la modulation
-        int currentSectionCount = getSectionCount();
-        int startOfNewSection = getStartingChordIndexOfSection(currentSectionCount);
-        int fromChordGlobalIndex = startOfNewSection - 1;  // Dernier accord de la section précédente
-        int toChordGlobalIndex = startOfNewSection;        // Premier accord de la nouvelle section
-        
-        // S'assurer que l'index de départ est valide
-        if (fromChordGlobalIndex < 0) {
-            fromChordGlobalIndex = 0;
+void Piece::addSection(const juce::String& sectionName)
+{
+    // Si ce n'est pas la première section, on doit d'abord ajouter une modulation
+    if (getSectionCount() > 0)
+    {
+        // Ajoute une modulation par défaut entre les sections
+        // Les index -1 indiquent une modulation symbolique à définir ultérieurement
+        addModulation(Diatony::ModulationType::PerfectCadence, -1, -1);
+    }
+    
+    auto sectionNode = Section::createSectionNode(sectionName);
+    state.appendChild(sectionNode, &undoManager);
+}
+
+Section Piece::createSection(const juce::String& sectionName)
+{
+    return Section::createIn(state, sectionName);
+}
+
+void Piece::removeLastSection()
+{
+    auto sections = getChildrenOfType(Identifiers::SECTION);
+    if (!sections.empty())
+    {
+        // Trouve et supprime la dernière section
+        for (int i = state.getNumChildren() - 1; i >= 0; --i)
+        {
+            if (state.getChild(i).hasType(Identifiers::SECTION))
+            {
+                state.removeChild(i, &undoManager);
+                break;
+            }
         }
         
-        auto newModulation = std::make_unique<Modulation>(
-            Diatony::ModulationType::PerfectCadence, 
-            fromChordGlobalIndex, 
-            toChordGlobalIndex
-        );
-        
-        // Connecter le callback unifié de la modulation
-        newModulation->onElementChanged = [this]() { notifyChange(); };
-        
-        // Ajouter la modulation à elements
-        elements.add(newModulation.release());
-    }
-    
-    // Connecter le callback unifié de la section
-    section->onElementChanged = [this]() { notifyChange(); };
-    
-    // Ajouter la section à elements
-    elements.add(section.release());
-    
-    notifyChange();
-}
-
-void Piece::removeLastSection() {
-    if (elements.isEmpty()) return;
-    
-    // Vérifier que le dernier élément est bien une Section
-    auto* lastElement = elements.getLast();
-    if (lastElement->getType() != PieceElement::Type::Section) {
-        // Si le dernier élément n'est pas une Section, quelque chose ne va pas
-        // dans la structure. On ne fait rien pour éviter de corrompre davantage.
-        return;
-    }
-    
-    // Supprimer la dernière section
-    elements.removeLast();
-    
-    // Si il reste des éléments ET que le nouveau dernier élément est une Modulation,
-    // alors il faut aussi la supprimer pour maintenir l'invariant
-    if (!elements.isEmpty()) {
-        auto* newLastElement = elements.getLast();
-        if (newLastElement->getType() == PieceElement::Type::Modulation) {
-            elements.removeLast();
+        // Si on avait plus d'une section, supprimer aussi la dernière modulation
+        auto modulations = getChildrenOfType(Identifiers::MODULATION);
+        if (sections.size() > 1 && !modulations.empty())
+        {
+            for (int i = state.getNumChildren() - 1; i >= 0; --i)
+            {
+                if (state.getChild(i).hasType(Identifiers::MODULATION))
+                {
+                    state.removeChild(i, &undoManager);
+                    break;
+                }
+            }
         }
     }
-    
-    notifyChange();
 }
 
-void Piece::clearAllElements() {
-    elements.clear();
-    notifyChange();
+void Piece::clearAllElements()
+{
+    state.removeAllChildren(&undoManager);
 }
 
-void Piece::clear() {
+void Piece::clear()
+{
     clearAllElements();
-    title = "Untitled Piece";
-    notifyChange();
 }
 
-const Section& Piece::getSection(size_t index) const {
-    size_t sectionIndex = 0;
-    for (int i = 0; i < elements.size(); ++i) {
-        if (elements[i]->getType() == PieceElement::Type::Section) {
-            if (sectionIndex == index) {
-                return *static_cast<const Section*>(elements[i]);
-            }
-            sectionIndex++;
-        }
-    }
-    throw std::out_of_range("Section index out of range");
+// Gestion des modulations
+void Piece::addModulation(const Modulation& modulation)
+{
+    state.appendChild(modulation.getState().createCopy(), &undoManager);
 }
 
-Section& Piece::getSection(size_t index) {
-    return const_cast<Section&>(static_cast<const Piece*>(this)->getSection(index));
+void Piece::addModulation(Diatony::ModulationType type, int fromChord, int toChord)
+{
+    auto modulationNode = Modulation::createModulationNode(type, fromChord, toChord);
+    state.appendChild(modulationNode, &undoManager);
 }
 
-const Modulation& Piece::getModulation(size_t index) const {
-    size_t modulationIndex = 0;
-    for (int i = 0; i < elements.size(); ++i) {
-        if (elements[i]->getType() == PieceElement::Type::Modulation) {
-            if (modulationIndex == index) {
-                return *static_cast<const Modulation*>(elements[i]);
-            }
-            modulationIndex++;
-        }
-    }
-    throw std::out_of_range("Modulation index out of range");
+Modulation Piece::createModulation(Diatony::ModulationType type, int fromChord, int toChord)
+{
+    return Modulation::createIn(state, type, fromChord, toChord);
 }
 
-Modulation& Piece::getModulation(size_t index) {
-    return const_cast<Modulation&>(static_cast<const Piece*>(this)->getModulation(index));
-}
-
-void Piece::setTitle(const juce::String& newTitle) {
-    title = newTitle;
-    notifyChange();
-}
-
-bool Piece::isComplete() const {
-    if (getSectionCount() == 0) {
-        return false;
+// Accès aux éléments par type
+std::vector<Section> Piece::getSections() const
+{
+    std::vector<Section> sections;
+    auto sectionNodes = getChildrenOfType(Identifiers::SECTION);
+    
+    for (const auto& node : sectionNodes)
+    {
+        sections.emplace_back(node);
     }
     
-    // Vérifier l'invariant des modulations
-    if (!hasValidStructure()) {
-        return false;
-    }
-    
-    // Toutes les sections doivent être valides
-    for (int i = 0; i < elements.size(); ++i) {
-        if (elements[i]->getType() == PieceElement::Type::Section) {
-            auto* section = static_cast<const Section*>(elements[i]);
-            if (!section->isValid()) {
-                return false;
-            }
-        }
-    }
-    
-    return true;
-}
-
-bool Piece::hasValidStructure() const {
-    // Vérifier l'invariant : modulations.size() == sections.size() - 1
-    size_t sectionCount = getSectionCount();
-    size_t modulationCount = getModulationCount();
-    
-    if (sectionCount == 0) {
-        return modulationCount == 0;
-    }
-    
-    return modulationCount == sectionCount - 1;
-}
-
-// Nouvelles méthodes pour la structure unifiée
-size_t Piece::getSectionCount() const {
-    size_t count = 0;
-    for (int i = 0; i < elements.size(); ++i) {
-        if (elements[i]->getType() == PieceElement::Type::Section) {
-            count++;
-        }
-    }
-    return count;
-}
-
-size_t Piece::getModulationCount() const {
-    size_t count = 0;
-    for (int i = 0; i < elements.size(); ++i) {
-        if (elements[i]->getType() == PieceElement::Type::Modulation) {
-            count++;
-        }
-    }
-    return count;
-}
-
-std::vector<Section*> Piece::getSections() const {
-    std::vector<Section*> sections;
-    for (int i = 0; i < elements.size(); ++i) {
-        if (elements[i]->getType() == PieceElement::Type::Section) {
-            sections.push_back(static_cast<Section*>(elements[i]));
-        }
-    }
     return sections;
 }
 
-std::vector<Modulation*> Piece::getModulations() const {
-    std::vector<Modulation*> modulations;
-    for (int i = 0; i < elements.size(); ++i) {
-        if (elements[i]->getType() == PieceElement::Type::Modulation) {
-            modulations.push_back(static_cast<Modulation*>(elements[i]));
-        }
+std::vector<Modulation> Piece::getModulations() const
+{
+    std::vector<Modulation> modulations;
+    auto modulationNodes = getChildrenOfType(Identifiers::MODULATION);
+    
+    for (const auto& node : modulationNodes)
+    {
+        modulations.emplace_back(node);
     }
+    
     return modulations;
 }
 
-int Piece::getTotalChordCount() const {
-    int total = 0;
-    for (int i = 0; i < elements.size(); ++i) {
-        if (elements[i]->getType() == PieceElement::Type::Section) {
-            auto* section = static_cast<const Section*>(elements[i]);
-            total += static_cast<int>(section->getProgression().size());
-        }
-    }
-    return total;
+Section Piece::getSection(size_t index) const
+{
+    validateSectionIndex(index);
+    return Section(getChildOfType(Identifiers::SECTION, index));
 }
 
-juce::String Piece::toString() const {
-    juce::String result = title + " - ";
-    
-    if (isEmpty()) {
-        result += "Empty piece";
-    } else {
-        result += juce::String(getSectionCount()) + " sections";
-        if (getModulationCount() > 0) {
-            result += ", " + juce::String(getModulationCount()) + " modulations";
-        }
-        result += ", " + juce::String(getTotalChordCount()) + " total chords";
-    }
-    
-    return result;
+Section Piece::getSection(size_t index)
+{
+    validateSectionIndex(index);
+    return Section(getChildOfType(Identifiers::SECTION, index));
 }
 
-juce::String Piece::getDetailedSummary() const {
-    juce::String result = "Piece: " + title + "\n";
+Modulation Piece::getModulation(size_t index) const
+{
+    validateModulationIndex(index);
+    return Modulation(getChildOfType(Identifiers::MODULATION, index));
+}
+
+Modulation Piece::getModulation(size_t index)
+{
+    validateModulationIndex(index);
+    return Modulation(getChildOfType(Identifiers::MODULATION, index));
+}
+
+// Informations sur la pièce
+size_t Piece::getSectionCount() const
+{
+    return getChildrenOfType(Identifiers::SECTION).size();
+}
+
+size_t Piece::getModulationCount() const
+{
+    return getChildrenOfType(Identifiers::MODULATION).size();
+}
+
+int Piece::getNumElements() const
+{
+    return state.getNumChildren();
+}
+
+bool Piece::isEmpty() const
+{
+    return state.getNumChildren() == 0;
+}
+
+void Piece::setTitle(const juce::String& newTitle)
+{
+    state.setProperty(Identifiers::name, newTitle, &undoManager);
+}
+
+const juce::String Piece::getTitle() const
+{
+    return state.getProperty(Identifiers::name, "Untitled Piece").toString();
+}
+
+// Validation
+bool Piece::isComplete() const
+{
+    return !isEmpty() && hasValidStructure();
+}
+
+bool Piece::hasValidStructure() const
+{
+    // Vérifie l'invariant : modulations.size() == sections.size() - 1
+    auto sectionCount = getSectionCount();
+    auto modulationCount = getModulationCount();
     
-    if (isEmpty()) {
-        result += "  No sections defined\n";
-    } else {
-        result += "  Elements (" + juce::String(elements.size()) + "):\n";
-        int sectionCounter = 1;
-        int modulationCounter = 1;
+    if (sectionCount == 0)
+        return true; // Pièce vide est valide
         
-        for (int i = 0; i < elements.size(); ++i) {
-            auto* element = elements[i];
-            if (element->getType() == PieceElement::Type::Section) {
-                auto* section = static_cast<const Section*>(element);
-                result += "    S" + juce::String(sectionCounter) + ". " + section->toString() + "\n";
-                sectionCounter++;
-            } else if (element->getType() == PieceElement::Type::Modulation) {
-                auto* modulation = static_cast<const Modulation*>(element);
-                result += "    M" + juce::String(modulationCounter) + ". → " + modulation->toString() + "\n";
-                modulationCounter++;
+    return modulationCount == (sectionCount - 1);
+}
+
+// Statistiques
+int Piece::getTotalChordCount() const
+{
+    int totalChords = 0;
+    auto sections = getSections();
+    
+    for (const auto& section : sections)
+    {
+        totalChords += static_cast<int>(section.getProgression().size());
+    }
+    
+    return totalChords;
+}
+
+// Méthodes utilitaires
+juce::String Piece::toString() const
+{
+    if (isEmpty())
+        return getTitle() + " (Empty)";
+        
+    return getTitle() + " (" + 
+           juce::String(getSectionCount()) + " sections, " +
+           juce::String(getModulationCount()) + " modulations, " +
+           juce::String(getTotalChordCount()) + " total chords)";
+}
+
+juce::String Piece::getDetailedSummary() const
+{
+    juce::String result = "=== " + getTitle() + " ===\n";
+    result += "Structure: " + juce::String(getSectionCount()) + " sections, " +
+              juce::String(getModulationCount()) + " modulations\n";
+    result += "Total chords: " + juce::String(getTotalChordCount()) + "\n";
+    result += juce::String("Valid structure: ") + (hasValidStructure() ? "Yes" : "No") + "\n\n";
+    
+    if (!isEmpty())
+    {
+        result += "Elements:\n";
+        auto sections = getSections();
+        auto modulations = getModulations();
+        
+        for (size_t i = 0; i < sections.size(); ++i)
+        {
+            result += juce::String(i + 1) + ". " + sections[i].toString() + "\n";
+            
+            if (i < modulations.size())
+            {
+                result += "   -> " + modulations[i].toString() + "\n";
             }
         }
-        result += "  Total chords: " + juce::String(getTotalChordCount()) + "\n";
-        result += "  Structure valid: " + juce::String(hasValidStructure() ? "Yes" : "No");
     }
     
     return result;
 }
 
-void Piece::notifyChange() {
-    if (onPieceChanged) {
-        onPieceChanged();
-    }
+// Création d'un nouveau nœud Piece
+juce::ValueTree Piece::createPieceNode(const juce::String& title)
+{
+    juce::ValueTree pieceNode(Identifiers::PIECE);
+    
+    // Générer un ID unique pour cette pièce
+    static int nextId = 1;
+    pieceNode.setProperty(Identifiers::id, nextId++, nullptr);
+    pieceNode.setProperty(Identifiers::name, title, nullptr);
+    
+    return pieceNode;
 }
 
-void Piece::connectAllCallbacks() {
-    // Connecter tous les callbacks unifiés de tous les éléments
-    for (int i = 0; i < elements.size(); ++i) {
-        auto* element = elements[i];
-        element->onElementChanged = [this]() { notifyChange(); };
-    }
-}
-
-int Piece::getStartingChordIndexOfSection(size_t sectionIndex) const {
-    if (sectionIndex > getSectionCount()) {
-        throw std::out_of_range("Section index is out of range for chord index calculation");
-    }
+// Helpers pour naviguer dans l'arborescence
+std::vector<juce::ValueTree> Piece::getChildrenOfType(const juce::Identifier& type) const
+{
+    std::vector<juce::ValueTree> children;
     
-    int total = 0;
-    size_t currentSectionIndex = 0;
-    
-    for (int i = 0; i < elements.size() && currentSectionIndex < sectionIndex; ++i) {
-        if (elements[i]->getType() == PieceElement::Type::Section) {
-            auto* section = static_cast<const Section*>(elements[i]);
-            total += static_cast<int>(section->getProgression().size());
-            currentSectionIndex++;
+    for (int i = 0; i < state.getNumChildren(); ++i)
+    {
+        auto child = state.getChild(i);
+        if (child.hasType(type))
+        {
+            children.push_back(child);
         }
     }
-    return total;
+    
+    return children;
 }
 
-std::vector<ChordReference> Piece::getChordsWithGlobalIndices(size_t sectionIndex) {
-    // Déléguer à la version const et convertir le résultat
-    auto constResult = static_cast<const Piece*>(this)->getChordsWithGlobalIndices(sectionIndex);
+juce::ValueTree Piece::getChildOfType(const juce::Identifier& type, size_t index) const
+{
+    auto children = getChildrenOfType(type);
     
-    std::vector<ChordReference> result;
-    result.reserve(constResult.size());
-    
-    for (const auto& constRef : constResult) {
-        result.push_back({const_cast<Chord&>(constRef.chord), constRef.globalIndex});
+    if (index >= children.size())
+    {
+        jassertfalse;
+        return juce::ValueTree(); // Retourne un ValueTree invalide
     }
     
-    return result;
+    return children[index];
 }
 
-std::vector<ConstChordReference> Piece::getChordsWithGlobalIndices(size_t sectionIndex) const {
-    if (sectionIndex >= getSectionCount()) {
+// Validation des index
+void Piece::validateSectionIndex(size_t index) const
+{
+    if (index >= getSectionCount())
+    {
+        jassertfalse;
         throw std::out_of_range("Section index out of range");
     }
-
-    std::vector<ConstChordReference> result;
-    const int globalStartIndex = getStartingChordIndexOfSection(sectionIndex);
-    const auto& section = getSection(sectionIndex);
-    const auto& progression = section.getProgression();
-
-    result.reserve(progression.size());
-    for (size_t i = 0; i < progression.size(); ++i) {
-        result.push_back({progression.getChord(i), globalStartIndex + static_cast<int>(i)});
-    }
-    return result;
 }
 
-// Implémentation des helpers auxiliaires
-Section* Piece::getSectionAtElementIndex(int elementIndex) const {
-    if (elementIndex < 0 || elementIndex >= elements.size()) {
-        return nullptr;
+void Piece::validateModulationIndex(size_t index) const
+{
+    if (index >= getModulationCount())
+    {
+        jassertfalse;
+        throw std::out_of_range("Modulation index out of range");
     }
-    
-    auto* element = elements[elementIndex];
-    if (element->getType() == PieceElement::Type::Section) {
-        return static_cast<Section*>(element);
-    }
-    return nullptr;
-}
-
-Modulation* Piece::getModulationAtElementIndex(int elementIndex) const {
-    if (elementIndex < 0 || elementIndex >= elements.size()) {
-        return nullptr;
-    }
-    
-    auto* element = elements[elementIndex];
-    if (element->getType() == PieceElement::Type::Modulation) {
-        return static_cast<Modulation*>(element);
-    }
-    return nullptr;
 }

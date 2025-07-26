@@ -1,67 +1,53 @@
 #pragma once
 
-#include <vector>
 #include <juce_core/juce_core.h>
 #include <juce_data_structures/juce_data_structures.h>
 #include "Section.h"
 #include "Modulation.h"
-#include "PieceElement.h"
-
-// Nouvelle structure pour encapsuler un accord et son index global
-struct ChordReference {
-    Chord& chord;
-    int globalIndex;
-};
-
-// Version const pour les accès en lecture seule
-struct ConstChordReference {
-    const Chord& chord;
-    int globalIndex;
-};
+#include "Identifiers.h"
 
 /**
  * Représente une pièce musicale complète avec ses sections tonales et modulations
+ * Propriétaire du ValueTree racine et de l'UndoManager
  * Maintient l'invariant : modulations.size() == sections.size() - 1
- * Utilise maintenant une collection unifiée PieceElement pour l'ordre chronologique
+ * Architecture ValueTree : les éléments sont stockés dans l'ordre chronologique
  */
 class Piece {
 public:
     Piece();
     explicit Piece(const juce::String& pieceTitle);
     
-    // Gestion des sections (API préservée pour compatibilité)
-    void addSection(const Section& section);
-    void addSection(std::unique_ptr<Section> section);  // Nouvelle surcharge
+    // Gestion des sections
+    void addSection(const Section& section);           // Ajoute automatiquement une modulation si nécessaire
+    void addSection(const juce::String& sectionName);  // Ajoute automatiquement une modulation si nécessaire
+    Section createSection(const juce::String& sectionName);
     void removeLastSection();  // Supprime section et modulation associée
-    void clearAllElements();   // Nouvelle méthode unifiée
-    void clear();             // Conservée pour compatibilité
+    void clearAllElements();   // Vide toute la pièce
+    void clear();             // Alias pour compatibilité
     
-    // Nouvelle API unifiée pour les éléments
-    int getNumElements() const { return elements.size(); }
-    PieceElement* getElement(int index) const { return elements[index]; }
-    const juce::OwnedArray<PieceElement>& getElements() const { return elements; }
+    // Gestion des modulations
+    void addModulation(const Modulation& modulation);
+    void addModulation(Diatony::ModulationType type, int fromChord, int toChord);
+    Modulation createModulation(Diatony::ModulationType type, int fromChord, int toChord);
     
-    // API préservée pour compatibilité (reconstruite dynamiquement)
-    std::vector<Section*> getSections() const;
-    std::vector<Modulation*> getModulations() const;
+    // Accès aux éléments par type
+    std::vector<Section> getSections() const;
+    std::vector<Modulation> getModulations() const;
     
-    Section& getSection(size_t index);
-    const Section& getSection(size_t index) const;
+    Section getSection(size_t index) const;
+    Section getSection(size_t index);
     
-    Modulation& getModulation(size_t index);
-    const Modulation& getModulation(size_t index) const;
-    
-    // Accès aux accords avec index globaux
-    std::vector<ConstChordReference> getChordsWithGlobalIndices(size_t sectionIndex) const;
-    std::vector<ChordReference> getChordsWithGlobalIndices(size_t sectionIndex);
+    Modulation getModulation(size_t index) const;
+    Modulation getModulation(size_t index);
     
     // Informations sur la pièce
-    size_t getSectionCount() const;    // Implémentation déplacée dans .cpp
-    size_t getModulationCount() const; // Implémentation déplacée dans .cpp  
-    bool isEmpty() const { return elements.isEmpty(); }
+    size_t getSectionCount() const;
+    size_t getModulationCount() const;
+    int getNumElements() const; // Nombre total d'éléments (sections + modulations)
+    bool isEmpty() const;
     
     void setTitle(const juce::String& newTitle);
-    const juce::String& getTitle() const { return title; }
+    const juce::String getTitle() const;
     
     // Validation
     bool isComplete() const;
@@ -74,18 +60,23 @@ public:
     juce::String toString() const;
     juce::String getDetailedSummary() const;
     
-    // Callback pour notifier les changements
-    std::function<void()> onPieceChanged;
+    // Accès au ValueTree et UndoManager
+    juce::ValueTree getState() const { return state; }
+    juce::UndoManager& getUndoManager() { return undoManager; }
+    const juce::UndoManager& getUndoManager() const { return undoManager; }
+    
+    // Création d'un nouveau nœud Piece
+    static juce::ValueTree createPieceNode(const juce::String& title);
     
 private:
-    juce::String title;
-    juce::OwnedArray<PieceElement> elements;  // Collection unifiée : Section, Modulation, Section, etc.
+    juce::ValueTree state;           // ValueTree racine contenant toute la pièce
+    juce::UndoManager undoManager;   // Gestionnaire Undo/Redo
     
-    void notifyChange();
-    void connectAllCallbacks();  // Helper pour reconnecter tous les callbacks
-    int getStartingChordIndexOfSection(size_t sectionIndex) const;
+    // Helpers pour naviguer dans l'arborescence
+    std::vector<juce::ValueTree> getChildrenOfType(const juce::Identifier& type) const;
+    juce::ValueTree getChildOfType(const juce::Identifier& type, size_t index) const;
     
-    // Helpers pour la nouvelle architecture  
-    Section* getSectionAtElementIndex(int elementIndex) const;     // Cast sécurisé vers Section
-    Modulation* getModulationAtElementIndex(int elementIndex) const; // Cast sécurisé vers Modulation
+    // Validation des index
+    void validateSectionIndex(size_t index) const;
+    void validateModulationIndex(size_t index) const;
 }; 
