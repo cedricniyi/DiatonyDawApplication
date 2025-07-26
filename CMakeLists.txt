@@ -72,6 +72,10 @@ target_sources(DiatonyDawApplication
         src/controller/core/PluginProcessor.cpp
         src/controller/core/PluginProcessor.h
         
+        # App Controller
+        src/controller/AppController.cpp
+        src/controller/AppController.h
+        
         # UI
         src/ui/PluginEditor.cpp
         src/ui/PluginEditor.h
