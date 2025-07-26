@@ -1,39 +1,54 @@
 #pragma once
 
 #include <juce_core/juce_core.h>
-#include <functional>
+#include <juce_data_structures/juce_data_structures.h>
 #include "DiatonyTypes.h"
+#include "Identifiers.h"
 
 /**
  * Représente un accord avec son degré, sa qualité et son état (renversement)
- * Classe simple qui encapsule les trois composants essentiels d'un accord harmonique
+ * Wrapper léger autour d'un ValueTree qui ne stocke pas de données lui-même
+ * mais agit comme interface de haut niveau pour lire/écrire dans le ValueTree
  */
 class Chord {
 public:
-    // Constructeurs
-    Chord();
-    Chord(Diatony::ChordDegree degree, Diatony::ChordQuality quality, Diatony::ChordState state);
+    // Constructeur avec ValueTree existant (mode wrapper)
+    explicit Chord(juce::ValueTree state);
     
-    // Setters
+    // Méthode statique pour créer un nouveau Chord dans un parent
+    static Chord createIn(juce::ValueTree parentTree, Diatony::ChordDegree degree, 
+                         Diatony::ChordQuality quality, Diatony::ChordState state);
+    
+    // Setters (modifient directement le ValueTree)
     void setDegree(Diatony::ChordDegree newDegree);
     void setQuality(Diatony::ChordQuality newQuality);
-    void setState(Diatony::ChordState newState);
+    void setChordState(Diatony::ChordState newState);
     
-    // Getters
-    Diatony::ChordDegree getDegree() const { return degree; }
-    Diatony::ChordQuality getQuality() const { return quality; }
-    Diatony::ChordState getState() const { return state; }
+    // Getters (lisent directement du ValueTree)
+    Diatony::ChordDegree getDegree() const;
+    Diatony::ChordQuality getQuality() const;
+    Diatony::ChordState getChordState() const;  // Renommé pour éviter le conflit
     
-    // Affichage simple
+    // Accès au ValueTree sous-jacent
+    juce::ValueTree getState() const { return state; }
+    bool isValid() const { return state.isValid(); }
+    
+    // Méthodes utilitaires
     juce::String toString() const;
     
-    // Callback pour notifier les changements
-    std::function<void()> onChordChanged;
+    // Création d'un nouveau nœud Chord dans un ValueTree
+    static juce::ValueTree createChordNode(Diatony::ChordDegree degree,
+                                          Diatony::ChordQuality quality,
+                                          Diatony::ChordState state);
     
 private:
-    Diatony::ChordDegree degree;
-    Diatony::ChordQuality quality;
-    Diatony::ChordState state;
+    juce::ValueTree state;
     
-    void notifyChange();
+    // Helpers pour la conversion des types
+    static int degreeToInt(Diatony::ChordDegree degree);
+    static Diatony::ChordDegree intToDegree(int value);
+    static int qualityToInt(Diatony::ChordQuality quality);
+    static Diatony::ChordQuality intToQuality(int value);
+    static int stateToInt(Diatony::ChordState state);
+    static Diatony::ChordState intToState(int value);
 }; 
