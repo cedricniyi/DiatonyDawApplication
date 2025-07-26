@@ -1,43 +1,55 @@
 #pragma once
 
 #include <juce_core/juce_core.h>
-#include <functional>
+#include <juce_data_structures/juce_data_structures.h>
 #include "DiatonyTypes.h"
-#include "PieceElement.h"
+#include "Identifiers.h"
 
 /**
  * Représente une modulation entre deux sections ou accords
- * Classe simple qui encapsule les paramètres essentiels d'une modulation
+ * Wrapper léger autour d'un ValueTree qui ne stocke pas de données lui-même
+ * mais agit comme interface de haut niveau pour lire/écrire dans le ValueTree
  */
-class Modulation : public PieceElement {
+class Modulation {
 public:
-    // Constructeurs
-    Modulation();
-    Modulation(Diatony::ModulationType type, int fromChordIndex, int toChordIndex);
+    // Constructeur avec ValueTree existant (mode wrapper)
+    explicit Modulation(juce::ValueTree state);
     
-    // Setters
+    // Méthode statique pour créer une nouvelle Modulation dans un parent
+    static Modulation createIn(juce::ValueTree parentTree, Diatony::ModulationType type, 
+                              int fromChordIndex, int toChordIndex);
+    
+    // Setters (modifient directement le ValueTree)
     void setModulationType(Diatony::ModulationType newType);
     void setFromChordIndex(int newFromChordIndex);
     void setToChordIndex(int newToChordIndex);
+    void setName(const juce::String& newName);
     
-    // Getters
-    Diatony::ModulationType getModulationType() const { return modulationType; }
-    int getFromChordIndex() const { return fromChordIndex; }
-    int getToChordIndex() const { return toChordIndex; }
+    // Getters (lisent directement du ValueTree)
+    Diatony::ModulationType getModulationType() const;
+    int getFromChordIndex() const;
+    int getToChordIndex() const;
+    const juce::String getName() const;
     
-    // Implémentation des méthodes virtuelles de PieceElement
-    Type getType() const override { return Type::Modulation; }
-    const juce::String& getName() const override { return name; }
+    // Accès au ValueTree sous-jacent
+    juce::ValueTree getState() const { return state; }
+    bool isValid() const { return state.isValid(); }
     
     // Méthodes utilitaires
     juce::String toString() const;
     
-private:
-    Diatony::ModulationType modulationType;  // Type de modulation fortement typé
-    int fromChordIndex;  // Index de l'accord de départ
-    int toChordIndex;    // Index de l'accord d'arrivée
-    juce::String name;   // Nom généré automatiquement basé sur le type
+    // Création d'un nouveau nœud Modulation dans un ValueTree
+    static juce::ValueTree createModulationNode(Diatony::ModulationType type,
+                                               int fromChordIndex,
+                                               int toChordIndex);
     
-    void notifyChange();
-    void updateName();   // Met à jour le nom basé sur les paramètres actuels
+private:
+    juce::ValueTree state;
+    
+    // Helpers pour la conversion des types
+    static int modulationTypeToInt(Diatony::ModulationType type);
+    static Diatony::ModulationType intToModulationType(int value);
+    
+    // Met à jour le nom basé sur les paramètres actuels
+    void updateName();
 }; 

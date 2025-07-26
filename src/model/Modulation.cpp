@@ -1,96 +1,111 @@
 #include "Modulation.h"
 
-Modulation::Modulation() 
-    : modulationType(Diatony::ModulationType::PerfectCadence), fromChordIndex(-1), toChordIndex(-1) {
+// Constructeur avec ValueTree existant
+Modulation::Modulation(juce::ValueTree state) : state(state)
+{
+    jassert(state.hasType(Identifiers::MODULATION));
+}
+
+// Méthode statique pour créer une nouvelle Modulation dans un parent
+Modulation Modulation::createIn(juce::ValueTree parentTree, Diatony::ModulationType type, 
+                                int fromChordIndex, int toChordIndex)
+{
+    auto modulationNode = createModulationNode(type, fromChordIndex, toChordIndex);
+    parentTree.appendChild(modulationNode, nullptr);
+    return Modulation(modulationNode);
+}
+
+// Setters
+void Modulation::setModulationType(Diatony::ModulationType newType)
+{
+    state.setProperty(Identifiers::modulationType, modulationTypeToInt(newType), nullptr);
     updateName();
 }
 
-Modulation::Modulation(Diatony::ModulationType type, int fromChordIndex, int toChordIndex) 
-    : modulationType(type), fromChordIndex(fromChordIndex), toChordIndex(toChordIndex) {
-    updateName();
+void Modulation::setFromChordIndex(int newFromChordIndex)
+{
+    state.setProperty("fromChordIndex", newFromChordIndex, nullptr);
 }
 
-void Modulation::setModulationType(Diatony::ModulationType newType) {
-    modulationType = newType;
-    updateName();
-    notifyChange();
+void Modulation::setToChordIndex(int newToChordIndex)
+{
+    state.setProperty("toChordIndex", newToChordIndex, nullptr);
 }
 
-void Modulation::setFromChordIndex(int newFromChordIndex) {
-    fromChordIndex = newFromChordIndex;
-    updateName();
-    notifyChange();
+void Modulation::setName(const juce::String& newName)
+{
+    state.setProperty(Identifiers::name, newName, nullptr);
 }
 
-void Modulation::setToChordIndex(int newToChordIndex) {
-    toChordIndex = newToChordIndex;
-    updateName();
-    notifyChange();
+// Getters
+Diatony::ModulationType Modulation::getModulationType() const
+{
+    return intToModulationType(state.getProperty(Identifiers::modulationType, 0));
 }
 
-juce::String Modulation::toString() const {
-    juce::String result;
-    
-    // Types de modulation avec correspondance aux enum class
-    switch (modulationType) {
-        case Diatony::ModulationType::PerfectCadence:
-            result = "Perfect Cadence";
-            break;
-        case Diatony::ModulationType::PivotChord:
-            result = "Pivot Chord";
-            break;
-        case Diatony::ModulationType::Alteration:
-            result = "Alteration";
-            break;
-        case Diatony::ModulationType::Chromatic:
-            result = "Chromatic";
-            break;
-        default:
-            result = "Unknown";
-            break;
-    }
-    
-    result += " (";
-    
-    if (fromChordIndex >= 0) {
-        result += "from chord " + juce::String(fromChordIndex);
-    } else {
-        result += "from unknown";
-    }
-    
-    if (toChordIndex >= 0) {
-        result += " to chord " + juce::String(toChordIndex);
-    } else {
-        result += " to unknown";
-    }
-    
-    result += ")";
-    
-    return result;
+int Modulation::getFromChordIndex() const
+{
+    return state.getProperty("fromChordIndex", -1);
 }
 
-void Modulation::updateName() {
-    // Générer le nom basé sur le type de modulation
-    switch (modulationType) {
-        case Diatony::ModulationType::PerfectCadence:
-            name = "Perfect Cadence";
-            break;
-        case Diatony::ModulationType::PivotChord:
-            name = "Pivot Chord";
-            break;
-        case Diatony::ModulationType::Alteration:
-            name = "Alteration";
-            break;
-        case Diatony::ModulationType::Chromatic:
-            name = "Chromatic";
-            break;
-        default:
-            name = "Unknown Modulation";
-            break;
-    }
+int Modulation::getToChordIndex() const
+{
+    return state.getProperty("toChordIndex", -1);
 }
 
-void Modulation::notifyChange() {
-    // Appeler le callback unifié de PieceElement
-    PieceElement::notifyChange();
+const juce::String Modulation::getName() const
+{
+    return state.getProperty(Identifiers::name, "Unknown Modulation").toString();
+}
+
+// Méthodes utilitaires
+juce::String Modulation::toString() const
+{
+    if (!isValid())
+        return "Invalid Modulation";
+        
+    return juce::String("Modulation: ") + getName() + 
+           " (from: " + juce::String(getFromChordIndex()) + 
+           ", to: " + juce::String(getToChordIndex()) + ")";
+}
+
+// Création d'un nouveau nœud Modulation
+juce::ValueTree Modulation::createModulationNode(Diatony::ModulationType type,
+                                                int fromChordIndex,
+                                                int toChordIndex)
+{
+    juce::ValueTree modulationNode(Identifiers::MODULATION);
+    
+    // Générer un ID unique pour cette modulation
+    static int nextId = 1;
+    modulationNode.setProperty(Identifiers::id, nextId++, nullptr);
+    
+    // Définir les propriétés
+    modulationNode.setProperty(Identifiers::modulationType, modulationTypeToInt(type), nullptr);
+    modulationNode.setProperty("fromChordIndex", fromChordIndex, nullptr);
+    modulationNode.setProperty("toChordIndex", toChordIndex, nullptr);
+    
+    // Générer le nom automatiquement
+    juce::String name = "Modulation " + juce::String(static_cast<int>(type));
+    modulationNode.setProperty(Identifiers::name, name, nullptr);
+    
+    return modulationNode;
+}
+
+// Helpers pour la conversion des types
+int Modulation::modulationTypeToInt(Diatony::ModulationType type)
+{
+    return static_cast<int>(type);
+}
+
+Diatony::ModulationType Modulation::intToModulationType(int value)
+{
+    return static_cast<Diatony::ModulationType>(value);
+}
+
+// Met à jour le nom basé sur les paramètres actuels
+void Modulation::updateName()
+{
+    juce::String newName = "Modulation " + juce::String(static_cast<int>(getModulationType()));
+    state.setProperty(Identifiers::name, newName, nullptr);
 } 
