@@ -79,9 +79,11 @@ public:
     
     // === GETTERS POUR L'ÉTAT ===
     
-    // Accès au modèle (lecture seule pour l'UI)
+    // Accès au modèle (ValueTree) pour l'UI
+    juce::ValueTree& getState() { return piece.getState(); }
+    
+    // Accès au modèle (objet Piece) pour la logique interne (lecture seule pour l'UI)
     const Piece& getPiece() const { return piece; }
-    Piece& getPiece() { return piece; }  // Version non-const pour modifications internes
     
     // État de l'application
     EditMode getCurrentEditMode() const { return currentEditMode; }
