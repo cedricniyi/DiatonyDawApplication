@@ -81,7 +81,9 @@ target_sources(DiatonyDawApplication
         src/ui/PluginEditor.h
         src/ui/UIStateIdentifiers.h
         src/ui/RootAnimator.h
+        src/ui/RootAnimator.cpp
         src/ui/MainContentComponent.h
+        src/ui/MainContentComponent.cpp
         # UI Extra Components - Panel
         src/ui/extra/Component/Panel/ColoredPanel.h
         src/ui/extra/Component/Panel/ColoredPanel.cpp
@@ -122,6 +124,7 @@ target_sources(DiatonyDawApplication
         src/ui/footer/FooterPanel.h
         src/ui/footer/FooterPanel.cpp
         src/ui/header/HeaderPanel.h
+        src/ui/header/HeaderPanel.cpp
         src/ui/section/SectionPanel.h
         src/ui/section/SectionPanel.cpp
         src/ui/style/DiatonyLookAndFeel.h
