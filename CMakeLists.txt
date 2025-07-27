@@ -82,12 +82,45 @@ target_sources(DiatonyDawApplication
         src/ui/UIStateIdentifiers.h
         src/ui/RootAnimator.h
         src/ui/MainContentComponent.h
-        src/ui/extra/ColoredPanel.h
-        src/ui/extra/StyledButton.h
-        src/ui/extra/OutlineTextButton.h
-        src/ui/extra/SimpleToastComponent.h
-        src/ui/extra/DiatonyAlertWindow.h
+        # UI Extra Components - Panel
+        src/ui/extra/Component/Panel/ColoredPanel.h
+        src/ui/extra/Component/Panel/ColoredPanel.cpp
+        src/ui/extra/Component/Panel/ClickableColoredPanel.h
+        src/ui/extra/Component/Panel/ClickableColoredPanel.cpp
+        
+        # UI Extra Components - Button  
+        src/ui/extra/Button/ButtonColoredPanel.h
+        src/ui/extra/Button/ButtonColoredPanel.cpp
+        src/ui/extra/Button/OutlineTextButton.h
+        src/ui/extra/Button/OutlineTextButton.cpp
+        src/ui/extra/Button/StyledButton.h
+        src/ui/extra/Button/StyledButton.cpp
+        
+        # UI Extra Components - Component
+        src/ui/extra/Component/DiatonyAlertWindow.h
+        src/ui/extra/Component/DiatonyAlertWindow.cpp
+        src/ui/extra/Component/SimpleToastComponent.h
+        src/ui/extra/Component/SimpleToastComponent.cpp
+        src/ui/extra/Component/TextPill.h
+        src/ui/extra/Component/TextPill.cpp
+        src/ui/extra/Component/ToastComponent.h
+        src/ui/extra/Component/ToastComponent.cpp
+        
+        # UI Footer Components
+        src/ui/footer/components/InteractivePiano/PianoKey.h
+        src/ui/footer/components/InteractivePiano/PianoKey.cpp
+        src/ui/footer/components/InteractivePiano/InteractivePianoContentArea.h
+        src/ui/footer/components/InteractivePiano/InteractivePianoContentArea.cpp
+        src/ui/footer/components/InteractivePiano/InteractivePiano.h
+        src/ui/footer/components/InteractivePiano/InteractivePiano.cpp
+        src/ui/footer/components/MidiPianoContentArea.h
+        src/ui/footer/components/MidiPianoContentArea.cpp
+        src/ui/footer/components/MidiPianoArea.h
+        src/ui/footer/components/MidiPianoArea.cpp
+        src/ui/footer/animator/FooterAnimator.h
+        src/ui/footer/animator/FooterAnimator.cpp
         src/ui/footer/FooterPanel.h
+        src/ui/footer/FooterPanel.cpp
         src/ui/header/HeaderPanel.h
         src/ui/section/SectionPanel.h
         src/ui/section/SectionPanel.cpp
@@ -137,6 +170,7 @@ target_sources(DiatonyDawApplication
         src/ui/section/components/OverviewZone/Overview/OverviewArea.cpp
         src/ui/section/components/OverviewZone/Overview/OverviewActionArea.h
         src/ui/section/components/OverviewZone/Overview/OverviewActionArea.cpp
+
 
         # Model
         src/model/Identifiers.h
