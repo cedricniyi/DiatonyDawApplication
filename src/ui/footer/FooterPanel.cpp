@@ -9,23 +9,21 @@
 //==============================================================================
 FooterPanel::FooterPanel() 
     : midiPianoArea(),
-      interactivePiano(juce::Colours::white.withAlpha(0.50f)), // Couleur blanche
+      interactivePiano(juce::Colours::white.withAlpha(0.50f)),
       isExpanded(false),
-      gridTransitionFraction(0.0f) // Paramètre d'interpolation (0 = compact, 1 = élargi)
+      gridTransitionFraction(0.0f) // Facteur d'interpolation pour l'animation du layout (0.0 = compact, 1.0 = étendu)
 {        
     addAndMakeVisible(midiPianoArea);
     addAndMakeVisible(interactivePiano);
     
-    // Configuration du callback pour le toggle du piano interactif
+    // Le clic sur le bouton de redimensionnement bascule la visibilité du piano interactif
     getMidiPianoContentArea().onResizeToggle = [this]() {
         if (!appState.isValid()) {
-            DBG("FooterPanel: ERREUR: ValueTree non initialisé !");
             return;
         }
         
         bool currentState = static_cast<bool>(appState.getProperty(UIStateIdentifiers::interactivePianoVisible, false));
         appState.setProperty(UIStateIdentifiers::interactivePianoVisible, !currentState, nullptr);
-        DBG("FooterPanel: Toggle InteractivePiano -> " << (!currentState ? "visible" : "caché"));
     };
 }
 
@@ -43,9 +41,8 @@ void FooterPanel::setAppState(juce::ValueTree& state)
     appState = state;
     appState.addListener(this);
     
-    // Synchroniser l'état initial
+    // Synchronise l'état du footer avec les données du ValueTree
     updateFooterState();
-    DBG("FooterPanel: ValueTree connecté et état initial synchronisé");
 }
 
 void FooterPanel::paint(juce::Graphics& g)
@@ -56,55 +53,54 @@ void FooterPanel::resized()
 {
     auto area = getLocalBounds();
 
-    // Utiliser Grid avec interpolation progressive selon gridTransitionFraction
+    // Layout basé sur une grille qui s'adapte selon gridTransitionFraction
     juce::Grid grid;
     
-    // Définir une seule ligne
+    // Le layout est sur une seule ligne
     grid.templateRows = { juce::Grid::TrackInfo(juce::Grid::Fr(1)) };
     
-    // Interpolation smooth entre les deux configurations
+    // Choix du layout en fonction de l'état d'expansion
     if (gridTransitionFraction <= 0.001f)
     {
-        // État compact : 3 colonnes [Fr(1) | 400px | Fr(1)]
+        // État compact : le piano MIDI est centré dans une grille à 3 colonnes
         grid.templateColumns = { 
-            juce::Grid::TrackInfo(juce::Grid::Fr(1)),      // Colonne gauche (flexible)
-            juce::Grid::TrackInfo(juce::Grid::Px(400)),    // Colonne centre MidiPianoArea
-            juce::Grid::TrackInfo(juce::Grid::Fr(1))       // Colonne droite (flexible)
+            juce::Grid::TrackInfo(juce::Grid::Fr(1)),      // Colonne gauche flexible
+            juce::Grid::TrackInfo(juce::Grid::Px(400)),    // Colonne centrale pour MidiPianoArea
+            juce::Grid::TrackInfo(juce::Grid::Fr(1))       // Colonne droite flexible
         };
         
-        // Ajouter seulement le MidiPianoArea
+        // Positionne le piano MIDI dans la colonne centrale
         grid.items.add(juce::GridItem(midiPianoArea)
-                      .withArea(1, 2));       // Ligne 1, Colonne 2 (centre)
+                      .withArea(1, 2));
     }
     else
     {
-        // État progressif : 4 colonnes avec interpolation
-        // La largeur de la colonne "mystère" grandit progressivement
-        float mysteryColumnWidth = 400.0f * gridTransitionFraction;
+        // État étendu : le piano interactif apparaît progressivement à droite
+        float interactivePianoWidth = 400.0f * gridTransitionFraction;
         
         grid.templateColumns = { 
-            juce::Grid::TrackInfo(juce::Grid::Fr(1)),                           // Colonne gauche (flexible)
-            juce::Grid::TrackInfo(juce::Grid::Px(400)),                        // Colonne MidiPianoArea (fixe)
-            juce::Grid::TrackInfo(juce::Grid::Px(static_cast<int>(mysteryColumnWidth))), // Colonne FadingDemoPanel (progressive)
-            juce::Grid::TrackInfo(juce::Grid::Fr(1))                           // Colonne droite (flexible)
+            juce::Grid::TrackInfo(juce::Grid::Fr(1)),                               // Colonne gauche flexible
+            juce::Grid::TrackInfo(juce::Grid::Px(400)),                             // Colonne pour MidiPianoArea
+            juce::Grid::TrackInfo(juce::Grid::Px(static_cast<int>(interactivePianoWidth))), // Colonne pour le piano interactif, largeur animée
+            juce::Grid::TrackInfo(juce::Grid::Fr(1))                                // Colonne droite flexible
         };
         
-        // Ajouter les deux composants
+        // Positionne les deux pianos
         grid.items.add(juce::GridItem(midiPianoArea)
-                      .withArea(1, 2)         // Ligne 1, Colonne 2
-                      .withMargin(juce::GridItem::Margin(0, 4, 0, 0))); // Marge droite
+                      .withArea(1, 2)
+                      .withMargin(juce::GridItem::Margin(0, 4, 0, 0))); // Marge à droite
         
         grid.items.add(juce::GridItem(interactivePiano)
-                      .withArea(1, 3)         // Ligne 1, Colonne 3
-                      .withMargin(juce::GridItem::Margin(0, 0, 0, 4))); // Marge gauche
+                      .withArea(1, 3)
+                      .withMargin(juce::GridItem::Margin(0, 0, 0, 4))); // Marge à gauche
     }
     
-    // Centrer le contenu
+    // Configuration de l'alignement de la grille
     grid.justifyContent = juce::Grid::JustifyContent::center;
     grid.alignContent = juce::Grid::AlignContent::center;
     grid.alignItems = juce::Grid::AlignItems::stretch;
     
-    // Appliquer le layout
+    // Applique la configuration de la grille
     grid.performLayout(area);
 }
 
@@ -157,7 +153,6 @@ void FooterPanel::updateFooterState()
     
     bool expanded = static_cast<bool>(appState.getProperty(UIStateIdentifiers::footerExpanded, false));
     setExpanded(expanded);
-    DBG("FooterPanel: État footer mis à jour -> " << (expanded ? "étendu" : "réduit"));
 }
 
 void FooterPanel::updateInteractivePianoState()
@@ -166,16 +161,14 @@ void FooterPanel::updateInteractivePianoState()
     
     bool visible = static_cast<bool>(appState.getProperty(UIStateIdentifiers::interactivePianoVisible, false));
     
-    // Notifier via callback si l'Animator s'est abonné
+    // Notifie l'Animator pour déclencher l'animation de visibilité
     if (onInteractivePianoVisibilityChange)
     {
         onInteractivePianoVisibilityChange(visible);
-        DBG("FooterPanel: Notifie Animator via callback -> " << (visible ? "visible" : "caché"));
     }
     else
     {
-        // Fallback : mise à jour directe sans animation
+        // Fallback : mise à jour directe de l'état si aucun animateur n'est attaché
         setExpanded(visible);
-        DBG("FooterPanel: Mise à jour directe InteractivePiano (pas d'Animator) -> " << (visible ? "visible" : "caché"));
     }
 } 
