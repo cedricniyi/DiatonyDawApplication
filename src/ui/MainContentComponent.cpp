@@ -17,8 +17,6 @@ MainContentComponent::MainContentComponent()
     addAndMakeVisible(headerPanel);
     addAndMakeVisible(sectionPanel);
     addAndMakeVisible(footerPanel);
-    
-    DBG("MainContentComponent: Composant principal initialisé");
 }
 
 MainContentComponent::~MainContentComponent()
@@ -29,23 +27,23 @@ MainContentComponent::~MainContentComponent()
 
 void MainContentComponent::setAppState(juce::ValueTree& state)
 {
+    // Déconnexion de l'ancien listener
     if (appState.isValid())
         appState.removeListener(this);
         
+    // Connexion au nouveau ValueTree
     appState = state;
     appState.addListener(this);
     
-    // Connecter les panels auto-gérés au ValueTree
+    // Propagation de l'état aux panels enfants
     headerPanel.setAppState(appState);
     footerPanel.setAppState(appState);
     // sectionPanel.setAppState(appState);  // Si nécessaire plus tard
-    
-    DBG("MainContentComponent: ValueTree connecté et panels configurés");
 }
 
 void MainContentComponent::paint(juce::Graphics& g)
 {   
-    // Dégradé linéaire à 135 degrés (même que dans l'ancien PluginEditor)
+    // Dégradé linéaire à 135 degrés
     auto bounds = getLocalBounds().toFloat();
     
     auto center = bounds.getCentre();
@@ -70,6 +68,7 @@ void MainContentComponent::resized()
     int padding = 8;
     auto content = getLocalBounds().reduced(padding);
 
+    // Layout vertical avec FlexBox
     juce::FlexBox fb;
     fb.flexDirection = juce::FlexBox::Direction::column;
 
@@ -115,14 +114,12 @@ SectionPanel& MainContentComponent::getSectionPanel()
 void MainContentComponent::valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged,
                                                    const juce::Identifier& property)
 {
-    // MainContentComponent détecte les changements et notifie RootAnimator via callback
+    // Notification du RootAnimator pour les changements de layout
     if (property == UIStateIdentifiers::interactivePianoVisible)
     {
-        // ✅ Notifier via callback si RootAnimator s'est abonné (même pattern que FooterPanel)
         if (onLayoutAnimationNeeded)
         {
             onLayoutAnimationNeeded();
-            DBG("MainContentComponent: Notifie RootAnimator via callback pour propriété: " << property.toString());
         }
     }
 }
