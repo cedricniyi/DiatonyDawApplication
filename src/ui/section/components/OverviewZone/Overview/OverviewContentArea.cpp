@@ -42,8 +42,7 @@ void OverviewContentArea::findAppController()
         appController = &pluginEditor->getAppController();
         
         // Connexion au ValueTree du modèle une fois AppController trouvé
-        auto modelTree = appController->getPiece().getState();
-        setModelState(modelTree);
+        setModelState(appController->getState());
     }
     else
     {
