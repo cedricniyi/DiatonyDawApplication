@@ -13,6 +13,22 @@ class RootAnimator;
 class FooterAnimator;
 class AppController;
 
+// ==============================================================================
+// Classe utilitaire pour logger les changements du ValueTree en temps réel
+class ValueTreeLogger : public juce::ValueTree::Listener
+{
+public:
+    ValueTreeLogger(const juce::String& name) : treeName(name) {}
+
+    void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property) override
+    {
+        DBG("Logger<" << treeName << ">: Propriété changée -> "
+            << property.toString() << " = "
+            << tree.getProperty(property).toString());
+    }
+private:
+    juce::String treeName;
+};
 //==============================================================================
 class AudioPluginAudioProcessorEditor : public juce::AudioProcessorEditor
 {
@@ -37,6 +53,9 @@ private:
     
     // État global de l'application (source de vérité unique)
     juce::ValueTree appState;
+    
+    // Logger pour l'état de l'UI
+    ValueTreeLogger appStateLogger { "UI State" };
     
     // Contrôleur principal de l'application
     std::unique_ptr<AppController> appController;
