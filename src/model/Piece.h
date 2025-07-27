@@ -62,6 +62,7 @@ public:
     
     // Accès au ValueTree et UndoManager
     juce::ValueTree getState() const { return state; }
+    juce::ValueTree& getState() { return state; }
     juce::UndoManager& getUndoManager() { return undoManager; }
     const juce::UndoManager& getUndoManager() const { return undoManager; }
     
