@@ -4,9 +4,9 @@
 #include "components/MidiPianoArea.h"
 #include "components/MidiPianoContentArea.h"
 #include "components/InteractivePiano/InteractivePiano.h"
-#include "../extra/ColoredPanel.h"
-#include "../UIStateIdentifiers.h"
-#include "../../utils/FontManager.h"
+#include "ui/extra/Component/Panel/ColoredPanel.h"
+#include "ui/UIStateIdentifiers.h"
+#include "utils/FontManager.h"
 
 //==============================================================================
 class FooterPanel : public juce::Component, public juce::ValueTree::Listener

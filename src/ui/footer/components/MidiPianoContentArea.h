@@ -1,9 +1,9 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "../../extra/StyledButton.h"
-#include "../../extra/TextPill.h"
-#include "../../../utils/FontManager.h"
+#include "ui/extra/Button/StyledButton.h"
+#include "ui/extra/Component/TextPill.h"
+#include "utils/FontManager.h"
 
 //==============================================================================
 

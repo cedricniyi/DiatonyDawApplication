@@ -1,10 +1,10 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "../extra/ColoredPanel.h"
-#include "../extra/StyledButton.h"
-#include "../UIStateIdentifiers.h"
-#include "../../utils/FontManager.h"
+#include "ui/extra/Component/Panel/ColoredPanel.h"
+#include "ui/extra/Button/StyledButton.h"
+#include "ui/UIStateIdentifiers.h"
+#include "utils/FontManager.h"
 
 class HeaderPanel : public ColoredPanel, public juce::ValueTree::Listener
 {

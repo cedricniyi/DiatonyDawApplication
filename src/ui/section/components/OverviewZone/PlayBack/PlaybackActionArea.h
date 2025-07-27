@@ -1,8 +1,8 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "ui/extra/ColoredPanel.h"
-#include "ui/extra/StyledButton.h"
+#include "ui/extra/Component/Panel/ColoredPanel.h"
+#include "ui/extra/Button/StyledButton.h"
 
 //==============================================================================
 class PlaybackActionArea : public ColoredPanel

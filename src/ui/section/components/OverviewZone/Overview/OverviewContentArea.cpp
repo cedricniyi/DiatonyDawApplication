@@ -1,5 +1,5 @@
 #include "OverviewContentArea.h"
-#include "ui/extra/ButtonColoredPanel.h"
+#include "ui/extra/Button/ButtonColoredPanel.h"
 #include "utils/FontManager.h"
 
 //==============================================================================

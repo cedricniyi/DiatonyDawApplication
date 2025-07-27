@@ -1,8 +1,8 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "ui/extra/ColoredPanel.h"
-#include "ui/extra/OutlineTextButton.h"
+#include "ui/extra/Component/Panel/ColoredPanel.h"
+#include "ui/extra/Button/OutlineTextButton.h"
 #include "utils/FontManager.h"
 #include "OverviewContentArea.h"
 

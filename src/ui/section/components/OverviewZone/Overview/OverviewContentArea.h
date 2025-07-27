@@ -1,7 +1,7 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "ui/extra/ColoredPanel.h"
+#include "ui/extra/Component/Panel/ColoredPanel.h"
 #include "ScrollableContentPanel.h"
 
 // Forward declarations

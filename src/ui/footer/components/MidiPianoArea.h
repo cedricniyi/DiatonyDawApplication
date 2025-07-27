@@ -1,8 +1,8 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "../../extra/ColoredPanel.h"
-#include "../../../utils/FontManager.h"
+#include "ui/extra/Component/Panel/ColoredPanel.h"
+#include "utils/FontManager.h"
 #include "MidiPianoContentArea.h"
 
 //==============================================================================

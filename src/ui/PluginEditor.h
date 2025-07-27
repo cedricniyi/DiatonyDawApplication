@@ -1,9 +1,9 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "../controller/core/PluginProcessor.h"
-#include "extra/SimpleToastComponent.h"
-#include "extra/DiatonyAlertWindow.h"
+#include "controller/core/PluginProcessor.h"
+#include "extra/Component/SimpleToastComponent.h"
+#include "extra/Component/DiatonyAlertWindow.h"
 #include "MainContentComponent.h"
 #include "UIStateIdentifiers.h"
 #include "melatonin_inspector/melatonin_inspector.h"
