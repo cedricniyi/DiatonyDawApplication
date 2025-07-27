@@ -5,6 +5,7 @@
 #include "ui/animation/AnimationManager.h"
 #include "ui/RootAnimator.h"
 #include "ui/footer/animator/FooterAnimator.h"
+#include "controller/AppController.h"
 
 //==============================================================================
 AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAudioProcessor& p)
@@ -12,7 +13,12 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
       appState(UIStateIdentifiers::APP_STATE)  // Initialiser le ValueTree
 {   
     // =================================================================================
-    // 1. Initialiser l'état global de l'application
+    // 1. Créer l'instance unique d'AppController
+    appController = std::make_unique<AppController>("Ma Pièce");
+    DBG("PluginEditor: AppController créé et prêt pour la découverte de service");
+    
+    // =================================================================================
+    // 2. Initialiser l'état global de l'application (UI State)
     appState.setProperty(UIStateIdentifiers::footerExpanded, false, nullptr);
     appState.setProperty(UIStateIdentifiers::dockVisible, false, nullptr);
     appState.setProperty(UIStateIdentifiers::interactivePianoVisible, false, nullptr);
@@ -23,13 +29,21 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
         ", piano:" << (static_cast<bool>(appState.getProperty(UIStateIdentifiers::interactivePianoVisible, false)) ? "true" : "false"));
 
     // =================================================================================
-    // 2. Créer et configurer le composant principal
+    // 3. Créer et configurer le composant principal
     mainContent = std::make_unique<MainContentComponent>();
+    
+    // Connecter à l'UI State (pour les animations et états d'interface)
     mainContent->setAppState(appState);
+    
+    // TODO: Connecter au Model State (pour les données métier via ValueTree::Listener)
+    // mainContent->setModelState(appController->getPiece().getState());
+    
     addAndMakeVisible(*mainContent);
     
+    DBG("PluginEditor: MainContentComponent configuré avec UI State et Model State");
+    
     // =================================================================================
-    // 3. Contrainte de taille
+    // 4. Contrainte de taille
     constrainer = std::make_unique<juce::ComponentBoundsConstrainer>();
     constrainer->setSizeLimits(1300, 569, 1694, 847);      // tailles min/max
     constrainer->setFixedAspectRatio(1500.0 / 750.0);     // ratio constant
@@ -38,7 +52,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     setSize(1500, 750);
 
     // =================================================================================
-    // 4. Créer les Animators pour gérer les animations à différents niveaux
+    // 5. Créer les Animators pour gérer les animations à différents niveaux
     
     // RootAnimator : gère les animations de niveau élevé (flex du layout global)
     rootAnimator = std::make_unique<RootAnimator>(
@@ -55,8 +69,13 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     DBG("PluginEditor: Architecture hiérarchique activée - RootAnimator (flex) + FooterAnimator (contenu)");
 
     // =================================================================================
-    // 5. Le MainContentComponent est déjà rendu visible plus haut
-    DBG("PluginEditor: Configuration terminée avec MainContentComponent");
+    // 6. Connexion Model-View via ValueTree::Listener (Architecture Réactive)
+    
+    // L'UI écoutera automatiquement les changements du modèle via les listeners
+    // Flux de données : AppController -> Piece.getState() -> ValueTree::Listener -> UI Update
+    
+    DBG("PluginEditor: Architecture MVC réactive activée");
+    DBG("PluginEditor: Configuration terminée avec MainContentComponent et AppController");
 
 }
 
@@ -77,4 +96,12 @@ void AudioPluginAudioProcessorEditor::resized()
     // Redimensionner le MainContentComponent pour qu'il occupe toute la zone
     if (mainContent)
         mainContent->setBounds(getLocalBounds());
+}
+
+// === DÉCOUVERTE DE SERVICE ===
+
+AppController& AudioPluginAudioProcessorEditor::getAppController()
+{
+    jassert(appController != nullptr);
+    return *appController;
 }

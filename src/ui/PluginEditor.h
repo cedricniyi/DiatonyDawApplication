@@ -11,6 +11,7 @@
 // Forward declarations pour éviter les dépendances circulaires
 class RootAnimator;
 class FooterAnimator;
+class AppController;
 
 //==============================================================================
 class AudioPluginAudioProcessorEditor : public juce::AudioProcessorEditor
@@ -22,6 +23,13 @@ public:
     //==============================================================================
     void paint (juce::Graphics&) override;
     void resized() override;
+    
+    // === DÉCOUVERTE DE SERVICE ===
+    /** 
+     * Permet aux composants enfants de découvrir AppController via findParentComponentOfClass
+     * @return Référence vers l'instance unique d'AppController
+     */
+    AppController& getAppController();
 
 private:
     // Référence au processeur
@@ -29,6 +37,9 @@ private:
     
     // État global de l'application (source de vérité unique)
     juce::ValueTree appState;
+    
+    // Contrôleur principal de l'application
+    std::unique_ptr<AppController> appController;
     
     // Melatonin Inspector pour déboguer l'interface
     melatonin::Inspector inspector { *this, false };
