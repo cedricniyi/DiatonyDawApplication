@@ -12,27 +12,23 @@ HeaderPanel::HeaderPanel()
                juce::Colour::fromString ("ff606060"), // Gris plus foncé au survol
                14.0f, FontManager::FontWeight::Black)
 {
-    // Label gauche
+    // Configuration du label principal
     mainLabel.setText(juce::String::fromUTF8("DiatonyDAWPlugin"),juce::dontSendNotification);
     mainLabel.setJustificationType (juce::Justification::centredLeft);
     mainLabel.setColour (juce::Label::textColourId, juce::Colours::black);
     
-    // Correction : Convertir FontOptions en Font
+    // Application de la police via FontManager
     auto fontOptions = fontManager->getSFProDisplay(24.0f, FontManager::FontWeight::Bold);
     mainLabel.setFont(juce::Font(fontOptions));
    
     addAndMakeVisible (mainLabel);
 
-    // Bouton D à droite - toggle direct du ValueTree
+    // Configuration du bouton D - toggle de visibilité du dock
     dButton.onClick = [this]() {
-        if (!appState.isValid()) {
-            DBG("HeaderPanel: ERREUR: ValueTree non initialisé !");
-            return;
-        }
+        if (!appState.isValid()) return;
         
         bool currentState = static_cast<bool>(appState.getProperty(UIStateIdentifiers::dockVisible, false));
         appState.setProperty(UIStateIdentifiers::dockVisible, !currentState, nullptr);
-        DBG("HeaderPanel: Toggle dock -> " << (!currentState ? "visible" : "caché"));
     };
     addAndMakeVisible (dButton);
 }
@@ -51,27 +47,26 @@ void HeaderPanel::setAppState(juce::ValueTree& state)
     appState = state;
     appState.addListener(this);
     
-    // Synchroniser l'état initial
+    // Synchronisation de l'état initial
     updateDockState();
-    DBG("HeaderPanel: ValueTree connecté et état initial synchronisé");
 }
 
 void HeaderPanel::resized()
 {
     auto area = getLocalBounds().reduced (20, 10);
 
-    // 1) Mesurer la largeur exacte du texte avec GlyphArrangement
+    // Calcul de la largeur exacte du texte
     juce::GlyphArrangement ga;
     ga.addLineOfText (mainLabel.getFont(),
                       mainLabel.getText(),
                       0, 0);
     auto labelWidth = static_cast<int>(std::ceil(ga.getBoundingBox(0, -1, false).getWidth()+10));
 
-    // 2) Positionner le label à gauche avec sa largeur exacte
+    // Positionnement du label à gauche
     mainLabel.setBounds(area.removeFromLeft(labelWidth));
 
-    // 3) Positionner le bouton D à droite avec FlexBox (bouton carré)
-    auto buttonSize = area.getHeight(); // Bouton carré basé sur la hauteur
+    // Positionnement du bouton D à droite (bouton carré)
+    auto buttonSize = area.getHeight();
     juce::FlexBox buttonFlex;
     buttonFlex.flexDirection = juce::FlexBox::Direction::row;
     buttonFlex.justifyContent = juce::FlexBox::JustifyContent::flexEnd;
@@ -83,7 +78,6 @@ void HeaderPanel::resized()
 
 void HeaderPanel::paint (juce::Graphics& g)
 {
-    // Fond blanc via ColoredPanel
     ColoredPanel::paint (g);
 }
 
@@ -107,7 +101,5 @@ void HeaderPanel::updateDockState()
     
     bool dockVisible = static_cast<bool>(appState.getProperty(UIStateIdentifiers::dockVisible, false));
     
-    // TODO: Quand le composant dock sera implémenté, ajouter la logique ici
-    // Par exemple: mettre à jour la couleur du bouton D selon l'état
-    DBG("HeaderPanel: État dock mis à jour -> " << (dockVisible ? "visible" : "caché"));
+    // TODO: Mise à jour visuelle du bouton D selon l'état du dock
 } 
