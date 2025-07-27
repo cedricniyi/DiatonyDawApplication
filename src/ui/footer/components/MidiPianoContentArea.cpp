@@ -18,17 +18,13 @@ MidiPianoContentArea::MidiPianoContentArea()
 {
     // Configuration du bouton de redimensionnement
     resizeButton.onClick = [this] { 
-        DBG("Bouton Show/Hide cliqué !"); // Debug
-        
         // Basculer la visibilité de la zone 5
         isZone5Visible = !isZone5Visible;
         
         if (isZone5Visible) {
             addAndMakeVisible(moreInfoPill);
-            DBG("Zone 5 affichée");
         } else {
             removeChildComponent(&moreInfoPill);
-            DBG("Zone 5 masquée");
         }
         
         // Redéclencher le layout
@@ -36,7 +32,6 @@ MidiPianoContentArea::MidiPianoContentArea()
         
         // Appeler le callback si défini
         if (onResizeToggle) {
-            DBG("Callback onResizeToggle trouvé, appel en cours...");
             onResizeToggle(); // Déclenche l'animation de redimensionnement
         }
     };
@@ -96,17 +91,13 @@ void MidiPianoContentArea::resized()
 void MidiPianoContentArea::calculateRowPercentages(const juce::Rectangle<int>& topRow, const juce::Rectangle<int>& bottomRow)
 {
     // Pour l'instant, utilisation de pourcentages fixes
-    // Ligne du haut : Zone 1 (45%) et resizeButton (55%)
+    // Ligne du haut : Zone 1 (77.5%) et resizeButton (22.5%)
     topLeftPercentage = 77.5f;
     topRightPercentage = 22.5f;
     
     // Ligne du bas : Zone 3 (65%) et Zone 4 (35%)
     bottomLeftPercentage = 65.0f;
     bottomRightPercentage = 35.0f;
-    
-    // Debug : afficher les pourcentages calculés
-    // DBG("Ligne du haut - Zone 1: " << topLeftPercentage << "%, ResizeButton: " << topRightPercentage << "%");
-    // DBG("Ligne du bas - Zone 3: " << bottomLeftPercentage << "%, Zone 4: " << bottomRightPercentage << "%");
 }
 
 void MidiPianoContentArea::setupTextPills()
