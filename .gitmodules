@@ -4,3 +4,6 @@
 [submodule "Diatony"]
 	path = Diatony
 	url = https://github.com/cedricniyi/Diatony.git
+[submodule "modules/juce-toys"]
+	path = modules/juce-toys
+	url = https://github.com/jcredland/juce-toys.git
