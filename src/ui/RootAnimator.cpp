@@ -9,46 +9,40 @@ RootAnimator::RootAnimator(MainContentComponent& mainContentComponent,
     : mainContent(mainContentComponent),
       animManager(animationManager)
 {
-    // ✅ S'abonner au callback du MainContentComponent (même pattern que FooterAnimator)
+    // S'abonne au callback du MainContentComponent pour déclencher les animations de layout.
     mainContent.onLayoutAnimationNeeded = [this]() {
         handleLayoutAnimationNeeded();
     };
-    
-    DBG("RootAnimator: Initialisé et abonné aux callbacks du MainContentComponent");
 }
 
 RootAnimator::~RootAnimator()
 {
-    // Désabonner le callback
+    // Se désabonne du callback pour éviter les appels invalides.
     if (mainContent.onLayoutAnimationNeeded)
         mainContent.onLayoutAnimationNeeded = nullptr;
 }
 
 void RootAnimator::handleLayoutAnimationNeeded()
 {
-    DBG("RootAnimator: Callback reçu - Déclenchement des animations de layout");
-    
-    // Déclencher les animations appropriées selon l'état
+    // Le callback a été reçu, on déclenche les animations de layout nécessaires.
     animateFooterFlex();
-    // Je peux ajouter d'autre animations à ce niveau si besoin
+    // D'autres animations globales pourraient être ajoutées ici.
 }
 
 void RootAnimator::animateFooterFlex()
 {
-    // Détecter l'état actuel via la valeur flex courante
-    // Si footerFlex < 25, alors on passe à l'état élargi, sinon on réduit
+    // Détecte l'état actuel (compact ou étendu) via la valeur flex du footer.
+    // Si la valeur est inférieure à 25, on étend le footer, sinon on le réduit.
     float currentFlex = mainContent.getFooterFlexRef();
     float targetFooterFlex = (currentFlex < 25.0f) ? 30.0f : 15.0f;
     
-    DBG("RootAnimator: Animation footer flex " << currentFlex << " -> " << targetFooterFlex);
-    
-    // Animer la valeur flex du footer
+    // Lance l'animation de la propriété flex du footer.
     animManager.animateValueSimple(
         mainContent.getFooterFlexRef(),
         targetFooterFlex,
-        300.0, // durée
+        300.0, // durée en ms
         [this]() { 
-            // Callback pour redessiner le layout global à chaque frame
+            // À chaque frame de l'animation, redessine le layout global.
             mainContent.resized();
         }
     );
