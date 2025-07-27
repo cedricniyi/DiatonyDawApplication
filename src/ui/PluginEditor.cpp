@@ -20,8 +20,16 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     appState.setProperty(UIStateIdentifiers::dockVisible, false, nullptr);
     appState.setProperty(UIStateIdentifiers::interactivePianoVisible, false, nullptr);
     
-    // Attache un logger pour déboguer les changements du ValueTree.
-    appState.addListener(&appStateLogger);
+    #if DEBUG
+        // Attache un logger pour déboguer les changements du ValueTree.
+        appState.addListener(&appStateLogger);
+    
+        // Attache un logger à l'état du modèle (la pièce) pour suivre ses changements.
+        appController->getState().addListener(&pieceStateLogger);
+
+        // Test: Modifions une propriété de la pièce pour vérifier que le logger fonctionne.
+        appController->getState().setProperty("testProperty", "Hello from Piece!", nullptr);
+    #endif
 
     // Création et configuration du composant de contenu principal.
     mainContent = std::make_unique<MainContentComponent>();
@@ -48,12 +56,14 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     // L'architecture est réactive : l'UI écoute les changements du modèle (ValueTree)
     // et se met à jour automatiquement.
 
-    // Bloc de test pour le débogage du ValueTree avec LLDB.
-    // Placez un point d'arrêt ici pour inspecter 'appState'.
-    appState.setProperty("test_debug", "LLDB_test_value", nullptr);
-    auto testChild = juce::ValueTree("TestChild");
-    testChild.setProperty("child_prop", 42, nullptr);
-    appState.appendChild(testChild, nullptr);
+    #if DEBUG
+        // Bloc de test pour le débogage du ValueTree avec LLDB.
+        // Placez un point d'arrêt ici pour inspecter 'appState'.
+        appState.setProperty("test_debug", "LLDB_test_value", nullptr);
+        auto testChild = juce::ValueTree("TestChild");
+        testChild.setProperty("child_prop", 42, nullptr);
+        appState.appendChild(testChild, nullptr);
+    #endif
 }
 
 AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
