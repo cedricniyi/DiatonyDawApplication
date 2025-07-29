@@ -158,6 +158,8 @@ target_sources(DiatonyDawApplication
         src/ui/section/components/EditZone/WelcomeView.cpp
         src/ui/section/components/EditZone/SectionEditor.h
         src/ui/section/components/EditZone/SectionEditor.cpp
+        src/ui/section/components/EditZone/ModulationEditor.h
+        src/ui/section/components/EditZone/ModulationEditor.cpp
         
         # UI Components - OverviewZone/PlayBack
         src/ui/section/components/OverviewZone/PlayBack/PlaybackActionArea.h
