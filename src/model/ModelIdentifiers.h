@@ -1,7 +1,7 @@
 #pragma once
 #include <juce_core/juce_core.h>
 
-namespace Identifiers
+namespace ModelIdentifiers
 {
     // Noms des types de noeuds (les "tables" de notre base de données)
     const juce::Identifier PIECE      { "Piece" };
