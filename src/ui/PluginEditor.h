@@ -48,6 +48,7 @@ private:
         // Loggers pour le débogage (uniquement en mode DEBUG)
         ValueTreeLogger appStateLogger { "UI State" };
         ValueTreeLogger pieceStateLogger { "Piece Model State" };
+        ValueTreeLogger selectionStateLogger { "Selection Context State" };
     #endif
     
     // Contrôleur principal de l'application

@@ -26,6 +26,9 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     
         // Attache un logger à l'état du modèle (la pièce) pour suivre ses changements.
         appController->getState().addListener(&pieceStateLogger);
+        
+        // Attache un logger à l'état de sélection (contexte applicatif) pour suivre ses changements.
+        appController->getSelectionState().addListener(&selectionStateLogger);
 
         // Test: Modifions une propriété de la pièce pour vérifier que le logger fonctionne.
         appController->getState().setProperty("testProperty", "Hello from Piece!", nullptr);

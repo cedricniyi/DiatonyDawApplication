@@ -22,6 +22,11 @@ public:
         {
             logPieceStateSummary(tree);
         }
+        // Si c'est le logger de sélection, afficher un résumé de sélection
+        else if (treeName.contains("Selection"))
+        {
+            logSelectionStateSummary(tree);
+        }
     }
 
     void valueTreeChildAdded(juce::ValueTree& parentTree, juce::ValueTree& childWhichHasBeenAdded) override
@@ -33,6 +38,10 @@ public:
         {
             logPieceStateSummary(parentTree);
         }
+        else if (treeName.contains("Selection"))
+        {
+            logSelectionStateSummary(parentTree);
+        }
     }
 
     void valueTreeChildRemoved(juce::ValueTree& parentTree, juce::ValueTree& childWhichHasBeenRemoved, int index) override
@@ -43,6 +52,10 @@ public:
         if (treeName.contains("Piece"))
         {
             logPieceStateSummary(parentTree);
+        }
+        else if (treeName.contains("Selection"))
+        {
+            logSelectionStateSummary(parentTree);
         }
     }
 
@@ -86,6 +99,49 @@ private:
         }
         
         summary += "\n========================";
+        
+        DBG(juce::String::fromUTF8(summary.toUTF8()));
+    }
+    
+    void logSelectionStateSummary(const juce::ValueTree& selectionState)
+    {
+        if (!selectionState.isValid())
+        {
+            DBG("=== ETAT DE SELECTION: INVALIDE ===");
+            return;
+        }
+        
+        // Récupérer les propriétés de sélection
+        juce::String selectionType = selectionState.getProperty("selectionType", "None").toString();
+        juce::String selectedElementId = selectionState.getProperty("selectedElementId", "").toString();
+        
+        juce::String summary = "=== ETAT DE SELECTION ===\n";
+        summary += "Type de sélection: " + selectionType + "\n";
+        summary += "ID de l'élément: " + selectedElementId + "\n";
+        
+        // Ajouter des détails contextuels selon le type
+        if (selectionType == "Section")
+        {
+            // Extraire l'index de la section depuis l'ID (format: "Section_0")
+            juce::String indexStr = selectedElementId.fromLastOccurrenceOf("_", false, false);
+            summary += "-> Section sélectionnée (index: " + indexStr + ")\n";
+        }
+        else if (selectionType == "Chord")
+        {
+            juce::String indexStr = selectedElementId.fromLastOccurrenceOf("_", false, false);
+            summary += "-> Accord sélectionné (index: " + indexStr + ")\n";
+        }
+        else if (selectionType == "Modulation")
+        {
+            juce::String indexStr = selectedElementId.fromLastOccurrenceOf("_", false, false);
+            summary += "-> Modulation sélectionnée (index: " + indexStr + ")\n";
+        }
+        else if (selectionType == "None")
+        {
+            summary += "-> Aucune sélection active\n";
+        }
+        
+        summary += "========================";
         
         DBG(juce::String::fromUTF8(summary.toUTF8()));
     }
