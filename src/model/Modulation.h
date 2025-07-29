@@ -3,7 +3,7 @@
 #include <juce_core/juce_core.h>
 #include <juce_data_structures/juce_data_structures.h>
 #include "DiatonyTypes.h"
-#include "Identifiers.h"
+#include "ModelIdentifiers.h"
 
 /**
  * Représente une modulation entre deux sections ou accords

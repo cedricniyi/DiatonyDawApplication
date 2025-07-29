@@ -3,7 +3,7 @@
 // Constructeur avec ValueTree existant
 Chord::Chord(juce::ValueTree state) : state(state)
 {
-    jassert(state.hasType(Identifiers::CHORD));
+    jassert(state.hasType(ModelIdentifiers::CHORD));
 }
 
 // Méthode statique pour créer un nouveau Chord dans un parent
@@ -18,33 +18,33 @@ Chord Chord::createIn(juce::ValueTree parentTree, Diatony::ChordDegree degree,
 // Setters
 void Chord::setDegree(Diatony::ChordDegree newDegree)
 {
-    state.setProperty(Identifiers::degree, degreeToInt(newDegree), nullptr);
+    state.setProperty(ModelIdentifiers::degree, degreeToInt(newDegree), nullptr);
 }
 
 void Chord::setQuality(Diatony::ChordQuality newQuality)
 {
-    state.setProperty(Identifiers::quality, qualityToInt(newQuality), nullptr);
+    state.setProperty(ModelIdentifiers::quality, qualityToInt(newQuality), nullptr);
 }
 
 void Chord::setChordState(Diatony::ChordState newState)
 {
-    state.setProperty(Identifiers::state, stateToInt(newState), nullptr);
+    state.setProperty(ModelIdentifiers::state, stateToInt(newState), nullptr);
 }
 
 // Getters
 Diatony::ChordDegree Chord::getDegree() const
 {
-    return intToDegree(state.getProperty(Identifiers::degree, 0));
+    return intToDegree(state.getProperty(ModelIdentifiers::degree, 0));
 }
 
 Diatony::ChordQuality Chord::getQuality() const
 {
-    return intToQuality(state.getProperty(Identifiers::quality, 0));
+    return intToQuality(state.getProperty(ModelIdentifiers::quality, 0));
 }
 
 Diatony::ChordState Chord::getChordState() const
 {
-    return intToState(state.getProperty(Identifiers::state, 0));
+    return intToState(state.getProperty(ModelIdentifiers::state, 0));
 }
 
 // Méthodes utilitaires
@@ -65,16 +65,16 @@ juce::ValueTree Chord::createChordNode(Diatony::ChordDegree degree,
                                       Diatony::ChordQuality quality,
                                       Diatony::ChordState state)
 {
-    juce::ValueTree chordNode(Identifiers::CHORD);
+    juce::ValueTree chordNode(ModelIdentifiers::CHORD);
     
     // Générer un ID unique pour ce chord
     static int nextId = 1;
-    chordNode.setProperty(Identifiers::id, nextId++, nullptr);
+    chordNode.setProperty(ModelIdentifiers::id, nextId++, nullptr);
     
     // Définir les propriétés
-    chordNode.setProperty(Identifiers::degree, degreeToInt(degree), nullptr);
-    chordNode.setProperty(Identifiers::quality, qualityToInt(quality), nullptr);
-    chordNode.setProperty(Identifiers::state, stateToInt(state), nullptr);
+    chordNode.setProperty(ModelIdentifiers::degree, degreeToInt(degree), nullptr);
+    chordNode.setProperty(ModelIdentifiers::quality, qualityToInt(quality), nullptr);
+    chordNode.setProperty(ModelIdentifiers::state, stateToInt(state), nullptr);
     
     return chordNode;
 }

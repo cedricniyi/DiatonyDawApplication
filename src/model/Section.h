@@ -4,7 +4,7 @@
 #include <juce_data_structures/juce_data_structures.h>
 #include "Progression.h"
 #include "DiatonyTypes.h"
-#include "Identifiers.h"
+#include "ModelIdentifiers.h"
 
 /**
  * Représente une section tonale complète avec sa tonalité, son mode et sa progression

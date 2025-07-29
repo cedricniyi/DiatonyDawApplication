@@ -3,7 +3,7 @@
 // Constructeur avec ValueTree existant
 Progression::Progression(juce::ValueTree state) : state(state)
 {
-    jassert(state.hasType(Identifiers::PROGRESSION));
+    jassert(state.hasType(ModelIdentifiers::PROGRESSION));
 }
 
 // Méthode statique pour créer une nouvelle Progression dans un parent
@@ -109,11 +109,11 @@ juce::String Progression::toString() const
 // Création d'un nouveau nœud Progression
 juce::ValueTree Progression::createProgressionNode()
 {
-    juce::ValueTree progressionNode(Identifiers::PROGRESSION);
+    juce::ValueTree progressionNode(ModelIdentifiers::PROGRESSION);
     
     // Générer un ID unique pour cette progression
     static int nextId = 1;
-    progressionNode.setProperty(Identifiers::id, nextId++, nullptr);
+    progressionNode.setProperty(ModelIdentifiers::id, nextId++, nullptr);
     
     return progressionNode;
 }

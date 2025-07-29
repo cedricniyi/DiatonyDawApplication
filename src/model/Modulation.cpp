@@ -3,7 +3,7 @@
 // Constructeur avec ValueTree existant
 Modulation::Modulation(juce::ValueTree state) : state(state)
 {
-    jassert(state.hasType(Identifiers::MODULATION));
+    jassert(state.hasType(ModelIdentifiers::MODULATION));
 }
 
 // Méthode statique pour créer une nouvelle Modulation dans un parent
@@ -18,7 +18,7 @@ Modulation Modulation::createIn(juce::ValueTree parentTree, Diatony::ModulationT
 // Setters
 void Modulation::setModulationType(Diatony::ModulationType newType)
 {
-    state.setProperty(Identifiers::modulationType, modulationTypeToInt(newType), nullptr);
+    state.setProperty(ModelIdentifiers::modulationType, modulationTypeToInt(newType), nullptr);
     updateName();
 }
 
@@ -34,13 +34,13 @@ void Modulation::setToChordIndex(int newToChordIndex)
 
 void Modulation::setName(const juce::String& newName)
 {
-    state.setProperty(Identifiers::name, newName, nullptr);
+    state.setProperty(ModelIdentifiers::name, newName, nullptr);
 }
 
 // Getters
 Diatony::ModulationType Modulation::getModulationType() const
 {
-    return intToModulationType(state.getProperty(Identifiers::modulationType, 0));
+    return intToModulationType(state.getProperty(ModelIdentifiers::modulationType, 0));
 }
 
 int Modulation::getFromChordIndex() const
@@ -55,7 +55,7 @@ int Modulation::getToChordIndex() const
 
 const juce::String Modulation::getName() const
 {
-    return state.getProperty(Identifiers::name, "Unknown Modulation").toString();
+    return state.getProperty(ModelIdentifiers::name, "Unknown Modulation").toString();
 }
 
 // Méthodes utilitaires
@@ -74,20 +74,20 @@ juce::ValueTree Modulation::createModulationNode(Diatony::ModulationType type,
                                                 int fromChordIndex,
                                                 int toChordIndex)
 {
-    juce::ValueTree modulationNode(Identifiers::MODULATION);
+    juce::ValueTree modulationNode(ModelIdentifiers::MODULATION);
     
     // Générer un ID unique pour cette modulation
     static int nextId = 1;
-    modulationNode.setProperty(Identifiers::id, nextId++, nullptr);
+    modulationNode.setProperty(ModelIdentifiers::id, nextId++, nullptr);
     
     // Définir les propriétés
-    modulationNode.setProperty(Identifiers::modulationType, modulationTypeToInt(type), nullptr);
+    modulationNode.setProperty(ModelIdentifiers::modulationType, modulationTypeToInt(type), nullptr);
     modulationNode.setProperty("fromChordIndex", fromChordIndex, nullptr);
     modulationNode.setProperty("toChordIndex", toChordIndex, nullptr);
     
     // Générer le nom automatiquement
     juce::String name = "Modulation " + juce::String(static_cast<int>(type));
-    modulationNode.setProperty(Identifiers::name, name, nullptr);
+    modulationNode.setProperty(ModelIdentifiers::name, name, nullptr);
     
     return modulationNode;
 }
@@ -107,5 +107,5 @@ Diatony::ModulationType Modulation::intToModulationType(int value)
 void Modulation::updateName()
 {
     juce::String newName = "Modulation " + juce::String(static_cast<int>(getModulationType()));
-    state.setProperty(Identifiers::name, newName, nullptr);
+    state.setProperty(ModelIdentifiers::name, newName, nullptr);
 } 

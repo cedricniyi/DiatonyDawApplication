@@ -46,13 +46,13 @@ Section Piece::createSection(const juce::String& sectionName)
 
 void Piece::removeLastSection()
 {
-    auto sections = getChildrenOfType(Identifiers::SECTION);
+    auto sections = getChildrenOfType(ModelIdentifiers::SECTION);
     if (!sections.empty())
     {
         // Trouve et supprime la dernière section
         for (int i = state.getNumChildren() - 1; i >= 0; --i)
         {
-            if (state.getChild(i).hasType(Identifiers::SECTION))
+            if (state.getChild(i).hasType(ModelIdentifiers::SECTION))
             {
                 state.removeChild(i, &undoManager);
                 break;
@@ -60,12 +60,12 @@ void Piece::removeLastSection()
         }
         
         // Si on avait plus d'une section, supprimer aussi la dernière modulation
-        auto modulations = getChildrenOfType(Identifiers::MODULATION);
+        auto modulations = getChildrenOfType(ModelIdentifiers::MODULATION);
         if (sections.size() > 1 && !modulations.empty())
         {
             for (int i = state.getNumChildren() - 1; i >= 0; --i)
             {
-                if (state.getChild(i).hasType(Identifiers::MODULATION))
+                if (state.getChild(i).hasType(ModelIdentifiers::MODULATION))
                 {
                     state.removeChild(i, &undoManager);
                     break;
@@ -106,7 +106,7 @@ Modulation Piece::createModulation(Diatony::ModulationType type, int fromChord, 
 std::vector<Section> Piece::getSections() const
 {
     std::vector<Section> sections;
-    auto sectionNodes = getChildrenOfType(Identifiers::SECTION);
+    auto sectionNodes = getChildrenOfType(ModelIdentifiers::SECTION);
     
     for (const auto& node : sectionNodes)
     {
@@ -119,7 +119,7 @@ std::vector<Section> Piece::getSections() const
 std::vector<Modulation> Piece::getModulations() const
 {
     std::vector<Modulation> modulations;
-    auto modulationNodes = getChildrenOfType(Identifiers::MODULATION);
+    auto modulationNodes = getChildrenOfType(ModelIdentifiers::MODULATION);
     
     for (const auto& node : modulationNodes)
     {
@@ -132,36 +132,36 @@ std::vector<Modulation> Piece::getModulations() const
 Section Piece::getSection(size_t index) const
 {
     validateSectionIndex(index);
-    return Section(getChildOfType(Identifiers::SECTION, index));
+    return Section(getChildOfType(ModelIdentifiers::SECTION, index));
 }
 
 Section Piece::getSection(size_t index)
 {
     validateSectionIndex(index);
-    return Section(getChildOfType(Identifiers::SECTION, index));
+    return Section(getChildOfType(ModelIdentifiers::SECTION, index));
 }
 
 Modulation Piece::getModulation(size_t index) const
 {
     validateModulationIndex(index);
-    return Modulation(getChildOfType(Identifiers::MODULATION, index));
+    return Modulation(getChildOfType(ModelIdentifiers::MODULATION, index));
 }
 
 Modulation Piece::getModulation(size_t index)
 {
     validateModulationIndex(index);
-    return Modulation(getChildOfType(Identifiers::MODULATION, index));
+    return Modulation(getChildOfType(ModelIdentifiers::MODULATION, index));
 }
 
 // Informations sur la pièce
 size_t Piece::getSectionCount() const
 {
-    return getChildrenOfType(Identifiers::SECTION).size();
+    return getChildrenOfType(ModelIdentifiers::SECTION).size();
 }
 
 size_t Piece::getModulationCount() const
 {
-    return getChildrenOfType(Identifiers::MODULATION).size();
+    return getChildrenOfType(ModelIdentifiers::MODULATION).size();
 }
 
 int Piece::getNumElements() const
@@ -176,12 +176,12 @@ bool Piece::isEmpty() const
 
 void Piece::setTitle(const juce::String& newTitle)
 {
-    state.setProperty(Identifiers::name, newTitle, &undoManager);
+    state.setProperty(ModelIdentifiers::name, newTitle, &undoManager);
 }
 
 const juce::String Piece::getTitle() const
 {
-    return state.getProperty(Identifiers::name, "Untitled Piece").toString();
+    return state.getProperty(ModelIdentifiers::name, "Untitled Piece").toString();
 }
 
 // Validation
@@ -259,12 +259,12 @@ juce::String Piece::getDetailedSummary() const
 // Création d'un nouveau nœud Piece
 juce::ValueTree Piece::createPieceNode(const juce::String& title)
 {
-    juce::ValueTree pieceNode(Identifiers::PIECE);
+    juce::ValueTree pieceNode(ModelIdentifiers::PIECE);
     
     // Générer un ID unique pour cette pièce
     static int nextId = 1;
-    pieceNode.setProperty(Identifiers::id, nextId++, nullptr);
-    pieceNode.setProperty(Identifiers::name, title, nullptr);
+    pieceNode.setProperty(ModelIdentifiers::id, nextId++, nullptr);
+    pieceNode.setProperty(ModelIdentifiers::name, title, nullptr);
     
     return pieceNode;
 }

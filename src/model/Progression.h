@@ -3,7 +3,7 @@
 #include <juce_core/juce_core.h>
 #include <juce_data_structures/juce_data_structures.h>
 #include "Chord.h"
-#include "Identifiers.h"
+#include "ModelIdentifiers.h"
 
 /**
  * Représente une progression harmonique avec une liste d'accords

@@ -4,7 +4,7 @@
 #include <juce_data_structures/juce_data_structures.h>
 #include "Section.h"
 #include "Modulation.h"
-#include "Identifiers.h"
+#include "ModelIdentifiers.h"
 
 /**
  * Représente une pièce musicale complète avec ses sections tonales et modulations
