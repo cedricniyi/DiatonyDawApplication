@@ -55,7 +55,7 @@ void AppController::selectSection(int sectionIndex)
     currentSelection.clear();
     currentSelection.type = SelectionType::Section;
     currentSelection.sectionIndex = sectionIndex;
-    currentSelection.elementId = generateElementId(Identifiers::SECTION, sectionIndex);
+    currentSelection.elementId = generateElementId(ModelIdentifiers::SECTION, sectionIndex);
     
     setEditMode(EditMode::SectionEdit);
     notifySelectionChanged();
@@ -70,7 +70,7 @@ void AppController::selectModulation(int modulationIndex)
     currentSelection.clear();
     currentSelection.type = SelectionType::Modulation;
     currentSelection.sectionIndex = modulationIndex;  // Réutilise sectionIndex pour l'index de modulation
-    currentSelection.elementId = generateElementId(Identifiers::MODULATION, modulationIndex);
+    currentSelection.elementId = generateElementId(ModelIdentifiers::MODULATION, modulationIndex);
     
     setEditMode(EditMode::Overview);  // Les modulations restent en mode overview
     notifySelectionChanged();
@@ -123,7 +123,7 @@ void AppController::selectChord(int sectionIndex, int chordIndex)
     currentSelection.type = SelectionType::Chord;
     currentSelection.sectionIndex = sectionIndex;
     currentSelection.chordIndex = chordIndex;
-    currentSelection.elementId = generateElementId(Identifiers::CHORD, chordIndex);
+    currentSelection.elementId = generateElementId(ModelIdentifiers::CHORD, chordIndex);
     
     setEditMode(EditMode::ChordEdit);
     notifySelectionChanged();

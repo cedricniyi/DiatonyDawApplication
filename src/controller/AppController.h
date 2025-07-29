@@ -3,7 +3,7 @@
 #include <juce_core/juce_core.h>
 #include <juce_data_structures/juce_data_structures.h>
 #include "../model/Piece.h"
-#include "../model/Identifiers.h"
+#include "../model/ModelIdentifiers.h"
 
 /**
  * Contrôleur principal de l'application - Le "cerveau" découplé de l'UI
