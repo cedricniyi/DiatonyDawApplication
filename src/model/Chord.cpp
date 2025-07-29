@@ -67,8 +67,8 @@ juce::ValueTree Chord::createChordNode(Diatony::ChordDegree degree,
 {
     juce::ValueTree chordNode(ModelIdentifiers::CHORD);
     
-    // Générer un ID unique pour ce chord
-    static int nextId = 1;
+    // Générer un ID unique pour cet accord (commence à 0 pour correspondre aux index)
+    static int nextId = 0;
     chordNode.setProperty(ModelIdentifiers::id, nextId++, nullptr);
     
     // Définir les propriétés

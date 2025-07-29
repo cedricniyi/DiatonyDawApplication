@@ -111,8 +111,8 @@ juce::ValueTree Progression::createProgressionNode()
 {
     juce::ValueTree progressionNode(ModelIdentifiers::PROGRESSION);
     
-    // Générer un ID unique pour cette progression
-    static int nextId = 1;
+    // Générer un ID unique pour cette progression (commence à 0 pour correspondre aux index)
+    static int nextId = 0;
     progressionNode.setProperty(ModelIdentifiers::id, nextId++, nullptr);
     
     return progressionNode;

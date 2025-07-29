@@ -261,8 +261,8 @@ juce::ValueTree Piece::createPieceNode(const juce::String& title)
 {
     juce::ValueTree pieceNode(ModelIdentifiers::PIECE);
     
-    // Générer un ID unique pour cette pièce
-    static int nextId = 1;
+    // Générer un ID unique pour cette pièce (commence à 0 pour correspondre aux index)
+    static int nextId = 0;
     pieceNode.setProperty(ModelIdentifiers::id, nextId++, nullptr);
     pieceNode.setProperty(ModelIdentifiers::name, title, nullptr);
     

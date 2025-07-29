@@ -139,8 +139,8 @@ juce::ValueTree Section::createSectionNode(const juce::String& sectionName)
 {
     juce::ValueTree sectionNode(ModelIdentifiers::SECTION);
     
-    // Générer un ID unique pour cette section
-    static int nextId = 1;
+    // Générer un ID unique pour cette section (commence à 0 pour correspondre aux index)
+    static int nextId = 0;
     sectionNode.setProperty(ModelIdentifiers::id, nextId++, nullptr);
     
     // Définir les propriétés par défaut

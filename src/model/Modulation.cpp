@@ -76,8 +76,8 @@ juce::ValueTree Modulation::createModulationNode(Diatony::ModulationType type,
 {
     juce::ValueTree modulationNode(ModelIdentifiers::MODULATION);
     
-    // Générer un ID unique pour cette modulation
-    static int nextId = 1;
+    // Générer un ID unique pour cette modulation (commence à 0 pour correspondre aux index)
+    static int nextId = 0;
     modulationNode.setProperty(ModelIdentifiers::id, nextId++, nullptr);
     
     // Définir les propriétés
