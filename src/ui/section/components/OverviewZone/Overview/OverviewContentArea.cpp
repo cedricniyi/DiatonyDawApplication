@@ -3,7 +3,7 @@
 #include "utils/FontManager.h"
 #include "controller/AppController.h"
 #include "ui/PluginEditor.h"
-#include "model/Identifiers.h"
+#include "model/ModelIdentifiers.h"
 
 //==============================================================================
 OverviewContentArea::OverviewContentArea() 
@@ -75,7 +75,7 @@ void OverviewContentArea::refreshFromModel()
     int sectionCount = 0;
     for (int i = 0; i < modelState.getNumChildren(); ++i)
     {
-        if (modelState.getChild(i).hasType(Identifiers::SECTION))
+        if (modelState.getChild(i).hasType(ModelIdentifiers::SECTION))
             sectionCount++;
     }
     
@@ -89,7 +89,7 @@ void OverviewContentArea::refreshFromModel()
         for (int i = 0; i < modelState.getNumChildren(); ++i)
         {
             auto child = modelState.getChild(i);
-            if (child.hasType(Identifiers::SECTION))
+            if (child.hasType(ModelIdentifiers::SECTION))
             {
                 createPanelForSection(child, false);
             }
@@ -106,7 +106,7 @@ void OverviewContentArea::valueTreePropertyChanged(juce::ValueTree& treeWhosePro
                                                   const juce::Identifier& property)
 {
     // Mise à jour de l'affichage lors du changement de nom de section
-    if (property == Identifiers::name)
+    if (property == ModelIdentifiers::name)
     {
         refreshFromModel();
     }
@@ -114,7 +114,7 @@ void OverviewContentArea::valueTreePropertyChanged(juce::ValueTree& treeWhosePro
 
 void OverviewContentArea::valueTreeChildAdded(juce::ValueTree& parentTree, juce::ValueTree& childWhichHasBeenAdded)
 {
-    if (childWhichHasBeenAdded.hasType(Identifiers::SECTION))
+    if (childWhichHasBeenAdded.hasType(ModelIdentifiers::SECTION))
     {
         handleSectionAdded(childWhichHasBeenAdded);
     }
@@ -124,7 +124,7 @@ void OverviewContentArea::valueTreeChildRemoved(juce::ValueTree& parentTree,
                                                juce::ValueTree& childWhichHasBeenRemoved, 
                                                int indexFromWhichChildWasRemoved)
 {
-    if (childWhichHasBeenRemoved.hasType(Identifiers::SECTION))
+    if (childWhichHasBeenRemoved.hasType(ModelIdentifiers::SECTION))
     {
         handleSectionRemoved();
     }
@@ -164,7 +164,7 @@ void OverviewContentArea::createPanelForSection(const juce::ValueTree& sectionNo
     auto newPanel = std::make_unique<ButtonColoredPanel>(juce::Colours::blue);
     
     // Association de l'ID de section au panel
-    auto sectionId = sectionNode.getProperty(Identifiers::id, nextPanelId++);
+    auto sectionId = sectionNode.getProperty(ModelIdentifiers::id, nextPanelId++);
     newPanel->setUserData(sectionId);
     
     // Référence au panel avant transfert de propriété
