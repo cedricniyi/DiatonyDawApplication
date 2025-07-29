@@ -75,6 +75,7 @@ target_sources(DiatonyDawApplication
         # App Controller
         src/controller/AppController.cpp
         src/controller/AppController.h
+        src/controller/ContextIdentifiers.h
         
         # UI
         src/ui/PluginEditor.cpp
@@ -176,7 +177,7 @@ target_sources(DiatonyDawApplication
 
 
         # Model
-        src/model/Identifiers.h
+        src/model/ModelIdentifiers.h
         src/model/Progression.h
         src/model/Progression.cpp
         src/model/Chord.h
