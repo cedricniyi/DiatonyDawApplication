@@ -22,6 +22,9 @@ OverviewContentArea::~OverviewContentArea()
     // Nettoyer les listeners du ValueTree
     if (modelState.isValid())
         modelState.removeListener(this);
+    
+    if (selectionState.isValid())
+        selectionState.removeListener(this);
 }
 
 // === DÉCOUVERTE DE SERVICE ===
@@ -43,10 +46,24 @@ void OverviewContentArea::findAppController()
         
         // Connexion au ValueTree du modèle une fois AppController trouvé
         setModelState(appController->getState());
+        
+        // S'abonner à l'état de sélection centralisé
+        selectionState = appController->getSelectionState();
+        if (selectionState.isValid())
+        {
+            selectionState.addListener(this);
+        }
     }
     else
     {
         appController = nullptr;
+        
+        // Nettoyer les listeners si on perd AppController
+        if (selectionState.isValid())
+        {
+            selectionState.removeListener(this);
+            selectionState = juce::ValueTree();
+        }
     }
 }
 
@@ -82,7 +99,6 @@ void OverviewContentArea::refreshFromModel()
     // Création des panels pour les sections existantes
     if (scrollableContent && sectionCount > 0)
     {
-        selectedPanel = nullptr;
         scrollableContent->clearAllPanels();
         
         // Création d'un panel pour chaque section
@@ -109,6 +125,11 @@ void OverviewContentArea::valueTreePropertyChanged(juce::ValueTree& treeWhosePro
     if (property == ModelIdentifiers::name)
     {
         refreshFromModel();
+    }
+    // Réagir aux changements de sélection depuis l'état central
+    else if (property == ContextIdentifiers::selectedElementId && treeWhosePropertyHasChanged == selectionState)
+    {
+        updateSelectionHighlight();
     }
 }
 
@@ -160,11 +181,13 @@ void OverviewContentArea::createPanelForSection(const juce::ValueTree& sectionNo
     if (!scrollableContent)
         return;
     
+    // ✅ SIMPLE : Récupérer directement l'ID de la section (efficace O(1))
+    int sectionId = sectionNode.getProperty(ModelIdentifiers::id, -1);
+    
     // Création du panel avec couleur bleue
     auto newPanel = std::make_unique<ButtonColoredPanel>(juce::Colours::blue);
     
-    // Association de l'ID de section au panel
-    auto sectionId = sectionNode.getProperty(ModelIdentifiers::id, nextPanelId++);
+    // ✅ SIMPLE : Stocker l'ID (qui correspond maintenant à l'index grâce à notre correction)
     newPanel->setUserData(sectionId);
     
     // Référence au panel avant transfert de propriété
@@ -179,16 +202,10 @@ void OverviewContentArea::createPanelForSection(const juce::ValueTree& sectionNo
     std::unique_ptr<juce::Component> component(newPanel.release());
     scrollableContent->addSmallPanel(std::move(component));
     
-    // Gestion de la sélection automatique
-    if (autoSelect)
+    // ✅ SIMPLE : Sélection automatique directe avec l'ID (qui correspond à l'index)
+    if (autoSelect && appController && sectionId >= 0)
     {
-        if (selectedPanel)
-        {
-            selectedPanel->setSelected(false);
-        }
-        
-        newPanelPtr->setSelected(true);
-        selectedPanel = newPanelPtr;
+        appController->selectSection(sectionId);
     }
     
     updateVisibility();
@@ -233,11 +250,7 @@ void OverviewContentArea::addSmallPanel()
     auto newPanel = std::make_unique<ButtonColoredPanel>(juce::Colours::blue);
     newPanel->setUserData(nextPanelId++);
     
-    // Désélection de l'ancien panel
-    if (selectedPanel)
-    {
-        selectedPanel->setSelected(false);
-    }
+    // La sélection est maintenant gérée centralement - pas besoin de désélection manuelle
     
     ButtonColoredPanel* newPanelPtr = newPanel.get();
     
@@ -250,8 +263,7 @@ void OverviewContentArea::addSmallPanel()
     std::unique_ptr<juce::Component> component(newPanel.release());
     scrollableContent->addSmallPanel(std::move(component));
     
-    newPanelPtr->setSelected(true);
-    selectedPanel = newPanelPtr;
+    // La sélection visuelle sera gérée par updateSelectionHighlight()
     
     updateVisibility();
     resized();
@@ -261,7 +273,6 @@ void OverviewContentArea::clearAllPanels()
 {
     if (scrollableContent)
     {
-        selectedPanel = nullptr;
         scrollableContent->clearAllPanels();
         updateVisibility();
         resized();
@@ -278,15 +289,7 @@ juce::Rectangle<int> OverviewContentArea::getPreferredSize() const
     return juce::Rectangle<int>(0, 0, PREFERRED_WIDTH, PREFERRED_HEIGHT);
 }
 
-ButtonColoredPanel* OverviewContentArea::getSelectedPanel() const
-{
-    return selectedPanel;
-}
-
-bool OverviewContentArea::hasSelectedPanel() const
-{
-    return selectedPanel != nullptr;
-}
+// Méthodes de sélection supprimées - maintenant pilotées par l'état central
 
 void OverviewContentArea::setupViewport()
 {
@@ -326,18 +329,48 @@ void OverviewContentArea::updateVisibility()
 
 void OverviewContentArea::onPanelClicked(ButtonColoredPanel* clickedPanel)
 {
-    if (!clickedPanel)
+    if (!clickedPanel || !appController)
         return;
         
-    // Gestion de la sélection de panel
-    if (selectedPanel != clickedPanel)
+    // Obtenir l'index de la section à partir des données du panel
+    int sectionIndex = clickedPanel->getUserData();
+    
+    // Appeler AppController pour gérer la sélection de manière centralisée
+    if (sectionIndex >= 0)
     {
-        if (selectedPanel)
+        appController->selectSection(sectionIndex);
+    }
+}
+
+void OverviewContentArea::updateSelectionHighlight()
+{
+    if (!selectionState.isValid() || !scrollableContent)
+        return;
+    
+    // Obtenir l'ID de l'élément sélectionné depuis l'état central
+    juce::String selectedElementId = selectionState.getProperty(ContextIdentifiers::selectedElementId, "");
+    juce::String selectionType = selectionState.getProperty(ContextIdentifiers::selectionType, "None");
+    
+    // Parcourir tous les panels pour mettre à jour leur état visuel
+    for (int i = 0; i < scrollableContent->getNumChildComponents(); ++i)
+    {
+        if (auto* panel = dynamic_cast<ButtonColoredPanel*>(scrollableContent->getChildComponent(i)))
         {
-            selectedPanel->setSelected(false);
+            // Vérifier si ce panel correspond à l'élément sélectionné
+            if (selectionType == "Section")
+            {
+                int panelSectionIndex = panel->getUserData();
+                // Générer l'ID attendu selon la logique d'AppController
+                juce::String expectedElementId = "Section_" + juce::String(panelSectionIndex);
+                
+                // Mettre à jour l'état visuel du panel
+                panel->setSelected(expectedElementId == selectedElementId);
+            }
+            else
+            {
+                // Aucune sélection ou sélection d'un autre type - désélectionner le panel
+                panel->setSelected(false);
+            }
         }
-        
-        clickedPanel->setSelected(true);
-        selectedPanel = clickedPanel;
     }
 } 

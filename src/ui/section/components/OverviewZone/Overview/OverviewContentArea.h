@@ -1,8 +1,11 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include <juce_data_structures/juce_data_structures.h>
+#include <juce_gui_basics/juce_gui_basics.h>
 #include "ui/extra/Component/Panel/ColoredPanel.h"
 #include "ScrollableContentPanel.h"
+#include "controller/ContextIdentifiers.h"
 
 // Forward declarations
 class ButtonColoredPanel;
@@ -45,9 +48,7 @@ public:
     // Configuration
     juce::Rectangle<int> getPreferredSize() const;
     
-    // Gestion de la sélection
-    ButtonColoredPanel* getSelectedPanel() const;
-    bool hasSelectedPanel() const;
+    // Gestion de la sélection (maintenant pilotée par l'état central)
     
     // =================================================================================
     // ValueTree::Listener interface - Réactivité aux changements du modèle
@@ -71,7 +72,8 @@ private:
     AppController* appController = nullptr;  // Trouvé via parentHierarchyChanged()
     
     // === ARCHITECTURE RÉACTIVE ===
-    juce::ValueTree modelState;  // ValueTree du modèle écouté via ValueTree::Listener
+    juce::ValueTree modelState;     // ValueTree du modèle écouté via ValueTree::Listener
+    juce::ValueTree selectionState; // ValueTree de l'état de sélection
     
     // Configuration
     static constexpr int PREFERRED_WIDTH = 300;
@@ -81,8 +83,7 @@ private:
     // Gestion des IDs de panels
     int nextPanelId = 1;
     
-    // Gestion de la sélection
-    ButtonColoredPanel* selectedPanel = nullptr;
+    // Gestion de la sélection supprimée - maintenant via selectionState
     
     // Méthodes privées
     void setupViewport();
@@ -96,6 +97,7 @@ private:
     void handleSectionAdded(const juce::ValueTree& sectionNode);
     void handleSectionRemoved();
     void createPanelForSection(const juce::ValueTree& sectionNode, bool autoSelect);  // Crée un panel visuel pour une section
+    void updateSelectionHighlight(); // Met à jour l'aspect visuel des panels selon la sélection centrale
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(OverviewContentArea)
 }; 
