@@ -4,6 +4,7 @@
 #include <juce_data_structures/juce_data_structures.h>
 #include "../model/Piece.h"
 #include "../model/ModelIdentifiers.h"
+#include "ContextIdentifiers.h"
 
 /**
  * Contrôleur principal de l'application - Le "cerveau" découplé de l'UI
@@ -29,25 +30,6 @@ public:
         Overview,       // Vue d'ensemble
         SectionEdit,    // Édition d'une section
         ChordEdit       // Édition d'un accord
-    };
-    
-    enum class SelectionType
-    {
-        None,
-        Section,
-        Modulation,
-        Chord
-    };
-    
-    struct Selection
-    {
-        SelectionType type = SelectionType::None;
-        juce::String elementId;         // ID de l'élément sélectionné
-        int sectionIndex = -1;          // Index de section (si applicable)
-        int chordIndex = -1;            // Index d'accord (si applicable)
-        
-        bool isValid() const { return type != SelectionType::None && !elementId.isEmpty(); }
-        void clear() { type = SelectionType::None; elementId = ""; sectionIndex = -1; chordIndex = -1; }
     };
     
     // === API POUR ACTIONS UTILISATEUR ===
@@ -87,7 +69,7 @@ public:
     
     // État de l'application
     EditMode getCurrentEditMode() const { return currentEditMode; }
-    const Selection& getCurrentSelection() const { return currentSelection; }
+    juce::ValueTree& getSelectionState() { return selectionState; }
     
     // Informations utiles pour l'UI
     bool isEmpty() const { return piece.isEmpty(); }
@@ -97,21 +79,16 @@ public:
     int getModulationCount() const { return static_cast<int>(piece.getModulationCount()); }
     int getTotalChordCount() const { return piece.getTotalChordCount(); }
     
-    // === CALLBACKS POUR L'UI ===
-    std::function<void()> onModelChanged;           // Appelé quand le modèle change
-    std::function<void()> onSelectionChanged;       // Appelé quand la sélection change
-    std::function<void()> onEditModeChanged;        // Appelé quand le mode d'édition change
+    // === ACCÈS À L'ÉTAT DE SÉLECTION ===
+    // L'UI peut s'abonner directement au ValueTree selectionState via getSelectionState()
     
 private:
     // === DONNÉES MEMBRES ===
     Piece piece;                    // Le modèle de données (propriétaire unique)
     EditMode currentEditMode;       // Mode d'édition actuel
-    Selection currentSelection;     // Sélection actuelle
+    juce::ValueTree selectionState; // État de sélection centralisé
     
     // === MÉTHODES PRIVÉES ===
-    void notifyModelChanged();
-    void notifySelectionChanged();
-    void notifyEditModeChanged();
     
     void setEditMode(EditMode newMode);
     void updateSelectionFromIndices(int sectionIndex, int chordIndex = -1);

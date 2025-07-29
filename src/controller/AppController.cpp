@@ -3,13 +3,19 @@
 // === CONSTRUCTEURS ===
 
 AppController::AppController() 
-    : piece(), currentEditMode(EditMode::Overview)
+    : piece(), currentEditMode(EditMode::Overview), selectionState(ContextIdentifiers::SELECTION_STATE)
 {
+    // Initialiser l'état de sélection avec les valeurs par défaut (pas de sélection)
+    selectionState.setProperty(ContextIdentifiers::selectionType, "None", &piece.getUndoManager());
+    selectionState.setProperty(ContextIdentifiers::selectedElementId, "", &piece.getUndoManager());
 }
 
 AppController::AppController(const juce::String& pieceTitle) 
-    : piece(pieceTitle), currentEditMode(EditMode::Overview)
+    : piece(pieceTitle), currentEditMode(EditMode::Overview), selectionState(ContextIdentifiers::SELECTION_STATE)
 {
+    // Initialiser l'état de sélection avec les valeurs par défaut (pas de sélection)
+    selectionState.setProperty(ContextIdentifiers::selectionType, "None", &piece.getUndoManager());
+    selectionState.setProperty(ContextIdentifiers::selectedElementId, "", &piece.getUndoManager());
 }
 
 // === API POUR ACTIONS UTILISATEUR ===
@@ -23,7 +29,6 @@ void AppController::addNewSection(const juce::String& sectionName)
     int newSectionIndex = getSectionCount() - 1;
     selectSection(newSectionIndex);
     
-    notifyModelChanged();
 }
 
 void AppController::removeSection(int sectionIndex)
@@ -32,8 +37,11 @@ void AppController::removeSection(int sectionIndex)
         return;
         
     // Si on supprime la section sélectionnée, clear la sélection
-    if (currentSelection.type == SelectionType::Section && 
-        currentSelection.sectionIndex == sectionIndex)
+    juce::String currentSelectionType = selectionState.getProperty(ContextIdentifiers::selectionType, "None");
+    juce::String currentElementId = selectionState.getProperty(ContextIdentifiers::selectedElementId, "");
+    juce::String sectionElementId = generateElementId(ModelIdentifiers::SECTION, sectionIndex);
+    
+    if (currentSelectionType == "Section" && currentElementId == sectionElementId)
     {
         clearSelection();
     }
@@ -43,7 +51,6 @@ void AppController::removeSection(int sectionIndex)
     if (sectionIndex == getSectionCount() - 1)
     {
         piece.removeLastSection();
-        notifyModelChanged();
     }
 }
 
@@ -52,13 +59,14 @@ void AppController::selectSection(int sectionIndex)
     if (!isValidSectionIndex(sectionIndex))
         return;
         
-    currentSelection.clear();
-    currentSelection.type = SelectionType::Section;
-    currentSelection.sectionIndex = sectionIndex;
-    currentSelection.elementId = generateElementId(ModelIdentifiers::SECTION, sectionIndex);
+    // Mettre à jour l'état de sélection via ValueTree
+    selectionState.setProperty(ContextIdentifiers::selectionType, "Section", &piece.getUndoManager());
+    selectionState.setProperty(ContextIdentifiers::selectedElementId, 
+                              generateElementId(ModelIdentifiers::SECTION, sectionIndex), 
+                              &piece.getUndoManager());
     
     setEditMode(EditMode::SectionEdit);
-    notifySelectionChanged();
+    // Plus besoin de notifySelectionChanged() - l'UI s'abonne directement au ValueTree
 }
 
 // Actions sur les modulations
@@ -67,13 +75,14 @@ void AppController::selectModulation(int modulationIndex)
     if (!isValidModulationIndex(modulationIndex))
         return;
         
-    currentSelection.clear();
-    currentSelection.type = SelectionType::Modulation;
-    currentSelection.sectionIndex = modulationIndex;  // Réutilise sectionIndex pour l'index de modulation
-    currentSelection.elementId = generateElementId(ModelIdentifiers::MODULATION, modulationIndex);
+    // Mettre à jour l'état de sélection via ValueTree
+    selectionState.setProperty(ContextIdentifiers::selectionType, "Modulation", &piece.getUndoManager());
+    selectionState.setProperty(ContextIdentifiers::selectedElementId, 
+                              generateElementId(ModelIdentifiers::MODULATION, modulationIndex), 
+                              &piece.getUndoManager());
     
     setEditMode(EditMode::Overview);  // Les modulations restent en mode overview
-    notifySelectionChanged();
+    // Plus besoin de notifySelectionChanged() - l'UI s'abonne directement au ValueTree
 }
 
 // Actions sur les accords
@@ -91,7 +100,6 @@ void AppController::addChordToSection(int sectionIndex, Diatony::ChordDegree deg
     int newChordIndex = static_cast<int>(progression.size()) - 1;
     selectChord(sectionIndex, newChordIndex);
     
-    notifyModelChanged();
 }
 
 void AppController::removeChordFromSection(int sectionIndex, int chordIndex)
@@ -100,9 +108,11 @@ void AppController::removeChordFromSection(int sectionIndex, int chordIndex)
         return;
         
     // Si on supprime l'accord sélectionné, clear la sélection
-    if (currentSelection.type == SelectionType::Chord && 
-        currentSelection.sectionIndex == sectionIndex &&
-        currentSelection.chordIndex == chordIndex)
+    juce::String currentSelectionType = selectionState.getProperty(ContextIdentifiers::selectionType, "None");
+    juce::String currentElementId = selectionState.getProperty(ContextIdentifiers::selectedElementId, "");
+    juce::String chordElementId = generateElementId(ModelIdentifiers::CHORD, chordIndex);
+    
+    if (currentSelectionType == "Chord" && currentElementId == chordElementId)
     {
         clearSelection();
     }
@@ -111,7 +121,6 @@ void AppController::removeChordFromSection(int sectionIndex, int chordIndex)
     auto progression = section.getProgression();
     progression.removeChord(static_cast<size_t>(chordIndex));
     
-    notifyModelChanged();
 }
 
 void AppController::selectChord(int sectionIndex, int chordIndex)
@@ -119,38 +128,38 @@ void AppController::selectChord(int sectionIndex, int chordIndex)
     if (!isValidChordIndex(sectionIndex, chordIndex))
         return;
         
-    currentSelection.clear();
-    currentSelection.type = SelectionType::Chord;
-    currentSelection.sectionIndex = sectionIndex;
-    currentSelection.chordIndex = chordIndex;
-    currentSelection.elementId = generateElementId(ModelIdentifiers::CHORD, chordIndex);
+    // Mettre à jour l'état de sélection via ValueTree
+    selectionState.setProperty(ContextIdentifiers::selectionType, "Chord", &piece.getUndoManager());
+    selectionState.setProperty(ContextIdentifiers::selectedElementId, 
+                              generateElementId(ModelIdentifiers::CHORD, chordIndex), 
+                              &piece.getUndoManager());
     
     setEditMode(EditMode::ChordEdit);
-    notifySelectionChanged();
+    // Plus besoin de notifySelectionChanged() - l'UI s'abonne directement au ValueTree
 }
 
 // Actions générales
 void AppController::clearSelection()
 {
-    if (currentSelection.type == SelectionType::None)
+    juce::String currentSelectionType = selectionState.getProperty(ContextIdentifiers::selectionType, "None");
+    if (currentSelectionType == "None")
         return;  // Déjà vide
         
-    currentSelection.clear();
+    selectionState.setProperty(ContextIdentifiers::selectionType, "None", &piece.getUndoManager());
+    selectionState.setProperty(ContextIdentifiers::selectedElementId, "", &piece.getUndoManager());
     setEditMode(EditMode::Overview);
-    notifySelectionChanged();
+    // Plus besoin de notifySelectionChanged() - l'UI s'abonne directement au ValueTree
 }
 
 void AppController::clearPiece()
 {
     piece.clear();
     clearSelection();
-    notifyModelChanged();
 }
 
 void AppController::setPieceTitle(const juce::String& title)
 {
     piece.setTitle(title);
-    notifyModelChanged();
 }
 
 // Undo/Redo
@@ -161,7 +170,6 @@ void AppController::undo()
         piece.getUndoManager().undo();
         // La sélection pourrait ne plus être valide après undo
         clearSelection();
-        notifyModelChanged();
     }
 }
 
@@ -172,7 +180,6 @@ void AppController::redo()
         piece.getUndoManager().redo();
         // La sélection pourrait ne plus être valide après redo
         clearSelection();
-        notifyModelChanged();
     }
 }
 
@@ -188,30 +195,14 @@ bool AppController::canRedo() const
 
 // === MÉTHODES PRIVÉES ===
 
-void AppController::notifyModelChanged()
-{
-    if (onModelChanged)
-        onModelChanged();
-}
-
-void AppController::notifySelectionChanged()
-{
-    if (onSelectionChanged)
-        onSelectionChanged();
-}
-
-void AppController::notifyEditModeChanged()
-{
-    if (onEditModeChanged)
-        onEditModeChanged();
-}
+// Méthodes de notification supprimées - l'UI s'abonne directement aux ValueTree
 
 void AppController::setEditMode(EditMode newMode)
 {
     if (currentEditMode != newMode)
     {
         currentEditMode = newMode;
-        notifyEditModeChanged();
+        // Plus besoin de notifyEditModeChanged() - l'UI peut surveiller le mode via d'autres moyens
     }
 }
 
