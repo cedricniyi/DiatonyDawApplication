@@ -173,6 +173,12 @@ target_sources(DiatonyDawApplication
         src/ui/section/components/EditZone/Parameters/Zone4.h
         src/ui/section/components/EditZone/Parameters/Zone4.cpp
         
+        # UI Components - Parameters/Zone4 (Zone4 scrollable architecture)
+        src/ui/section/components/EditZone/Parameters/zone4/Zone4ScrollablePanel.h
+        src/ui/section/components/EditZone/Parameters/zone4/Zone4ScrollablePanel.cpp
+        src/ui/section/components/EditZone/Parameters/zone4/Zone4ContentArea.h
+        src/ui/section/components/EditZone/Parameters/zone4/Zone4ContentArea.cpp
+        
         # UI Components - OverviewZone/PlayBack
         src/ui/section/components/OverviewZone/PlayBack/PlaybackActionArea.h
         src/ui/section/components/OverviewZone/PlayBack/PlaybackActionArea.cpp
