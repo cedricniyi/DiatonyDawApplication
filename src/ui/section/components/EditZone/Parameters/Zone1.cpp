@@ -92,21 +92,23 @@ void Zone1::layoutCircularButtons()
     flexBox.justifyContent = juce::FlexBox::JustifyContent::spaceAround;
     flexBox.alignItems = juce::FlexBox::AlignItems::center;
     
-    // FlexBox full-auto : laisser FlexBox gérer automatiquement la répartition
+    // FlexBox avec flex-basis défini pour une taille de base
     for (auto& button : circularButtons)
     {
         juce::FlexItem item(*button);
         
-        // Chaque bouton aura la même part d'espace disponible
-        item = item.withFlex(1.0f);
+        // Définir flex-grow=1, flex-shrink=1, flex-basis=70px pour un bon équilibre
+        item = item.withFlex(1.0f,    // flex-grow: grandit s'il y a de la place
+                            1.0f,    // flex-shrink: rétréci proportionnellement si nécessaire
+                            70.0f);  // flex-basis: taille de base de 70px
         
-        // Contraintes de taille minimale pour rester lisible
-        item = item.withMinWidth(50.0f);   // Minimum 30px de largeur
-        item = item.withMinHeight(50.0f);  // Minimum 30px de hauteur
+        // Contraintes de taille minimale pour l'accessibilité
+        item = item.withMinWidth(40.0f);   // Minimum 40px si vraiment très petit écran
+        item = item.withMinHeight(40.0f);  // Minimum 40px de hauteur
         
-        // Contraintes de taille maximale pour éviter des boutons trop grands
-        item = item.withMaxWidth(150.0f);   // Maximum 80px de largeur
-        item = item.withMaxHeight(150.0f);  // Maximum 80px de hauteur
+        // Contraintes de taille maximale pour éviter des boutons énormes
+        item = item.withMaxWidth(120.0f);   // Maximum 120px de largeur
+        item = item.withMaxHeight(120.0f);  // Maximum 120px de hauteur
         
         flexBox.items.add(item);
     }
