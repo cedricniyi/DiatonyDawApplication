@@ -2,6 +2,7 @@
 
 #include <JuceHeader.h>
 #include "ui/extra/Component/Panel/ColoredPanel.h"
+#include "utils/FontManager.h"
 
 /**
  * Composant d'édition de modulation - Placeholder pour l'édition détaillée d'une modulation
@@ -36,17 +37,23 @@ public:
 
 private:
     juce::String currentModulationId;
-    juce::Label titleLabel;
-    juce::Label contentLabel;
+    juce::Label modulationNameLabel;  // Label pour le nom de la modulation
+    
+    juce::SharedResourcePointer<FontManager> fontManager;
+    
+    // Zones de layout
+    juce::Rectangle<int> headerArea;
+    juce::Rectangle<int> contentArea;
     
     // Propriétés pour bordure sophistiquée (inspiré de OutlineTextButton)
     float borderThickness = 2.0f;
     float cornerRadius = 8.0f;
     juce::Colour borderColour = juce::Colours::darkgreen;
     
-    void setupLabels();
+    void setupModulationNameLabel();
     void updateContent();
     void drawBorder(juce::Graphics& g);
+    void drawSeparatorLine(juce::Graphics& g);
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ModulationEditor)
 }; 
