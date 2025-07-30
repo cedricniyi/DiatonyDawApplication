@@ -5,7 +5,9 @@ ButtonColoredPanel::ButtonColoredPanel(juce::Colour color)
     : juce::Button(""),  // Bouton sans texte
       baseColor(color),
       isSelected(false),
-      contentType(PanelContentType::Section)  // Par défaut Section
+      contentType(PanelContentType::Section),  // Par défaut Section
+      displayText(""),  // Pas de texte par défaut
+      showText(true)  // Affichage du texte activé par défaut (rétrocompatibilité)
 {
     // Désactiver le look and feel par défaut du bouton
     setButtonText("");
@@ -42,6 +44,19 @@ void ButtonColoredPanel::paintButton(juce::Graphics& g, bool shouldDrawButtonAsH
     // Rendre le panel (sans bordure, identique à ColoredPanel)
     g.setColour(currentColor);
     g.fillPath(panelPath);
+    
+    // Afficher le texte s'il y en a un ET si l'affichage est activé
+    if (showText && displayText.isNotEmpty())
+    {
+        // Couleur du texte : blanc pour contraster avec les couleurs de fond
+        g.setColour(juce::Colours::white);
+        
+        // Police adaptée à la taille du panel
+        g.setFont(juce::FontOptions(12.0f));
+        
+        // Dessiner le texte centré
+        g.drawText(displayText, bounds.toNearestInt(), juce::Justification::centred, true);
+    }
 }
 
 void ButtonColoredPanel::setSelected(bool selected)
@@ -87,4 +102,32 @@ void ButtonColoredPanel::setContentType(PanelContentType type)
 PanelContentType ButtonColoredPanel::getContentType() const
 {
     return contentType;
+}
+
+void ButtonColoredPanel::setDisplayText(const juce::String& text)
+{
+    if (displayText != text)
+    {
+        displayText = text;
+        repaint();  // Redessiner pour afficher le nouveau texte
+    }
+}
+
+juce::String ButtonColoredPanel::getDisplayText() const
+{
+    return displayText;
+}
+
+void ButtonColoredPanel::setShowText(bool shouldShowText)
+{
+    if (showText != shouldShowText)
+    {
+        showText = shouldShowText;
+        repaint();  // Redessiner pour mettre à jour l'affichage
+    }
+}
+
+bool ButtonColoredPanel::getShowText() const
+{
+    return showText;
 } 
