@@ -4,6 +4,7 @@
 #include "ui/extra/Component/Panel/ColoredPanel.h"
 #include "WelcomeView.h"
 #include "SectionEditor.h"
+#include "ModulationEditor.h"
 #include "controller/ContextIdentifiers.h"
 
 // Forward declarations
@@ -37,6 +38,7 @@ private:
     // Composants UI
     WelcomeView welcomeView;
     std::unique_ptr<SectionEditor> sectionEditor;
+    std::unique_ptr<ModulationEditor> modulationEditor;
     
     // === DÉCOUVERTE DE SERVICE ===
     AppController* appController = nullptr;  // Trouvé via parentHierarchyChanged()

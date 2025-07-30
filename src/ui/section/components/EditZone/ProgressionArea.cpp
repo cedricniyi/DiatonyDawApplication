@@ -13,6 +13,10 @@ ProgressionArea::ProgressionArea()
     // Créer le SectionEditor mais le garder caché au début
     sectionEditor = std::make_unique<SectionEditor>();
     addChildComponent(*sectionEditor); // addChildComponent = invisible par défaut
+    
+    // Créer le ModulationEditor mais le garder caché au début
+    modulationEditor = std::make_unique<ModulationEditor>();
+    addChildComponent(*modulationEditor); // addChildComponent = invisible par défaut
 }
 
 ProgressionArea::~ProgressionArea()
@@ -33,11 +37,13 @@ void ProgressionArea::resized()
     // Appliquer le padding à toute la zone
     auto area = getLocalBounds().reduced(20, 10);
     
-    // Positionner les deux vues dans toute la zone disponible
+    // Positionner les trois vues dans toute la zone disponible
     // Seule la vue visible sera affichée
     welcomeView.setBounds(area);
     if (sectionEditor)
         sectionEditor->setBounds(area);
+    if (modulationEditor)
+        modulationEditor->setBounds(area);
 }
 
 // === DÉCOUVERTE DE SERVICE ===
@@ -93,27 +99,37 @@ void ProgressionArea::valueTreePropertyChanged(juce::ValueTree& treeWhosePropert
 
 void ProgressionArea::updateContentBasedOnSelection()
 {
-    if (!selectionState.isValid() || !sectionEditor)
+    if (!selectionState.isValid() || !sectionEditor || !modulationEditor)
         return;
     
     juce::String selectedElementId = selectionState.getProperty(ContextIdentifiers::selectedElementId, "");
     juce::String selectionType = selectionState.getProperty(ContextIdentifiers::selectionType, "None");
     
-    // Si un ID de section est valide, cacher WelcomeView et montrer SectionEditor
+    // Gérer les trois cas de sélection
     if (selectionType == "Section" && !selectedElementId.isEmpty())
     {
+        // Afficher SectionEditor et cacher les autres
         welcomeView.setVisible(false);
+        modulationEditor->setVisible(false);
         sectionEditor->setSectionToEdit(selectedElementId);
         sectionEditor->setVisible(true);
     }
+    else if (selectionType == "Modulation" && !selectedElementId.isEmpty())
+    {
+        // Afficher ModulationEditor et cacher les autres
+        welcomeView.setVisible(false);
+        sectionEditor->setVisible(false);
+        sectionEditor->setSectionToEdit(""); // Clear l'éditeur de section
+        modulationEditor->setModulationToEdit(selectedElementId);
+        modulationEditor->setVisible(true);
+    }
     else
     {
-        // Si l'ID est invalide (sélection vide), cacher SectionEditor et montrer WelcomeView
-        if (sectionEditor->isVisible())
-        {
-            sectionEditor->setVisible(false);
-            sectionEditor->setSectionToEdit(""); // Clear l'éditeur
-        }
+        // Cas par défaut : afficher WelcomeView et cacher les éditeurs
+        sectionEditor->setVisible(false);
+        sectionEditor->setSectionToEdit(""); // Clear l'éditeur de section
+        modulationEditor->setVisible(false);
+        modulationEditor->setModulationToEdit(""); // Clear l'éditeur de modulation
         welcomeView.setVisible(true);
     }
 } 
