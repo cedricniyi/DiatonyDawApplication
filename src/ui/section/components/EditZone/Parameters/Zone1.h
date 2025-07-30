@@ -2,6 +2,7 @@
 
 #include <JuceHeader.h>
 #include "utils/FontManager.h"
+#include "ui/extra/Button/CircularButton.h"
 
 /**
  * Zone 1 - Premier paramètre/contrôle de section
@@ -28,6 +29,12 @@ private:
     
     // FontManager pour le titre
     juce::SharedResourcePointer<FontManager> fontManager;
+    
+    // Les 7 boutons circulaires
+    std::array<std::unique_ptr<CircularButton>, 7> circularButtons;
+    
+    void setupCircularButtons();
+    void layoutCircularButtons();
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Zone1)
 };
