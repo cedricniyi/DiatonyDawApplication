@@ -4,7 +4,8 @@
 ButtonColoredPanel::ButtonColoredPanel(juce::Colour color) 
     : juce::Button(""),  // Bouton sans texte
       baseColor(color),
-      isSelected(false)
+      isSelected(false),
+      contentType(PanelContentType::Section)  // Par défaut Section
 {
     // Désactiver le look and feel par défaut du bouton
     setButtonText("");
@@ -76,4 +77,14 @@ void ButtonColoredPanel::setUserData(const juce::var& data)
 juce::var ButtonColoredPanel::getUserData() const
 {
     return userData;
+}
+
+void ButtonColoredPanel::setContentType(PanelContentType type)
+{
+    contentType = type;
+}
+
+PanelContentType ButtonColoredPanel::getContentType() const
+{
+    return contentType;
 } 
