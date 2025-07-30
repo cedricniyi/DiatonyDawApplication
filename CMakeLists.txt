@@ -162,14 +162,14 @@ target_sources(DiatonyDawApplication
         src/ui/section/components/EditZone/ModulationEditor.cpp
         
         # UI Components - Parameters (Zone components for SectionEditor)
-        src/ui/section/components/Parameters/Zone1.h
-        src/ui/section/components/Parameters/Zone1.cpp
-        src/ui/section/components/Parameters/Zone2.h
-        src/ui/section/components/Parameters/Zone2.cpp
-        src/ui/section/components/Parameters/Zone3.h
-        src/ui/section/components/Parameters/Zone3.cpp
-        src/ui/section/components/Parameters/Zone4.h
-        src/ui/section/components/Parameters/Zone4.cpp
+        src/ui/section/components/EditZone/Parameters/Zone1.h
+        src/ui/section/components/EditZone/Parameters/Zone1.cpp
+        src/ui/section/components/EditZone/Parameters/Zone2.h
+        src/ui/section/components/EditZone/Parameters/Zone2.cpp
+        src/ui/section/components/EditZone/Parameters/Zone3.h
+        src/ui/section/components/EditZone/Parameters/Zone3.cpp
+        src/ui/section/components/EditZone/Parameters/Zone4.h
+        src/ui/section/components/EditZone/Parameters/Zone4.cpp
         
         # UI Components - OverviewZone/PlayBack
         src/ui/section/components/OverviewZone/PlayBack/PlaybackActionArea.h

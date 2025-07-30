@@ -1,6 +1,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "utils/FontManager.h"
 
 /**
  * Zone 1 - Premier paramètre/contrôle de section
@@ -17,8 +18,16 @@ public:
 
 private:
     // Couleur de fond pour cette zone
-    juce::Colour backgroundColour = juce::Colours::lightcoral.withAlpha(0.3f);
+    juce::Colour titleBackgroundColour = juce::Colours::lightcoral.withAlpha(0.3f);
+    juce::Colour contentBackgroundColour = juce::Colours::lightcoral.withAlpha(0.5f); // Plus foncé
     juce::Colour borderColour = juce::Colours::black;
+    
+    // Layout des zones
+    juce::Rectangle<int> titleArea;
+    juce::Rectangle<int> contentArea;
+    
+    // FontManager pour le titre
+    juce::SharedResourcePointer<FontManager> fontManager;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Zone1)
 };

@@ -3,10 +3,10 @@
 #include <JuceHeader.h>
 #include "ui/extra/Component/Panel/ColoredPanel.h"
 #include "utils/FontManager.h"
-#include "../Parameters/Zone1.h"
-#include "../Parameters/Zone2.h"
-#include "../Parameters/Zone3.h"
-#include "../Parameters/Zone4.h"
+#include "Parameters/Zone1.h"
+#include "Parameters/Zone2.h"
+#include "Parameters/Zone3.h"
+#include "Parameters/Zone4.h"
 
 /**
  * Composant d'édition de section - Placeholder pour l'édition détaillée d'une section
