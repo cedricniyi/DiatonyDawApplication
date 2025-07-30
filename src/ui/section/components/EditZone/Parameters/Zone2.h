@@ -2,6 +2,7 @@
 
 #include <JuceHeader.h>
 #include "utils/FontManager.h"
+#include "ui/extra/Button/StyledButton.h"
 
 /**
  * Zone 2 - Deuxième paramètre/contrôle de section
@@ -28,6 +29,12 @@ private:
     
     // FontManager pour le titre
     juce::SharedResourcePointer<FontManager> fontManager;
+    
+    // Les 3 boutons StyledButton
+    std::array<std::unique_ptr<StyledButton>, 3> styledButtons;
+    
+    void setupStyledButtons();
+    void layoutStyledButtons();
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Zone2)
 };
