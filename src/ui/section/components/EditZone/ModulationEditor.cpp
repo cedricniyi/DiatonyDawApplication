@@ -2,6 +2,7 @@
 #include "utils/FontManager.h"
 
 ModulationEditor::ModulationEditor()
+    : ColoredPanel(juce::Colours::lightgreen.withAlpha(0.25f)) // Vert clair plus visible
 {
     setupLabels();
     updateContent();
@@ -13,13 +14,11 @@ ModulationEditor::~ModulationEditor()
 
 void ModulationEditor::paint(juce::Graphics& g)
 {
-    // Arrière-plan avec une couleur légèrement différente pour indiquer l'état d'édition
-    // Couleur verte claire pour différencier des sections
-    g.fillAll(juce::Colour::fromString("#f0fff0ff"));
+    // Dessiner le fond coloré via ColoredPanel
+    ColoredPanel::paint(g);
     
-    // Bordure pour délimiter la zone d'édition
-    g.setColour(juce::Colours::lightgreen);
-    g.drawRect(getLocalBounds(), 1);
+    // Dessiner la bordure sophistiquée
+    drawBorder(g);
 }
 
 void ModulationEditor::resized()
@@ -83,4 +82,28 @@ void ModulationEditor::updateContent()
                            "• Réglages avancés", 
                            juce::dontSendNotification);
     }
+} 
+
+void ModulationEditor::drawBorder(juce::Graphics& g)
+{
+    // Logique inspirée de OutlineTextButton::drawButtonBackground
+    auto bounds = getLocalBounds().toFloat().reduced(borderThickness * 0.5f);
+    
+    juce::Colour currentBorderColour = borderColour;
+    
+    // Gestion des états comme dans OutlineTextButton
+    // Pour un éditeur, on peut simuler un état "actif" quand une modulation est sélectionnée
+    if (isEditingModulation())
+    {
+        // État actif : bordure plus vive
+        currentBorderColour = currentBorderColour.brighter(0.3f);
+    }
+    else
+    {
+        // État inactif : bordure plus discrète
+        currentBorderColour = currentBorderColour.withAlpha(0.6f);
+    }
+    
+    g.setColour(currentBorderColour);
+    g.drawRoundedRectangle(bounds, cornerRadius, borderThickness);
 } 

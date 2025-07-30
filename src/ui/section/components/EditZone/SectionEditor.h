@@ -1,12 +1,13 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "ui/extra/Component/Panel/ColoredPanel.h"
 
 /**
  * Composant d'édition de section - Placeholder pour l'édition détaillée d'une section
  * Reçoit l'ID de la section à éditer et affiche des informations/contrôles d'édition
  */
-class SectionEditor : public juce::Component
+class SectionEditor : public ColoredPanel
 {
 public:
     SectionEditor();
@@ -38,8 +39,14 @@ private:
     juce::Label titleLabel;
     juce::Label contentLabel;
     
+    // Propriétés pour bordure sophistiquée (inspiré de OutlineTextButton)
+    float borderThickness = 2.0f;
+    float cornerRadius = 8.0f;
+    juce::Colour borderColour = juce::Colours::darkblue;
+    
     void setupLabels();
     void updateContent();
+    void drawBorder(juce::Graphics& g);
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SectionEditor)
 }; 

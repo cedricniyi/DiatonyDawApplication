@@ -2,6 +2,7 @@
 #include "utils/FontManager.h"
 
 SectionEditor::SectionEditor()
+    : ColoredPanel(juce::Colours::lightblue.withAlpha(0.25f)) // Bleu clair plus visible
 {
     setupLabels();
     updateContent();
@@ -13,12 +14,11 @@ SectionEditor::~SectionEditor()
 
 void SectionEditor::paint(juce::Graphics& g)
 {
-    // Arrière-plan avec une couleur légèrement différente pour indiquer l'état d'édition
-    g.fillAll(juce::Colour::fromString("#f8f8f8ff"));
+    // Dessiner le fond coloré via ColoredPanel
+    ColoredPanel::paint(g);
     
-    // Bordure pour délimiter la zone d'édition
-    g.setColour(juce::Colours::lightgrey);
-    g.drawRect(getLocalBounds(), 1);
+    // Dessiner la bordure sophistiquée
+    drawBorder(g);
 }
 
 void SectionEditor::resized()
@@ -82,4 +82,28 @@ void SectionEditor::updateContent()
                            "• Advanced settings", 
                            juce::dontSendNotification);
     }
+} 
+
+void SectionEditor::drawBorder(juce::Graphics& g)
+{
+    // Logique inspirée de OutlineTextButton::drawButtonBackground
+    auto bounds = getLocalBounds().toFloat().reduced(borderThickness * 0.5f);
+    
+    juce::Colour currentBorderColour = borderColour;
+    
+    // Gestion des états comme dans OutlineTextButton
+    // Pour un éditeur, on peut simuler un état "actif" quand une section est sélectionnée
+    if (isEditingSection())
+    {
+        // État actif : bordure plus vive
+        currentBorderColour = currentBorderColour.brighter(0.3f);
+    }
+    else
+    {
+        // État inactif : bordure plus discrète
+        currentBorderColour = currentBorderColour.withAlpha(0.6f);
+    }
+    
+    g.setColour(currentBorderColour);
+    g.drawRoundedRectangle(bounds, cornerRadius, borderThickness);
 } 
