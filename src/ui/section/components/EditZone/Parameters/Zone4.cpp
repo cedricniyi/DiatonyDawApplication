@@ -30,7 +30,7 @@ void Zone4::paint(juce::Graphics& g)
     g.setColour(juce::Colours::black);
     auto titleFont = juce::Font(fontManager->getSFProDisplay(16.0f, FontManager::FontWeight::Bold));
     g.setFont(titleFont);
-    g.drawText("Zone 4", titleArea, juce::Justification::centred);
+    g.drawText("Zone 4", titleArea.reduced(10, 0), juce::Justification::left); // Marge gauche pour le titre aussi
 }
 
 void Zone4::resized()
@@ -41,7 +41,7 @@ void Zone4::resized()
     int titleHeight = static_cast<int>(bounds.getHeight() * 0.3f);
     
     titleArea = bounds.removeFromTop(titleHeight);
+
     contentArea = bounds; // Le reste pour le contenu
-    
-    // Layout logic for Zone4 content components will go here
+
 }
