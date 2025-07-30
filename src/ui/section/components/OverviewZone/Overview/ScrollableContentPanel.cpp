@@ -16,13 +16,20 @@ void ScrollableContentPanel::resized()
     layoutSmallPanels();
 }
 
+// Version rétrocompatible (utilise dimensions par défaut)
 void ScrollableContentPanel::addSmallPanel(std::unique_ptr<juce::Component> component)
+{
+    addSmallPanel(std::move(component), DEFAULT_PANEL_WIDTH, DEFAULT_PANEL_HEIGHT);
+}
+
+// Version découplée (dimensions explicites)
+void ScrollableContentPanel::addSmallPanel(std::unique_ptr<juce::Component> component, int width, int height)
 {
     if (!component)
         return;
         
     addAndMakeVisible(*component);
-    smallPanels.push_back(std::move(component));
+    smallPanels.emplace_back(std::move(component), width, height);
     updateContentSize();
 }
 
@@ -44,7 +51,7 @@ void ScrollableContentPanel::updateContentSize()
     // S'assurer qu'on a une hauteur minimale
     auto currentHeight = getHeight();
     if (currentHeight <= 0) 
-        currentHeight = PANEL_HEIGHT;
+        currentHeight = DEFAULT_PANEL_HEIGHT;
     
     setSize(juce::jmax(totalWidth, MIN_CONTENT_WIDTH), currentHeight);
     
@@ -58,12 +65,13 @@ void ScrollableContentPanel::layoutSmallPanels()
         return;
         
     int x = 0;
-    int y = (getHeight() - PANEL_HEIGHT) / 2; // Centrer verticalement
+    int y = (getHeight() - DEFAULT_PANEL_HEIGHT) / 2; // Centrer verticalement
     
-    for (auto& panel : smallPanels)
+    // ✅ SIMPLE : Pas de dynamic_cast, pas de logique métier !
+    for (auto& panelInfo : smallPanels)
     {
-        panel->setBounds(x, y, PANEL_WIDTH, PANEL_HEIGHT);
-        x += PANEL_WIDTH + PANEL_SPACING;
+        panelInfo.component->setBounds(x, y, panelInfo.width, panelInfo.height);
+        x += panelInfo.width + PANEL_SPACING;
     }
 }
 
@@ -71,6 +79,14 @@ int ScrollableContentPanel::calculateRequiredWidth() const
 {
     if (smallPanels.empty())
         return MIN_CONTENT_WIDTH;
-        
-    return static_cast<int>(smallPanels.size()) * (PANEL_WIDTH + PANEL_SPACING);
+    
+    int totalWidth = 0;
+    
+    // ✅ SIMPLE : Pas de dynamic_cast, pas de logique métier !
+    for (const auto& panelInfo : smallPanels)
+    {
+        totalWidth += panelInfo.width + PANEL_SPACING;
+    }
+    
+    return totalWidth;
 } 
