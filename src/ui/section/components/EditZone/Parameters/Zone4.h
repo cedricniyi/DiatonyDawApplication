@@ -2,12 +2,17 @@
 
 #include <JuceHeader.h>
 #include "utils/FontManager.h"
+#include "ui/extra/Component/Panel/ColoredPanel.h"
+#include "ui/extra/Button/StyledButton.h"
+#include "zone4/Zone4ContentArea.h"
 
 /**
  * Zone 4 - Quatrième paramètre/contrôle de section
  * Seconde ligne, toute la largeur
+ * Contient maintenant une zone scrollable pour ajouter des rectangles
+ * Hérite de ColoredPanel pour avoir un fond coloré automatique
  */
-class Zone4 : public juce::Component
+class Zone4 : public ColoredPanel
 {
 public:
     Zone4();
@@ -26,8 +31,23 @@ private:
     juce::Rectangle<int> titleArea;
     juce::Rectangle<int> contentArea;
     
+    // Composants UI
+    juce::Label titleLabel;
+    StyledButton addButton;
+    Zone4ContentArea contentAreaComponent;
+    
     // FontManager pour le titre
     juce::SharedResourcePointer<FontManager> fontManager;
+    
+    // Grid pour le layout
+    juce::Grid mainGrid;
+    
+    // Configuration
+    static constexpr int INTERNAL_PADDING = 12;
+    static constexpr float TITLE_HEIGHT_RATIO = 0.3f;
+    
+    // Méthodes privées
+    void setupGrid();
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Zone4)
 };
