@@ -88,26 +88,34 @@ void OverviewContentArea::refreshFromModel()
     if (!modelState.isValid())
         return;
         
-    // Comptage des sections dans le modèle
+    // Comptage des sections et modulations dans le modèle
     int sectionCount = 0;
+    int modulationCount = 0;
     for (int i = 0; i < modelState.getNumChildren(); ++i)
     {
-        if (modelState.getChild(i).hasType(ModelIdentifiers::SECTION))
+        auto child = modelState.getChild(i);
+        if (child.hasType(ModelIdentifiers::SECTION))
             sectionCount++;
+        else if (child.hasType(ModelIdentifiers::MODULATION))
+            modulationCount++;
     }
     
-    // Création des panels pour les sections existantes
-    if (scrollableContent && sectionCount > 0)
+    // Création des panels si on a du contenu (sections ou modulations)
+    if (scrollableContent && (sectionCount > 0 || modulationCount > 0))
     {
         scrollableContent->clearAllPanels();
         
-        // Création d'un panel pour chaque section
+        // Création d'un panel pour chaque enfant du modèle
         for (int i = 0; i < modelState.getNumChildren(); ++i)
         {
             auto child = modelState.getChild(i);
             if (child.hasType(ModelIdentifiers::SECTION))
             {
                 createPanelForSection(child, false);
+            }
+            else if (child.hasType(ModelIdentifiers::MODULATION))
+            {
+                createPanelForModulation(child);
             }
         }
     }
@@ -139,6 +147,11 @@ void OverviewContentArea::valueTreeChildAdded(juce::ValueTree& parentTree, juce:
     {
         handleSectionAdded(childWhichHasBeenAdded);
     }
+    else if (childWhichHasBeenAdded.hasType(ModelIdentifiers::MODULATION))
+    {
+        // Pour les modulations, on rafraîchit simplement l'affichage
+        refreshFromModel();
+    }
 }
 
 void OverviewContentArea::valueTreeChildRemoved(juce::ValueTree& parentTree, 
@@ -148,6 +161,11 @@ void OverviewContentArea::valueTreeChildRemoved(juce::ValueTree& parentTree,
     if (childWhichHasBeenRemoved.hasType(ModelIdentifiers::SECTION))
     {
         handleSectionRemoved();
+    }
+    else if (childWhichHasBeenRemoved.hasType(ModelIdentifiers::MODULATION))
+    {
+        // Pour les modulations, on rafraîchit simplement l'affichage
+        refreshFromModel();
     }
 }
 
@@ -187,6 +205,9 @@ void OverviewContentArea::createPanelForSection(const juce::ValueTree& sectionNo
     // Création du panel avec couleur bleue
     auto newPanel = std::make_unique<ButtonColoredPanel>(juce::Colours::blue);
     
+    // Définir le type de contenu
+    newPanel->setContentType(PanelContentType::Section);
+    
     // ✅ SIMPLE : Stocker l'ID (qui correspond maintenant à l'index grâce à notre correction)
     newPanel->setUserData(sectionId);
     
@@ -198,15 +219,69 @@ void OverviewContentArea::createPanelForSection(const juce::ValueTree& sectionNo
         this->onPanelClicked(newPanelPtr);
     };
     
-    // Ajout au contenu scrollable
+    // ✅ DÉCOUPLÉ : OverviewContentArea décide des dimensions selon la logique métier
+    constexpr int SECTION_WIDTH = 40;
+    constexpr int SECTION_HEIGHT = 25;
+    
+    // Ajout au contenu scrollable avec dimensions explicites
     std::unique_ptr<juce::Component> component(newPanel.release());
-    scrollableContent->addSmallPanel(std::move(component));
+    scrollableContent->addSmallPanel(std::move(component), SECTION_WIDTH, SECTION_HEIGHT);
     
     // ✅ SIMPLE : Sélection automatique directe avec l'ID (qui correspond à l'index)
     if (autoSelect && appController && sectionId >= 0)
     {
         appController->selectSection(sectionId);
     }
+    
+    updateVisibility();
+    resized();
+}
+
+void OverviewContentArea::createPanelForModulation(const juce::ValueTree& modulationNode)
+{
+    if (!scrollableContent)
+        return;
+    
+    // Récupérer l'ID de la modulation
+    int modulationId = modulationNode.getProperty(ModelIdentifiers::id, -1);
+    
+    if (modulationId < 0)
+        return;
+    
+    // Création du panel avec couleur verte pour les modulations
+    auto newPanel = std::make_unique<ButtonColoredPanel>(juce::Colours::green);
+    
+    // Définir le type de contenu
+    newPanel->setContentType(PanelContentType::Modulation);
+    
+    // Stocker l'ID de la modulation (plus besoin d'offset !)
+    newPanel->setUserData(modulationId);
+    
+    // Référence au panel avant transfert de propriété
+    ButtonColoredPanel* newPanelPtr = newPanel.get();
+    
+    // Configuration du callback de clic
+    newPanel->onClick = [this, newPanelPtr]() {
+        if (!appController)
+            return;
+            
+        // Obtenir l'index de la modulation à partir des données du panel
+        int modulationIndex = static_cast<int>(newPanelPtr->getUserData());
+        
+        // Appeler AppController pour gérer la sélection de modulation
+        if (modulationIndex >= 0)
+        {
+            appController->selectModulation(modulationIndex);
+        }
+    };
+    
+    // ✅ DÉCOUPLÉ : OverviewContentArea décide des dimensions selon la logique métier
+    constexpr int MODULATION_WIDTH = 30;  // 5px plus large que carré comme demandé
+    constexpr int MODULATION_HEIGHT = 25;
+    
+    // Ajout au contenu scrollable avec dimensions explicites
+    std::unique_ptr<juce::Component> component(newPanel.release());
+    scrollableContent->addSmallPanel(std::move(component), MODULATION_WIDTH, MODULATION_HEIGHT);
     
     updateVisibility();
     resized();
@@ -356,21 +431,27 @@ void OverviewContentArea::updateSelectionHighlight()
     {
         if (auto* panel = dynamic_cast<ButtonColoredPanel*>(scrollableContent->getChildComponent(i)))
         {
-            // Vérifier si ce panel correspond à l'élément sélectionné
-            if (selectionType == "Section")
+            int userData = static_cast<int>(panel->getUserData());
+            PanelContentType panelType = panel->getContentType();
+            
+            // Déterminer si ce panel doit être sélectionné
+            bool shouldBeSelected = false;
+            
+            if (selectionType == "Section" && panelType == PanelContentType::Section)
             {
-                int panelSectionIndex = panel->getUserData();
-                // Générer l'ID attendu selon la logique d'AppController
-                juce::String expectedElementId = "Section_" + juce::String(panelSectionIndex);
-                
-                // Mettre à jour l'état visuel du panel
-                panel->setSelected(expectedElementId == selectedElementId);
+                // Panel de section
+                juce::String expectedElementId = "Section_" + juce::String(userData);
+                shouldBeSelected = (expectedElementId == selectedElementId);
             }
-            else
+            else if (selectionType == "Modulation" && panelType == PanelContentType::Modulation)
             {
-                // Aucune sélection ou sélection d'un autre type - désélectionner le panel
-                panel->setSelected(false);
+                // Panel de modulation
+                juce::String expectedElementId = "Modulation_" + juce::String(userData);
+                shouldBeSelected = (expectedElementId == selectedElementId);
             }
+            
+            // Mettre à jour l'état visuel du panel
+            panel->setSelected(shouldBeSelected);
         }
     }
 } 

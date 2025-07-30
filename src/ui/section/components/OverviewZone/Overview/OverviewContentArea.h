@@ -97,6 +97,7 @@ private:
     void handleSectionAdded(const juce::ValueTree& sectionNode);
     void handleSectionRemoved();
     void createPanelForSection(const juce::ValueTree& sectionNode, bool autoSelect);  // Crée un panel visuel pour une section
+    void createPanelForModulation(const juce::ValueTree& modulationNode);  // Crée un panel visuel pour une modulation
     void updateSelectionHighlight(); // Met à jour l'aspect visuel des panels selon la sélection centrale
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(OverviewContentArea)
