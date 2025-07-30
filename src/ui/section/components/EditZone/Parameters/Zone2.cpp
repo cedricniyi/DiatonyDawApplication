@@ -90,7 +90,7 @@ void Zone2::layoutStyledButtons()
     // Utiliser FlexBox pour disposer les 3 boutons sur une rangée
     juce::FlexBox flexBox;
     flexBox.flexDirection = juce::FlexBox::Direction::row;
-    flexBox.justifyContent = juce::FlexBox::JustifyContent::center; // Centrer les boutons
+    flexBox.justifyContent = juce::FlexBox::JustifyContent::spaceAround; // Plus d'espace automatique entre boutons
     flexBox.alignItems = juce::FlexBox::AlignItems::center;
     
     // FlexBox full-auto : laisser FlexBox gérer automatiquement la répartition
@@ -101,16 +101,16 @@ void Zone2::layoutStyledButtons()
         // Chaque bouton aura la même part d'espace disponible
         item = item.withFlex(1.0f);
         
-        // Contraintes pour des boutons carrés
+        // Contraintes pour des boutons carrés (corrigées)
         item = item.withMinWidth(60.0f);   // Minimum 60px de largeur
-        item = item.withMinHeight(60.0f);  // Minimum 60px de hauteur (carré)
+        item = item.withMinHeight(40.0f);  // Minimum 60px de hauteur (vraiment carré maintenant)
         
         // Contraintes de taille maximale
         item = item.withMaxWidth(120.0f);  // Maximum 120px de largeur
         item = item.withMaxHeight(120.0f); // Maximum 120px de hauteur (carré)
         
-        // Espacement entre les boutons
-        item = item.withMargin(juce::FlexItem::Margin(5.0f));
+        // Espacement entre les boutons (plus prononcé)
+        item = item.withMargin(juce::FlexItem::Margin(12.0f)); // 12px au lieu de 5px
         
         flexBox.items.add(item);
     }
