@@ -50,14 +50,17 @@ void Zone1::resized()
 
 void Zone1::setupCircularButtons()
 {
-    // Créer les 7 boutons circulaires
+    // Créer les 7 boutons circulaires basés sur les BaseNote
     for (int i = 0; i < 7; ++i)
     {
         // Couleurs différentes pour chaque bouton
         juce::Colour baseColour = juce::Colours::lightblue.withRotatedHue(i * 0.14f); // Rotation de teinte
         
+        // Obtenir le nom de la note de base pour le label
+        auto noteName = DiatonyText::getBaseNoteName(baseNotes[i]);
+        
         circularButtons[i] = std::make_unique<CircularButton>(
-            juce::String(i + 1),
+            noteName,
             baseColour,
             juce::Colours::black,
             12.0f, // Taille de police plus petite pour les cercles
@@ -66,7 +69,12 @@ void Zone1::setupCircularButtons()
         
         // Ajouter le callback pour les clics avec gestion de sélection
         circularButtons[i]->onClick = [i, this]() {
-            DBG("Bouton circulaire " << (i + 1) << " cliqué!");
+            auto selectedNote = baseNotes[i];
+            auto noteName = DiatonyText::getBaseNoteName(selectedNote);
+            DBG("Note de base " << noteName.toStdString() << " sélectionnée!");
+            
+            // Mettre à jour la note sélectionnée
+            selectedBaseNote = selectedNote;
             
             // Désélectionner tous les autres boutons
             for (int j = 0; j < 7; ++j)
@@ -74,7 +82,7 @@ void Zone1::setupCircularButtons()
                 circularButtons[j]->setSelected(j == i);
             }
             
-            // TODO: Ajouter la logique spécifique pour chaque bouton
+            // TODO: Ajouter la logique pour communiquer la sélection au modèle
         };
         
         addAndMakeVisible(*circularButtons[i]);
