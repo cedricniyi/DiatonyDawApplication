@@ -1,268 +1,96 @@
 #include "PluginEditor.h"
-#include "components/DiatonyAlertWindow.h"
+#include <juce_gui_basics/juce_gui_basics.h>
+#include "melatonin_inspector/melatonin_inspector.h"
+#include "utils/FontManager.h"
+#include "ui/animation/AnimationManager.h"
+#include "ui/RootAnimator.h"
+#include "ui/footer/animator/FooterAnimator.h"
+#include "controller/AppController.h"
 
 //==============================================================================
 AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAudioProcessor& p)
-    : AudioProcessorEditor (&p), processorRef (p), titleBounds(0, 0, 0, 0)
+    : AudioProcessorEditor (&p), audioProcessor (p),
+      appState(UIStateIdentifiers::APP_STATE)
 {
-    // Appliquer le look and feel personnalisé
-    setLookAndFeel(&diatonyLookAndFeel);
+    // Création du contrôleur principal de l'application.
+    appController = std::make_unique<AppController>(juce::String::fromUTF8("Ma Pièce"));
+
+    // Initialisation de l'état de l'interface (UI State).
+    appState.setProperty(UIStateIdentifiers::footerExpanded, false, nullptr);
+    appState.setProperty(UIStateIdentifiers::dockVisible, false, nullptr);
+    appState.setProperty(UIStateIdentifiers::interactivePianoVisible, false, nullptr);
     
-    // Créer la fenêtre de tooltip
-    tooltipWindow = std::make_unique<juce::TooltipWindow>(this, 700);
+    #if DEBUG
+        // Attache un logger pour déboguer les changements du ValueTree.
+        appState.addListener(&appStateLogger);
     
-    // Créer les panels
-    headerPanel = std::make_unique<HeaderPanel>();
-    sidebarPanel = std::make_unique<SidebarPanel>();
-    statusPanel = std::make_unique<StatusPanel>();
+        // Attache un logger à l'état du modèle (la pièce) pour suivre ses changements.
+        appController->getState().addListener(&pieceStateLogger);
+        
+        // Attache un logger à l'état de sélection (contexte applicatif) pour suivre ses changements.
+        appController->getSelectionState().addListener(&selectionStateLogger);
+
+        // Test: Modifions une propriété de la pièce pour vérifier que le logger fonctionne.
+        appController->getState().setProperty("testProperty", "Hello from Piece!", nullptr);
+    #endif
+
+    // Création et configuration du composant de contenu principal.
+    mainContent = std::make_unique<MainContentComponent>();
+    mainContent->setAppState(appState); // Lie l'état de l'UI au contenu.
+    // TODO: Connecter au Model State (données métier).
+    // mainContent->setModelState(appController->getPiece().getState());
+    addAndMakeVisible(*mainContent);
+
+    // Configuration des contraintes de taille de la fenêtre.
+    constrainer = std::make_unique<juce::ComponentBoundsConstrainer>();
+    constrainer->setSizeLimits(1300, 569, 1694, 847);
+    constrainer->setFixedAspectRatio(1500.0 / 750.0);
+    setConstrainer(constrainer.get());
     
-    diatonyPanel = std::make_unique<DiatonyContentPanel>();
-    harmonizerPanel = std::make_unique<HarmonizerContentPanel>();
+    setSize(1500, 750);
+
+    // Initialisation des animateurs.
+    // RootAnimator gère le layout flexible principal.
+    rootAnimator = std::make_unique<RootAnimator>(*mainContent, *AnimationManager::getInstance());
     
-    // Créer le composant toast pour les notifications
-    toastComponent = std::make_unique<ToastComponent>();
-    toastComponent->setVisible(false);
-    
-    // Ajouter les panels à l'interface
-    addAndMakeVisible(*headerPanel);
-    addAndMakeVisible(*sidebarPanel);
-    sidebarPanel->setVisible(false);  // Caché par défaut  
-    addChildComponent(*diatonyPanel);
-    addChildComponent(*harmonizerPanel);
-    addChildComponent(*toastComponent);
-    
-    // Configurer les callbacks et l'interactivité
-    setupPanels();
-    
-    // Initialiser la visibilité des panels
-    updateContentPanelVisibility();
-    
-    // Définir la taille de la fenêtre
-    setSize (1200, 800);
+    // FooterAnimator gère les animations spécifiques au panneau de pied de page.
+    footerAnimator = std::make_unique<FooterAnimator>(mainContent->getFooterPanel(), *AnimationManager::getInstance());
+
+    // L'architecture est réactive : l'UI écoute les changements du modèle (ValueTree)
+    // et se met à jour automatiquement.
+
+    #if DEBUG
+        // Bloc de test pour le débogage du ValueTree avec LLDB.
+        // Placez un point d'arrêt ici pour inspecter 'appState'.
+        appState.setProperty("test_debug", "LLDB_test_value", nullptr);
+        auto testChild = juce::ValueTree("TestChild");
+        testChild.setProperty("child_prop", 42, nullptr);
+        appState.appendChild(testChild, nullptr);
+    #endif
 }
 
 AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
 {
-    // Nettoyer le look and feel
     setLookAndFeel(nullptr);
 }
 
 //==============================================================================
 void AudioPluginAudioProcessorEditor::paint (juce::Graphics& g)
-{
-    // Dessiner le fond
-    g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
+{   
+    // La peinture est déléguée au MainContentComponent qui remplit toute la zone.
 }
 
-//==============================================================================
 void AudioPluginAudioProcessorEditor::resized()
 {
-    auto bounds = getLocalBounds();
-    
-    // Barre d'en-tête en haut
-    auto headerHeight = 50;
-    headerPanel->setBounds(bounds.removeFromTop(headerHeight));
-    
-    // Zone restante après le header
-    auto remainingBounds = bounds;
-    
-    // Si la sidebar est visible, on ajuste les bounds en conséquence
-    if (sidebarPanel->isVisible())
-    {
-        int sidebarWidth = 220;
-        sidebarPanel->setBounds(remainingBounds.removeFromLeft(sidebarWidth));
-    }
-
-    // Positionner les panels de contenu dans tout l'espace restant
-    diatonyPanel->setBounds(remainingBounds);
-    harmonizerPanel->setBounds(remainingBounds);
-
-    // Positionner le toast (pleine largeur)
-    toastComponent->setBounds(getLocalBounds());
+    // Le MainContentComponent occupe toute la surface de l'éditeur.
+    if (mainContent)
+        mainContent->setBounds(getLocalBounds());
 }
 
-//==============================================================================
-void AudioPluginAudioProcessorEditor::setupPanels()
+// === DÉCOUVERTE DE SERVICE ===
+
+AppController& AudioPluginAudioProcessorEditor::getAppController()
 {
-    // Configurer les callbacks pour le panel d'en-tête
-    headerPanel->onDiatonyClicked = [this]() {
-        handleDiatonyModeClicked();
-    };
-    
-    headerPanel->onHarmonizerClicked = [this]() {
-        handleHarmonizerModeClicked();
-    };
-    
-    headerPanel->onSettingsClicked = [this]() {
-        handleSettingsClicked();
-    };
-    
-    // Configurer les callbacks pour le DiatonyContentPanel
-    diatonyPanel->onModelChanged = [this](const DiatonyModel& model) {
-        handleModelChanged(model);
-    };
-    
-    diatonyPanel->onGenerateRequested = [this]() {
-        handleGenerateButtonClicked();
-    };
-    
-    diatonyPanel->onPlayRequested = [this]() {
-        handlePlayButtonClicked();
-    };
-    
-    // Configurer les callbacks pour la sidebar
-    sidebarPanel->onRefreshRequested = [this]() {
-        handleRefreshSolutions();
-    };
-    
-    sidebarPanel->onLoadRequested = [this](const SolutionHistoryItem& solution) {
-        handleLoadSolution(solution);
-    };
-    
-    sidebarPanel->onSolutionSelected = [this](const SolutionHistoryItem& solution) {
-        handleSolutionSelected(solution);
-    };
-
-    // Ajouter le callback pour le bouton de toggle sidebar
-    headerPanel->onToggleSidebarClicked = [this]() {
-        toggleSidebar();
-    };
+    jassert(appController != nullptr);
+    return *appController;
 }
-
-//==============================================================================
-void AudioPluginAudioProcessorEditor::updateContentPanelVisibility()
-{
-    diatonyPanel->setVisible(isDiatonyMode);
-    harmonizerPanel->setVisible(!isDiatonyMode);
-}
-
-//==============================================================================
-void AudioPluginAudioProcessorEditor::handleDiatonyModeClicked()
-{
-    isDiatonyMode = true;
-    updateContentPanelVisibility();
-    toastComponent->showMessage(juce::String::fromUTF8("🟠 Switched to Diatony mode"));
-}
-
-void AudioPluginAudioProcessorEditor::handleHarmonizerModeClicked()
-{
-    isDiatonyMode = false;
-    updateContentPanelVisibility();
-    toastComponent->showMessage(juce::String::fromUTF8("🟢 Switched to Harmonizer mode"));
-}
-
-//==============================================================================
-void AudioPluginAudioProcessorEditor::handleModelChanged(const DiatonyModel& model)
-{
-    // Mettre à jour le status avec les informations du modèle
-    statusPanel->setGenerationStatus(model.toString());
-    
-    // TODO: Ajouter d'autres logiques selon les besoins
-    // Par exemple, activer/désactiver des boutons selon l'état du modèle
-}
-
-//==============================================================================
-void AudioPluginAudioProcessorEditor::handleGenerateButtonClicked()
-{
-    DBG("handleGenerateButtonClicked: début");
-    
-    // Récupérer le modèle depuis DiatonyContentPanel
-    const auto& model = diatonyPanel->getModel();
-    
-    // Vérifier si le modèle est complet
-    if (!model.isComplete()) {
-        DBG("Modèle incomplet, génération annulée");
-        statusPanel->setGenerationStatus(juce::String("Modèle incomplet"));
-        return;
-    }
-    
-    DBG("Modèle complet, génération en cours...");
-    statusPanel->setGenerationStatus(juce::String::fromUTF8("Génération en cours..."));
-    
-    // Générer la solution MIDI en utilisant le nouveau modèle
-    juce::String midiPath = processorRef.generateMidiSolution(model);
-    
-    if (!midiPath.isEmpty()) {
-        statusPanel->setGenerationStatus(juce::String::fromUTF8("Génération réussie !"));
-        diatonyPanel->setSolutionGenerated(true);
-    } else {
-        statusPanel->setGenerationStatus(juce::String::fromUTF8("Échec de la génération"));
-        diatonyPanel->setSolutionGenerated(false);
-    }
-}
-
-//==============================================================================
-void AudioPluginAudioProcessorEditor::handlePlayButtonClicked()
-{
-    if (processorRef.isPlayingMidi()) {
-        processorRef.stopMidiPlayback();
-        statusPanel->setPlaybackStatus(juce::String::fromUTF8("Lecture en pause"));
-    } else {
-        if (processorRef.startMidiPlayback()) {
-            statusPanel->setPlaybackStatus(juce::String::fromUTF8("Lecture en cours..."));
-        } else {
-            statusPanel->setPlaybackStatus(juce::String::fromUTF8("Erreur de lecture"));
-        }
-    }
-}
-
-//==============================================================================
-void AudioPluginAudioProcessorEditor::handlePlaybackFinished()
-{
-    juce::MessageManager::callAsync([this]() {
-        statusPanel->setPlaybackStatus("");
-    });
-}
-
-//==============================================================================
-void AudioPluginAudioProcessorEditor::handleRefreshSolutions()
-{
-    // Charger les solutions de la base de données
-    sidebarPanel->loadSolutionsFromDb();
-    
-    // Afficher un toast de confirmation
-    toastComponent->showMessage(juce::String::fromUTF8("Historique mis à jour"));
-}
-
-void AudioPluginAudioProcessorEditor::handleLoadSolution(const SolutionHistoryItem& solution)
-{
-    // Récupérer le chemin vers le fichier MIDI
-    juce::String midiPath = solution.getPath();
-    
-    if (juce::File(midiPath).existsAsFile()) {
-        // Charger le fichier MIDI pour lecture
-        processorRef.loadMidiFile(midiPath);
-        
-        // Afficher un toast de confirmation
-        juce::String message = juce::String::fromUTF8("Loaded solution: ") + solution.getName();
-        toastComponent->showMessage(message);
-    } else {
-        // Le fichier n'existe pas - afficher un toast d'erreur
-        juce::String errorMessage = juce::String::fromUTF8("Error: MIDI file not found");
-        toastComponent->showMessage(errorMessage);
-    }
-}
-
-void AudioPluginAudioProcessorEditor::handleSolutionSelected(const SolutionHistoryItem& solution)
-{
-    // Afficher une notification toast
-    juce::String message = juce::String::fromUTF8("Selected solution: ") + solution.getName();
-    toastComponent->showMessage(message);
-}
-
-void AudioPluginAudioProcessorEditor::handleSettingsClicked()
-{
-    DiatonyAlertWindow::show(
-        juce::String::fromUTF8("Settings"),
-        juce::String::fromUTF8("Standalone and DAW plugin developed by C. Niyikiza and D. Sprockeels."),
-        juce::String::fromUTF8("Close")
-    );
-}
-
-void AudioPluginAudioProcessorEditor::toggleSidebar()
-{
-    isSidebarVisible = !isSidebarVisible;
-    sidebarPanel->setVisible(isSidebarVisible);
-    resized();  // Pour recalculer la disposition
-}
-

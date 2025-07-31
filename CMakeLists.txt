@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.22)
 
 include(FetchContent)
 
+# Dépendance JSON 
 FetchContent_Declare(
     json
     URL https://github.com/nlohmann/json/releases/download/v3.12.0/json.tar.xz
@@ -9,10 +10,26 @@ FetchContent_Declare(
     DOWNLOAD_EXTRACT_TIMESTAMP TRUE
 )
 
+# Dépendance Melatonin Inspector, pour inspecter l'interface de l'application
+FetchContent_Declare(
+    melatonin_inspector
+    GIT_REPOSITORY https://github.com/sudara/melatonin_inspector.git
+    GIT_TAG        origin/main      # ou une release taguée si tu préfères
+    SOURCE_DIR     ${CMAKE_CURRENT_BINARY_DIR}/melatonin_inspector
+)
+
+# Dépendance Melatonin Blur, pour les effets de flou et shadows
+FetchContent_Declare(
+    melatonin_blur
+    GIT_REPOSITORY https://github.com/sudara/melatonin_blur.git
+    GIT_TAG        origin/main
+    SOURCE_DIR     ${CMAKE_CURRENT_BINARY_DIR}/melatonin_blur
+)
+
 # Cette option désactive la compilation des tests
 set(JSON_BuildTests OFF CACHE INTERNAL "")
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# Rend la bibliothèque disponible
 FetchContent_MakeAvailable(json)
 
 project(DiatonyDawApplication VERSION 0.0.1)
@@ -30,8 +47,11 @@ endif()
 
 add_subdirectory("${CMAKE_SOURCE_DIR}/modules/JUCE" JUCE)
 
+FetchContent_MakeAvailable(melatonin_inspector)
+FetchContent_MakeAvailable(melatonin_blur)  
+
 juce_add_plugin(DiatonyDawApplication
-    COMPANY_NAME "64492300_CN_UCL"                # Specify the name of the plugin's author
+    COMPANY_NAME "64492300_CN_UCL"              # Specify the name of the plugin's author
     NEEDS_MIDI_INPUT TRUE                       # Does the plugin need midi input?
     NEEDS_MIDI_OUTPUT TRUE                      # Does the plugin need midi output?
     PLUGIN_MANUFACTURER_CODE Juce               # A four-character manufacturer id with at least one upper-case character
@@ -49,32 +69,201 @@ juce_generate_juce_header(DiatonyDawApplication)
 target_sources(DiatonyDawApplication
     PRIVATE
         # Core
-        src/core/PluginProcessor.cpp
+        src/controller/core/PluginProcessor.cpp
+        src/controller/core/PluginProcessor.h
+        
+        # App Controller
+        src/controller/AppController.cpp
+        src/controller/AppController.h
+        src/controller/ContextIdentifiers.h
         
         # UI
         src/ui/PluginEditor.cpp
+        src/ui/PluginEditor.h
+        src/ui/UIStateIdentifiers.h
+        src/ui/RootAnimator.h
+        src/ui/RootAnimator.cpp
+        src/ui/MainContentComponent.h
+        src/ui/MainContentComponent.cpp
+        # UI Extra Components - Panel
+        src/ui/extra/Component/Panel/ColoredPanel.h
+        src/ui/extra/Component/Panel/ColoredPanel.cpp
+        src/ui/extra/Component/Panel/ClickableColoredPanel.h
+        src/ui/extra/Component/Panel/ClickableColoredPanel.cpp
+        src/ui/extra/Component/Panel/InfoColoredPanel.h
+        src/ui/extra/Component/Panel/InfoColoredPanel.cpp
+        src/ui/extra/Component/ComboBox/DiatonyComboBox.cpp
+        src/ui/extra/Component/ComboBox/DiatonyComboBox.h
+        src/ui/extra/Component/ComboBox/DiatonyComboBoxLookAndFeel.h
+        src/ui/extra/Component/ComboBox/DiatonyComboBoxLookAndFeel.cpp
+        
+        # UI Extra Components - Button  
+        src/ui/extra/Button/ButtonColoredPanel.h
+        src/ui/extra/Button/ButtonColoredPanel.cpp
+        src/ui/extra/Button/OutlineTextButton.h
+        src/ui/extra/Button/OutlineTextButton.cpp
+        src/ui/extra/Button/StyledButton.h
+        src/ui/extra/Button/StyledButton.cpp
+        src/ui/extra/Button/CircularButton.h
+        src/ui/extra/Button/CircularButton.cpp
+        
+        # UI Extra Components - Component
+        src/ui/extra/Component/DiatonyAlertWindow.h
+        src/ui/extra/Component/DiatonyAlertWindow.cpp
+        src/ui/extra/Component/SimpleToastComponent.h
+        src/ui/extra/Component/SimpleToastComponent.cpp
+        src/ui/extra/Component/TextPill.h
+        src/ui/extra/Component/TextPill.cpp
+        src/ui/extra/Component/ToastComponent.h
+        src/ui/extra/Component/ToastComponent.cpp
+        
+        # UI Footer Components
+        src/ui/footer/components/InteractivePiano/PianoKey.h
+        src/ui/footer/components/InteractivePiano/PianoKey.cpp
+        src/ui/footer/components/InteractivePiano/InteractivePianoContentArea.h
+        src/ui/footer/components/InteractivePiano/InteractivePianoContentArea.cpp
+        src/ui/footer/components/InteractivePiano/InteractivePiano.h
+        src/ui/footer/components/InteractivePiano/InteractivePiano.cpp
+        src/ui/footer/components/MidiPianoContentArea.h
+        src/ui/footer/components/MidiPianoContentArea.cpp
+        src/ui/footer/components/MidiPianoArea.h
+        src/ui/footer/components/MidiPianoArea.cpp
+        src/ui/footer/animator/FooterAnimator.h
+        src/ui/footer/animator/FooterAnimator.cpp
+        src/ui/footer/FooterPanel.h
+        src/ui/footer/FooterPanel.cpp
+        src/ui/header/HeaderPanel.h
+        src/ui/header/HeaderPanel.cpp
+        src/ui/section/SectionPanel.h
+        src/ui/section/SectionPanel.cpp
+        src/ui/style/DiatonyLookAndFeel.h
+        
+        # Animation
+        src/ui/animation/AnimationManager.cpp
+        src/ui/animation/AnimationManager.h
         
         # Fichiers header only (à inclure pour être sûr qu'ils sont pris en compte)
-        src/model/Progression.h
-        src/model/ChordSequence.h
         src/audio/SimpleSound.h
         src/audio/SimpleVoice.h
-        src/ui/components/ProgressionPanel.h
-        src/ui/components/GenerationPanel.h
-        src/ui/LookAndFeel/DiatonyLookAndFeel.h
+
         src/utils/DiatonyConstants.h
         src/utils/Midiprocessor.h
         src/utils/FileUtils.h
         src/utils/DatabaseManagement.h
-        src/ui/components/zones/BaseZone.h
-        src/ui/components/zones/GenerationZone.h
-        src/ui/components/zones/ModeZone.h
-        src/ui/components/zones/ProgressionZone.h
-        src/ui/components/zones/TonalityZone.h
+        
+        # Font Manager
+        src/utils/FontManager.cpp
+        src/utils/FontManager.h
+        
+        # Color Generator
+        src/utils/ColorGenerator.cpp
+        src/utils/ColorGenerator.h
+        
+        # UI Components - EditZone
+        src/ui/section/components/EditZone/ProgressionArea.h
+        src/ui/section/components/EditZone/ProgressionArea.cpp
+        src/ui/section/components/EditZone/WelcomeView.h
+        src/ui/section/components/EditZone/WelcomeView.cpp
+        src/ui/section/components/EditZone/SectionEditor.h
+        src/ui/section/components/EditZone/SectionEditor.cpp
+        src/ui/section/components/EditZone/ModulationEditor.h
+        src/ui/section/components/EditZone/ModulationEditor.cpp
+        
+        # UI Components - Parameters (Zone components for SectionEditor)
+        src/ui/section/components/EditZone/Parameters/Zone1.h
+        src/ui/section/components/EditZone/Parameters/Zone1.cpp
+        src/ui/section/components/EditZone/Parameters/Zone2.h
+        src/ui/section/components/EditZone/Parameters/Zone2.cpp
+        src/ui/section/components/EditZone/Parameters/Zone3.h
+        src/ui/section/components/EditZone/Parameters/Zone3.cpp
+        src/ui/section/components/EditZone/Parameters/Zone4.h
+        src/ui/section/components/EditZone/Parameters/Zone4.cpp
+        
+        # UI Components - Parameters/Zone4 (Zone4 scrollable architecture)
+        src/ui/section/components/EditZone/Parameters/zone4/Zone4ScrollablePanel.h
+        src/ui/section/components/EditZone/Parameters/zone4/Zone4ScrollablePanel.cpp
+        src/ui/section/components/EditZone/Parameters/zone4/Zone4ContentArea.h
+        src/ui/section/components/EditZone/Parameters/zone4/Zone4ContentArea.cpp
+        
+        # UI Components - OverviewZone/PlayBack
+        src/ui/section/components/OverviewZone/PlayBack/PlaybackActionArea.h
+        src/ui/section/components/OverviewZone/PlayBack/PlaybackActionArea.cpp
+        
+        # UI Components - OverviewZone/GenerateAndMore
+        src/ui/section/components/OverviewZone/GenerateAndMore/GenerationButtons.h
+        src/ui/section/components/OverviewZone/GenerateAndMore/GenerationButtons.cpp
+        
+        # UI Components - OverviewZone/Overview
+        src/ui/section/components/OverviewZone/Overview/ScrollableContentPanel.h
+        src/ui/section/components/OverviewZone/Overview/ScrollableContentPanel.cpp
+        src/ui/section/components/OverviewZone/Overview/OverviewContentArea.h
+        src/ui/section/components/OverviewZone/Overview/OverviewContentArea.cpp
+        src/ui/section/components/OverviewZone/Overview/OverviewArea.h
+        src/ui/section/components/OverviewZone/Overview/OverviewArea.cpp
+        src/ui/section/components/OverviewZone/Overview/OverviewActionArea.h
+        src/ui/section/components/OverviewZone/Overview/OverviewActionArea.cpp
+
+
+        # Model
+        src/model/ModelIdentifiers.h
+        src/model/Progression.h
+        src/model/Progression.cpp
+        src/model/Chord.h
+        src/model/Chord.cpp
+        src/model/Modulation.h
+        src/model/Modulation.cpp
+        src/model/Piece.h
+        src/model/Piece.cpp
+        src/model/Section.h
+        src/model/Section.cpp
+        src/model/DiatonyTypes.h
+
+        # Services
+        src/services/GenerationService.h
+        src/services/GenerationService.cpp
 )
+
+# === Configuration des Fonts SF Pro ===
+# Vérification de la présence des fonts essentielles
+set(FONTS_DIR "${CMAKE_SOURCE_DIR}/src/utils/Fonts")
+set(ESSENTIAL_FONTS
+    "${FONTS_DIR}/SF-Pro-Display-Regular.otf"
+    "${FONTS_DIR}/SF-Pro-Display-Bold.otf"
+    "${FONTS_DIR}/SF-Pro-Display-Semibold.otf"
+    "${FONTS_DIR}/SF-Pro-Text-Regular.otf"
+    "${FONTS_DIR}/SF-Pro-Text-Medium.otf"
+)
+
+# Rechercher toutes les fonts SF Pro disponibles
+file(GLOB SF_PRO_FONTS "${FONTS_DIR}/SF-Pro-*.otf")
+
+if(SF_PRO_FONTS)
+    # Compter le nombre de fonts trouvées
+    list(LENGTH SF_PRO_FONTS FONT_COUNT)
+    message(STATUS "Found ${FONT_COUNT} SF Pro fonts")
+    
+    # Afficher la liste des fonts trouvées pour debug
+    foreach(FONT ${SF_PRO_FONTS})
+        get_filename_component(FONT_NAME ${FONT} NAME)
+        message(STATUS "  - ${FONT_NAME}")
+    endforeach()
+    
+    # Créer les ressources binaires pour les fonts
+    juce_add_binary_data(FontResources
+        SOURCES ${SF_PRO_FONTS}
+        HEADER_NAME "BinaryData.h"
+        NAMESPACE "BinaryData"
+    )
+    
+    message(STATUS "SF Pro fonts successfully added to binary resources")
+else()
+    message(WARNING "No SF Pro fonts found in ${FONTS_DIR}")
+    message(WARNING "Please place your SF Pro .otf files in src/utils/Fonts/")
+endif()
 
 target_include_directories(DiatonyDawApplication PRIVATE 
     ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_BINARY_DIR}  # Pour accéder à BinaryData.h généré
 )
 
 target_compile_definitions(DiatonyDawApplication
@@ -90,12 +279,22 @@ target_compile_definitions(DiatonyDawApplication
 target_link_libraries(DiatonyDawApplication
     PRIVATE
         # AudioPluginData           # If we'd created a binary data target, we'd link to it here
+        melatonin_inspector
+        melatonin_blur
         juce::juce_audio_utils
+        juce::juce_animation
+        juce::juce_data_structures # Ajouté pour support du ValueTree
         nlohmann_json::nlohmann_json
     PUBLIC
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags
         juce::juce_recommended_config_flags)
+
+# Link font resources if they were created
+if(TARGET FontResources)
+    target_link_libraries(DiatonyDawApplication PRIVATE FontResources)
+    message(STATUS "FontResources target linked to DiatonyDawApplication")
+endif()
 
 
 # --- Set the Gecode paths ---

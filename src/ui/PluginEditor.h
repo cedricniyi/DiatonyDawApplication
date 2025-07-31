@@ -1,72 +1,75 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "../core/PluginProcessor.h"
-#include "components/StatusPanel.h"
-#include "components/SidebarPanel.h"
-#include "components/ToastComponent.h"
-#include "components/HeaderPanel.h"
-#include "components/DiatonyContentPanel.h"
-#include "components/HarmonizerContentPanel.h"
-#include "LookAndFeel/DiatonyLookAndFeel.h"
-#include "../model/DiatonyModel.h"
+#include "controller/core/PluginProcessor.h"
+#include "extra/Component/SimpleToastComponent.h"
+#include "extra/Component/DiatonyAlertWindow.h"
+#include "MainContentComponent.h"
+#include "UIStateIdentifiers.h"
+#include "melatonin_inspector/melatonin_inspector.h"
 
+#if DEBUG
+    #include "debug/ValueTreeLogger.h"
+#endif
+
+// Forward declarations pour éviter les dépendances circulaires
+class RootAnimator;
+class FooterAnimator;
+class AppController;
+
+// ==============================================================================
+// Classe utilitaire pour logger les changements du ValueTree en temps réel
 //==============================================================================
-/**
-*/
-class AudioPluginAudioProcessorEditor final : public juce::AudioProcessorEditor
+class AudioPluginAudioProcessorEditor : public juce::AudioProcessorEditor
 {
 public:
-    explicit AudioPluginAudioProcessorEditor (AudioPluginAudioProcessor&);
+    AudioPluginAudioProcessorEditor (AudioPluginAudioProcessor&);
     ~AudioPluginAudioProcessorEditor() override;
 
     //==============================================================================
     void paint (juce::Graphics&) override;
     void resized() override;
-    void handlePlaybackFinished();
+    
+    // === DÉCOUVERTE DE SERVICE ===
+    /** 
+     * Permet aux composants enfants de découvrir AppController via findParentComponentOfClass
+     * @return Référence vers l'instance unique d'AppController
+     */
+    AppController& getAppController();
 
 private:
-    // This reference is provided as a quick way for your editor to
-    // access the processor object that created it.
-    AudioPluginAudioProcessor& processorRef;
+    // Référence au processeur
+    AudioPluginAudioProcessor& audioProcessor;
     
-    // Look and feel personnalisé
-    DiatonyLookAndFeel diatonyLookAndFeel;
+    // État global de l'application (source de vérité unique)
+    juce::ValueTree appState;
     
-    // Tooltip window
-    std::unique_ptr<juce::TooltipWindow> tooltipWindow;
+    #if DEBUG
+        // Loggers pour le débogage (uniquement en mode DEBUG)
+        ValueTreeLogger appStateLogger { "UI State" };
+        ValueTreeLogger pieceStateLogger { "Piece Model State" };
+        ValueTreeLogger selectionStateLogger { "Selection Context State" };
+    #endif
     
-    // Panels
-    std::unique_ptr<HeaderPanel> headerPanel;
-    std::unique_ptr<SidebarPanel> sidebarPanel;
-    std::unique_ptr<StatusPanel> statusPanel;
-    std::unique_ptr<DiatonyContentPanel> diatonyPanel;
-    std::unique_ptr<HarmonizerContentPanel> harmonizerPanel;
+    // Contrôleur principal de l'application
+    std::unique_ptr<AppController> appController;
     
-    // Composant toast pour les notifications temporaires
-    std::unique_ptr<ToastComponent> toastComponent;
+    // Melatonin Inspector pour déboguer l'interface
+    melatonin::Inspector inspector { *this, false };
+
     
-    // Zone du titre
-    juce::Rectangle<int> titleBounds;
+    // Composants de notification
+    std::unique_ptr<SimpleToastComponent> toast;
     
-    // Mode actif
-    bool isDiatonyMode = true;
+    // Composant principal qui gère le contenu et le layout
+    std::unique_ptr<MainContentComponent> mainContent;
     
-    bool isSidebarVisible = false;  
-    
-    // Méthodes de gestion des événements
-    void setupPanels();
-    void handleGenerateButtonClicked();
-    void handlePlayButtonClicked();
-    void handleSettingsClicked();
-    void handleRefreshSolutions();
-    void handleLoadSolution(const SolutionHistoryItem& solution);
-    void handleSolutionSelected(const SolutionHistoryItem& solution);
-    void handleDiatonyModeClicked();
-    void handleHarmonizerModeClicked();
-    void updateContentPanelVisibility();
-    void toggleSidebar();
-    void handleModelChanged(const DiatonyModel& model);
+    // Animators pour gérer les animations à différents niveaux
+    std::unique_ptr<RootAnimator> rootAnimator;      // Animations niveau root (flex)
+    std::unique_ptr<FooterAnimator> footerAnimator;  // Animations niveau footer (grid + fade)
+
+    // Constrainer pour la taille
+    std::unique_ptr<juce::ComponentBoundsConstrainer> constrainer;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessorEditor)
 }; 
