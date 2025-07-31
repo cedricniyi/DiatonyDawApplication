@@ -11,27 +11,11 @@ Zone1::~Zone1()
 
 void Zone1::paint(juce::Graphics& g)
 {
-    // Dessiner le fond du titre
-    g.setColour(titleBackgroundColour);
-    g.fillRect(titleArea);
-    
-    // Dessiner le fond du contenu (plus foncé)
-    g.setColour(contentBackgroundColour);
-    g.fillRect(contentArea);
-    
-    // Dessiner la bordure globale
-    g.setColour(borderColour);
-    g.drawRect(getLocalBounds(), 1);
-    
-    // Dessiner une ligne de séparation entre titre et contenu
-    g.setColour(borderColour.withAlpha(0.3f));
-    g.drawHorizontalLine(titleArea.getBottom(), static_cast<float>(titleArea.getX()), static_cast<float>(titleArea.getRight()));
-    
     // Dessiner le titre avec FontManager
     g.setColour(juce::Colours::black);
     auto titleFont = juce::Font(fontManager->getSFProDisplay(16.0f, FontManager::FontWeight::Bold));
     g.setFont(titleFont);
-    g.drawText("Zone 1", titleArea, juce::Justification::centred);
+    g.drawText("Principal Note", titleArea, juce::Justification::centred);
 }
 
 void Zone1::resized()
@@ -53,16 +37,17 @@ void Zone1::setupCircularButtons()
     // Créer les 7 boutons circulaires basés sur les BaseNote
     for (int i = 0; i < 7; ++i)
     {
-        // Couleurs différentes pour chaque bouton
-        juce::Colour baseColour = juce::Colours::lightblue.withRotatedHue(i * 0.14f); // Rotation de teinte
+        // Couleurs cohérentes : gris normal, bleu pour sélection
+        juce::Colour normalColour = juce::Colours::lightgrey;
+        juce::Colour selectedColour = juce::Colours::blue;
         
         // Obtenir le nom de la note de base pour le label
         auto noteName = DiatonyText::getBaseNoteName(baseNotes[i]);
         
         circularButtons[i] = std::make_unique<CircularButton>(
             noteName,
-            baseColour,
-            juce::Colours::black,
+            normalColour,
+            juce::Colours::black,  // Texte noir pour l'état normal
             12.0f, // Taille de police plus petite pour les cercles
             FontManager::FontWeight::Medium
         );
@@ -76,10 +61,23 @@ void Zone1::setupCircularButtons()
             // Mettre à jour la note sélectionnée
             selectedBaseNote = selectedNote;
             
-            // Désélectionner tous les autres boutons
+            // Désélectionner tous les autres boutons et mettre à jour les couleurs
             for (int j = 0; j < 7; ++j)
             {
-                circularButtons[j]->setSelected(j == i);
+                bool isSelected = (j == i);
+                circularButtons[j]->setSelected(isSelected);
+                
+                // Mettre à jour les couleurs selon l'état
+                if (isSelected)
+                {
+                    circularButtons[j]->setBaseColour(juce::Colours::blue);
+                    circularButtons[j]->setTextColour(juce::Colours::white);
+                }
+                else
+                {
+                    circularButtons[j]->setBaseColour(juce::Colours::lightgrey);
+                    circularButtons[j]->setTextColour(juce::Colours::black);
+                }
             }
             
             // TODO: Ajouter la logique pour communiquer la sélection au modèle
