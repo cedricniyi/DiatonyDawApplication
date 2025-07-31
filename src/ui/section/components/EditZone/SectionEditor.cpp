@@ -61,7 +61,7 @@ void SectionEditor::setSectionToEdit(const juce::String& sectionId)
 void SectionEditor::setupSectionNameLabel()
 {
     // Configuration du label de nom de section
-    sectionNameLabel.setJustificationType(juce::Justification::centredLeft);
+    sectionNameLabel.setJustificationType(juce::Justification::centred);
     sectionNameLabel.setColour(juce::Label::textColourId, juce::Colours::darkblue);
     
     // Application de la police via FontManager - taille légèrement plus grande
