@@ -107,6 +107,8 @@ target_sources(DiatonyDawApplication
         src/ui/extra/Button/StyledButton.cpp
         src/ui/extra/Button/CircularButton.h
         src/ui/extra/Button/CircularButton.cpp
+        src/ui/extra/Button/SelectableStyledButton.h
+        src/ui/extra/Button/SelectableStyledButton.cpp
         
         # UI Extra Components - Component
         src/ui/extra/Component/DiatonyAlertWindow.h
