@@ -32,14 +32,6 @@ void CircularButtonLookAndFeel::drawButtonBackground(juce::Graphics& g, juce::Bu
     // Dessiner le cercle plein (style simple, pas de gradient)
     g.setColour(currentColor);
     g.fillEllipse(circleBounds);
-    
-    // Si sélectionné, dessiner une bordure (comme OutlineTextButton)
-    if (circularButton->getSelected())
-    {
-        float borderThickness = 2.0f;
-        g.setColour(juce::Colours::darkblue);
-        g.drawEllipse(circleBounds.reduced(borderThickness * 0.5f), borderThickness);
-    }
 }
 
 void CircularButtonLookAndFeel::drawButtonText(juce::Graphics& g, juce::TextButton& button,
