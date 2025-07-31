@@ -90,6 +90,12 @@ target_sources(DiatonyDawApplication
         src/ui/extra/Component/Panel/ColoredPanel.cpp
         src/ui/extra/Component/Panel/ClickableColoredPanel.h
         src/ui/extra/Component/Panel/ClickableColoredPanel.cpp
+        src/ui/extra/Component/Panel/InfoColoredPanel.h
+        src/ui/extra/Component/Panel/InfoColoredPanel.cpp
+        src/ui/extra/Component/ComboBox/DiatonyComboBox.cpp
+        src/ui/extra/Component/ComboBox/DiatonyComboBox.h
+        src/ui/extra/Component/ComboBox/DiatonyComboBoxLookAndFeel.h
+        src/ui/extra/Component/ComboBox/DiatonyComboBoxLookAndFeel.cpp
         
         # UI Extra Components - Button  
         src/ui/extra/Button/ButtonColoredPanel.h
