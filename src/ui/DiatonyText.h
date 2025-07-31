@@ -18,9 +18,9 @@ namespace DiatonyText {
     
     inline juce::String getAlterationSymbol(Diatony::Alteration alt) {
         switch (alt) {
-            case Diatony::Alteration::Flat: return "♭";
-            case Diatony::Alteration::Natural: return "";
-            case Diatony::Alteration::Sharp: return "♯";
+            case Diatony::Alteration::Flat: return juce::String::fromUTF8("♭");
+            case Diatony::Alteration::Natural: return juce::String::fromUTF8("♮");
+            case Diatony::Alteration::Sharp: return juce::String::fromUTF8("♯");
         }
         return {}; // Ne devrait jamais arriver
     }

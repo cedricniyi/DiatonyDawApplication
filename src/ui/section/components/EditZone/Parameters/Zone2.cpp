@@ -50,33 +50,50 @@ void Zone2::resized()
 
 void Zone2::setupStyledButtons()
 {
-    // Créer les 3 boutons StyledButton
+    // Créer les 3 boutons StyledButton basés sur les altérations
     for (int i = 0; i < 3; ++i)
     {
         // Couleurs différentes pour chaque bouton
         juce::Colour normalColour = juce::Colours::darkgreen.withRotatedHue(i * 0.2f); // Rotation de teinte
         juce::Colour highlightColour = normalColour.brighter(0.3f);
         
+        // Obtenir le symbole de l'altération pour le label
+        auto alterationSymbol = DiatonyText::getAlterationSymbol(alterations[i]);
+        
         styledButtons[i] = std::make_unique<StyledButton>(
-            juce::String("Btn ") + juce::String(i + 1),
+            alterationSymbol,
             normalColour,
             highlightColour,
-            14.0f, // Taille de police
+            24.0f, // Taille de police plus grande pour les symboles d'altération
             FontManager::FontWeight::Semibold
         );
         
         // Ajouter le callback pour les clics avec gestion de sélection
         styledButtons[i]->onClick = [i, this]() {
-            DBG("StyledButton " << (i + 1) << " cliqué!");
+            auto selectedAlt = alterations[i];
+            auto altSymbol = DiatonyText::getAlterationSymbol(selectedAlt);
+            DBG("Altération " << altSymbol.toStdString() << " sélectionnée!");
             
-            // Basculer l'état du bouton (toggle)
-            styledButtons[i]->setToggleState(!styledButtons[i]->getToggleState(), juce::dontSendNotification);
+            // Mettre à jour l'altération sélectionnée
+            selectedAlteration = selectedAlt;
             
-            // TODO: Ajouter la logique spécifique pour chaque bouton
+            // Désélectionner tous les autres boutons
+            for (int j = 0; j < 3; ++j)
+            {
+                styledButtons[j]->setToggleState(j == i, juce::dontSendNotification);
+            }
+            
+            // TODO: Ajouter la logique pour communiquer la sélection au modèle
         };
         
         // Rendre les boutons "toggleable"
         styledButtons[i]->setClickingTogglesState(true);
+        
+        // Définir "Natural" comme sélectionné par défaut
+        if (alterations[i] == Diatony::Alteration::Natural)
+        {
+            styledButtons[i]->setToggleState(true, juce::dontSendNotification);
+        }
         
         addAndMakeVisible(*styledButtons[i]);
     }
