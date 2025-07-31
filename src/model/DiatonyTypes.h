@@ -12,6 +12,16 @@
 namespace Diatony {
 
     /**
+     * @brief Types de modes disponibles
+     * Correspond à l'enum 'Mode' de Utilities.hpp
+     * @note On a restreint les modes a ceux utilisés de base.
+     */
+    enum class Mode : int {
+        Major = 0,              // IONIAN
+        Minor = 1,              // AEOLIAN
+    };
+
+    /**
      * @brief Types de modulations disponibles
      * Correspond à l'enum 'modulations' de Utilities.hpp
      */

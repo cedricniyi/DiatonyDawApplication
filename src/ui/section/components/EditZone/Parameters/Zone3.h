@@ -3,6 +3,8 @@
 #include <JuceHeader.h>
 #include "utils/FontManager.h"
 #include "ui/extra/Button/StyledButton.h"
+#include "model/DiatonyTypes.h"
+#include "ui/DiatonyText.h"
 
 /**
  * Zone 3 - Troisième paramètre/contrôle de section
@@ -30,8 +32,16 @@ private:
     // FontManager pour le titre
     juce::SharedResourcePointer<FontManager> fontManager;
     
-    // Les 2 boutons StyledButton rectangulaires
+    // Les 2 boutons StyledButton rectangulaires correspondant aux 2 modes
     std::array<std::unique_ptr<StyledButton>, 2> styledButtons;
+    
+    // Les 2 modes dans l'ordre logique
+    static constexpr std::array<Diatony::Mode, 2> modes = {
+        Diatony::Mode::Major, Diatony::Mode::Minor
+    };
+    
+    // Mode actuellement sélectionné
+    Diatony::Mode selectedMode = Diatony::Mode::Major;
     
     void setupStyledButtons();
     void layoutStyledButtons();

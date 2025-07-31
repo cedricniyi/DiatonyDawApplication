@@ -28,4 +28,12 @@ namespace DiatonyText {
     inline juce::String getFullNoteName(Diatony::BaseNote base, Diatony::Alteration alt) {
         return getBaseNoteName(base) + getAlterationSymbol(alt);
     }
+    
+    inline juce::String getModeName(Diatony::Mode mode) {
+        switch (mode) {
+            case Diatony::Mode::Major: return "Major";
+            case Diatony::Mode::Minor: return "Minor";
+        }
+        return {}; // Ne devrait jamais arriver
+    }
 }

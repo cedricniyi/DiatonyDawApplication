@@ -50,15 +50,18 @@ void Zone3::resized()
 
 void Zone3::setupStyledButtons()
 {
-    // Créer les 2 boutons StyledButton
+    // Créer les 2 boutons StyledButton basés sur les modes
     for (int i = 0; i < 2; ++i)
     {
         // Couleurs différentes pour chaque bouton (tons jaune/orange)
         juce::Colour normalColour = juce::Colours::darkorange.withRotatedHue(i * 0.15f); // Rotation de teinte
         juce::Colour highlightColour = normalColour.brighter(0.3f);
         
+        // Obtenir le nom du mode pour le label
+        auto modeName = DiatonyText::getModeName(modes[i]);
+        
         styledButtons[i] = std::make_unique<StyledButton>(
-            juce::String("Action ") + juce::String(i + 1),
+            modeName,
             normalColour,
             highlightColour,
             13.0f, // Taille de police légèrement plus petite pour les rectangles
@@ -67,16 +70,30 @@ void Zone3::setupStyledButtons()
         
         // Ajouter le callback pour les clics avec gestion de sélection
         styledButtons[i]->onClick = [i, this]() {
-            DBG("Bouton rectangulaire " << (i + 1) << " cliqué!");
+            auto selectedModeValue = modes[i];
+            auto modeName = DiatonyText::getModeName(selectedModeValue);
+            DBG("Mode " << modeName.toStdString() << " sélectionné!");
             
-            // Basculer l'état du bouton (toggle)
-            styledButtons[i]->setToggleState(!styledButtons[i]->getToggleState(), juce::dontSendNotification);
+            // Mettre à jour le mode sélectionné
+            selectedMode = selectedModeValue;
             
-            // TODO: Ajouter la logique spécifique pour chaque bouton
+            // Désélectionner tous les autres boutons
+            for (int j = 0; j < 2; ++j)
+            {
+                styledButtons[j]->setToggleState(j == i, juce::dontSendNotification);
+            }
+            
+            // TODO: Ajouter la logique pour communiquer la sélection au modèle
         };
         
         // Rendre les boutons "toggleable"
         styledButtons[i]->setClickingTogglesState(true);
+        
+        // Définir "Major" comme sélectionné par défaut
+        if (modes[i] == Diatony::Mode::Major)
+        {
+            styledButtons[i]->setToggleState(true, juce::dontSendNotification);
+        }
         
         addAndMakeVisible(*styledButtons[i]);
     }
