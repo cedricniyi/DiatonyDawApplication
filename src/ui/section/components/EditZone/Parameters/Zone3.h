@@ -2,7 +2,7 @@
 
 #include <JuceHeader.h>
 #include "utils/FontManager.h"
-#include "ui/extra/Button/StyledButton.h"
+#include "ui/extra/Button/SelectableStyledButton.h"
 #include "model/DiatonyTypes.h"
 #include "ui/DiatonyText.h"
 
@@ -32,8 +32,8 @@ private:
     // FontManager pour le titre
     juce::SharedResourcePointer<FontManager> fontManager;
     
-    // Les 2 boutons StyledButton rectangulaires correspondant aux 2 modes
-    std::array<std::unique_ptr<StyledButton>, 2> styledButtons;
+    // Les 2 boutons SelectableStyledButton rectangulaires correspondant aux 2 modes
+    std::array<std::unique_ptr<SelectableStyledButton>, 2> styledButtons;
     
     // Les 2 modes dans l'ordre logique
     static constexpr std::array<Diatony::Mode, 2> modes = {

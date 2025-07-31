@@ -10,28 +10,12 @@ Zone2::~Zone2()
 }
 
 void Zone2::paint(juce::Graphics& g)
-{
-    // Dessiner le fond du titre
-    g.setColour(titleBackgroundColour);
-    g.fillRect(titleArea);
-    
-    // Dessiner le fond du contenu (plus foncé)
-    g.setColour(contentBackgroundColour);
-    g.fillRect(contentArea);
-    
-    // Dessiner la bordure globale
-    g.setColour(borderColour);
-    g.drawRect(getLocalBounds(), 1);
-    
-    // Dessiner une ligne de séparation entre titre et contenu
-    g.setColour(borderColour.withAlpha(0.3f));
-    g.drawHorizontalLine(titleArea.getBottom(), static_cast<float>(titleArea.getX()), static_cast<float>(titleArea.getRight()));
-    
+{    
     // Dessiner le titre avec FontManager
     g.setColour(juce::Colours::black);
     auto titleFont = juce::Font(fontManager->getSFProDisplay(16.0f, FontManager::FontWeight::Bold));
     g.setFont(titleFont);
-    g.drawText("Zone 2", titleArea, juce::Justification::centred);
+    g.drawText("Alteration", titleArea, juce::Justification::centred);
 }
 
 void Zone2::resized()
@@ -50,20 +34,20 @@ void Zone2::resized()
 
 void Zone2::setupStyledButtons()
 {
-    // Créer les 3 boutons StyledButton basés sur les altérations
+    // Créer les 3 boutons SelectableStyledButton basés sur les altérations
     for (int i = 0; i < 3; ++i)
     {
-        // Couleurs différentes pour chaque bouton
-        juce::Colour normalColour = juce::Colours::darkgreen.withRotatedHue(i * 0.2f); // Rotation de teinte
-        juce::Colour highlightColour = normalColour.brighter(0.3f);
+        // Couleurs cohérentes : gris normal, bleu pour sélection
+        juce::Colour normalColour = juce::Colours::lightgrey;
+        juce::Colour selectedColour = juce::Colours::blue;
         
         // Obtenir le symbole de l'altération pour le label
         auto alterationSymbol = DiatonyText::getAlterationSymbol(alterations[i]);
         
-        styledButtons[i] = std::make_unique<StyledButton>(
+        styledButtons[i] = std::make_unique<SelectableStyledButton>(
             alterationSymbol,
             normalColour,
-            highlightColour,
+            selectedColour,
             24.0f, // Taille de police plus grande pour les symboles d'altération
             FontManager::FontWeight::Semibold
         );
@@ -77,22 +61,19 @@ void Zone2::setupStyledButtons()
             // Mettre à jour l'altération sélectionnée
             selectedAlteration = selectedAlt;
             
-            // Désélectionner tous les autres boutons
+            // Désélectionner tous les autres boutons et sélectionner le bon
             for (int j = 0; j < 3; ++j)
             {
-                styledButtons[j]->setToggleState(j == i, juce::dontSendNotification);
+                styledButtons[j]->setSelected(j == i);
             }
             
             // TODO: Ajouter la logique pour communiquer la sélection au modèle
         };
         
-        // Rendre les boutons "toggleable"
-        styledButtons[i]->setClickingTogglesState(true);
-        
         // Définir "Natural" comme sélectionné par défaut
         if (alterations[i] == Diatony::Alteration::Natural)
         {
-            styledButtons[i]->setToggleState(true, juce::dontSendNotification);
+            styledButtons[i]->setSelected(true);
         }
         
         addAndMakeVisible(*styledButtons[i]);
