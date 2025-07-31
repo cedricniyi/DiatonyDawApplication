@@ -1,5 +1,5 @@
 #include "Zone4ContentArea.h"
-#include "ui/extra/Component/Panel/ColoredPanel.h"
+#include "ui/extra/Component/Panel/InfoColoredPanel.h"
 
 //==============================================================================
 Zone4ContentArea::Zone4ContentArea() 
@@ -49,8 +49,8 @@ void Zone4ContentArea::addRectangle()
     if (!scrollableContent)
         return;
     
-    // Créer un rectangle coloré simple
-    auto newRectangle = std::make_unique<ColoredPanel>(getNextColour());
+    // Créer un rectangle coloré avec zones d'information
+    auto newRectangle = std::make_unique<InfoColoredPanel>(getNextColour());
     
     // Configuration du rectangle
     newRectangle->setAlpha(0.8f);
