@@ -211,6 +211,12 @@ void OverviewContentArea::createPanelForSection(const juce::ValueTree& sectionNo
     // ✅ SIMPLE : Stocker l'ID (qui correspond maintenant à l'index grâce à notre correction)
     newPanel->setUserData(sectionId);
     
+    // ✅ CONFIGURABLE : Affichage du numéro de section
+    newPanel->setDisplayText(juce::String(sectionId + 1));  // Affiche "1", "2", "3"...
+    newPanel->setShowText(true);  // Activé par défaut pour les sections
+    
+    // Pour désactiver l'affichage des numéros : newPanel->setShowText(false);
+    
     // Référence au panel avant transfert de propriété
     ButtonColoredPanel* newPanelPtr = newPanel.get();
     
@@ -256,6 +262,12 @@ void OverviewContentArea::createPanelForModulation(const juce::ValueTree& modula
     
     // Stocker l'ID de la modulation (plus besoin d'offset !)
     newPanel->setUserData(modulationId);
+    
+    // ✅ OPTIONNEL : Désactiver l'affichage du texte pour les modulations
+    newPanel->setShowText(false);  // Les modulations ne sont pas numérotées par défaut
+    
+    // Si tu veux quand même afficher l'ID de la modulation, décommente la ligne suivante :
+    // newPanel->setDisplayText(juce::String(modulationId+1));
     
     // Référence au panel avant transfert de propriété
     ButtonColoredPanel* newPanelPtr = newPanel.get();
@@ -323,7 +335,12 @@ void OverviewContentArea::addSmallPanel()
     
     // Fallback : création manuelle si AppController indisponible
     auto newPanel = std::make_unique<ButtonColoredPanel>(juce::Colours::blue);
-    newPanel->setUserData(nextPanelId++);
+    int panelId = nextPanelId++;
+    newPanel->setUserData(panelId);
+    
+    // ✅ CONFIGURABLE : Affichage de l'ID sur le panel (fallback)
+    newPanel->setDisplayText(juce::String(panelId));
+    newPanel->setShowText(true);  // Par défaut activé pour rétrocompatibilité
     
     // La sélection est maintenant gérée centralement - pas besoin de désélection manuelle
     
