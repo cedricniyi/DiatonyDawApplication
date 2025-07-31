@@ -91,7 +91,7 @@ void Zone4ScrollablePanel::layoutRectangles()
         // Contrôle automatique de la partie droite des InfoColoredPanel selon la hauteur
         if (auto* infoPanel = dynamic_cast<InfoColoredPanel*>(rectInfo.component.get()))
         {
-            if (rectangleHeight <= 45)
+            if (rectangleHeight <= 50)
             {
                 // Hauteur trop petite : masquer la partie droite
                 infoPanel->hideRightSide();
