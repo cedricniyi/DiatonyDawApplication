@@ -12,6 +12,16 @@
 namespace Diatony {
 
     /**
+     * @brief Types de modes disponibles
+     * Correspond à l'enum 'Mode' de Utilities.hpp
+     * @note On a restreint les modes a ceux utilisés de base.
+     */
+    enum class Mode : int {
+        Major = 0,              // IONIAN
+        Minor = 1,              // AEOLIAN
+    };
+
+    /**
      * @brief Types de modulations disponibles
      * Correspond à l'enum 'modulations' de Utilities.hpp
      */
@@ -94,6 +104,14 @@ namespace Diatony {
         A = 9,          // A
         ASharp = 10,    // A_SHARP / B_FLAT
         B = 11          // B / C_FLAT
+    };
+
+    /**
+     * @brief Les 7 notes de base du système diatonique.
+     * Utilisé principalement par l'UI pour une sélection intuitive.
+     */
+    enum class BaseNote : int {
+        C = 0, D = 2, E = 4, F = 5, G = 7, A = 9, B = 11
     };
 
     /**

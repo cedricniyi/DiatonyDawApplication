@@ -85,6 +85,7 @@ target_sources(DiatonyDawApplication
         src/ui/RootAnimator.cpp
         src/ui/MainContentComponent.h
         src/ui/MainContentComponent.cpp
+        src/ui/DiatonyText.h
         # UI Extra Components - Panel
         src/ui/extra/Component/Panel/ColoredPanel.h
         src/ui/extra/Component/Panel/ColoredPanel.cpp
@@ -106,6 +107,8 @@ target_sources(DiatonyDawApplication
         src/ui/extra/Button/StyledButton.cpp
         src/ui/extra/Button/CircularButton.h
         src/ui/extra/Button/CircularButton.cpp
+        src/ui/extra/Button/SelectableStyledButton.h
+        src/ui/extra/Button/SelectableStyledButton.cpp
         
         # UI Extra Components - Component
         src/ui/extra/Component/DiatonyAlertWindow.h
@@ -217,6 +220,7 @@ target_sources(DiatonyDawApplication
         src/model/Section.h
         src/model/Section.cpp
         src/model/DiatonyTypes.h
+        src/model/NoteConverter.h
 
         # Services
         src/services/GenerationService.h

@@ -1,22 +1,27 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include <juce_data_structures/juce_data_structures.h>
+#include <juce_gui_basics/juce_gui_basics.h>
 #include "ui/extra/Component/Panel/ColoredPanel.h"
 #include "utils/FontManager.h"
 #include "Parameters/Zone1.h"
 #include "Parameters/Zone2.h"
 #include "Parameters/Zone3.h"
 #include "Parameters/Zone4.h"
+#include "model/Section.h"
+#include "model/NoteConverter.h"
+#include "controller/AppController.h"
 
 /**
  * Composant d'édition de section - Placeholder pour l'édition détaillée d'une section
  * Reçoit l'ID de la section à éditer et affiche des informations/contrôles d'édition
  */
-class SectionEditor : public ColoredPanel
+class SectionEditor : public ColoredPanel, public juce::ValueTree::Listener
 {
 public:
     SectionEditor();
-    ~SectionEditor() override;
+    ~SectionEditor();
     
     void paint(juce::Graphics& g) override;
     void resized() override;
@@ -26,6 +31,7 @@ public:
      * @param sectionId ID de la section à éditer (ex: "Section_0")
      */
     void setSectionToEdit(const juce::String& sectionId);
+    void setSectionState(juce::ValueTree sectionState);
     
     /**
      * Obtient l'ID de la section actuellement éditée
@@ -41,6 +47,7 @@ public:
 
 private:
     juce::String currentSectionId;
+    juce::ValueTree currentSectionState; // ValueTree de la section éditée
     juce::Label sectionNameLabel;  // Label pour le nom de la section
     
     juce::SharedResourcePointer<FontManager> fontManager;
@@ -76,6 +83,18 @@ private:
     void drawBorder(juce::Graphics& g);
     void drawSeparatorLine(juce::Graphics& g);
     void calculateContentZones();
+
+    // Helpers binding
+    void bindZonesToModel();
+    void syncZonesFromModel();
+
+    // ValueTree::Listener
+    void valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged,
+                                  const juce::Identifier& property) override;
+    void valueTreeChildAdded(juce::ValueTree&, juce::ValueTree&) override {}
+    void valueTreeChildRemoved(juce::ValueTree&, juce::ValueTree&, int) override {}
+    void valueTreeChildOrderChanged(juce::ValueTree&, int, int) override {}
+    void valueTreeParentChanged(juce::ValueTree&) override {}
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SectionEditor)
 }; 
