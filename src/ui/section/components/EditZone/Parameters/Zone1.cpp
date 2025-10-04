@@ -85,6 +85,14 @@ void Zone1::setupCircularButtons()
                 onBaseNoteChanged(selectedBaseNote);
         };
         
+        // Définir "C" comme sélectionné par défaut (comme Zone2 et Zone3)
+        if (baseNotes[i] == Diatony::BaseNote::C)
+        {
+            circularButtons[i]->setSelected(true);
+            circularButtons[i]->setBaseColour(juce::Colours::blue);
+            circularButtons[i]->setTextColour(juce::Colours::white);
+        }
+        
         addAndMakeVisible(*circularButtons[i]);
     }
 }
