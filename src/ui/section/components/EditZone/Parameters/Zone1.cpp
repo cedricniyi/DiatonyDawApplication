@@ -80,11 +80,39 @@ void Zone1::setupCircularButtons()
                 }
             }
             
-            // TODO: Ajouter la logique pour communiquer la sélection au modèle
+            // Notifier l'aval si un binding est présent
+            if (onBaseNoteChanged)
+                onBaseNoteChanged(selectedBaseNote);
         };
         
         addAndMakeVisible(*circularButtons[i]);
     }
+}
+
+void Zone1::setSelectedBaseNote(Diatony::BaseNote note)
+{
+    if (selectedBaseNote == note && !circularButtons.empty())
+        return;
+
+    selectedBaseNote = note;
+
+    for (size_t j = 0; j < circularButtons.size(); ++j)
+    {
+        bool isSelected = (baseNotes[j] == selectedBaseNote);
+        circularButtons[j]->setSelected(isSelected);
+        if (isSelected)
+        {
+            circularButtons[j]->setBaseColour(juce::Colours::blue);
+            circularButtons[j]->setTextColour(juce::Colours::white);
+        }
+        else
+        {
+            circularButtons[j]->setBaseColour(juce::Colours::lightgrey);
+            circularButtons[j]->setTextColour(juce::Colours::black);
+        }
+    }
+
+    repaint();
 }
 
 void Zone1::layoutCircularButtons()

@@ -112,6 +112,18 @@ void ProgressionArea::updateContentBasedOnSelection()
         welcomeView.setVisible(false);
         modulationEditor->setVisible(false);
         sectionEditor->setSectionToEdit(selectedElementId);
+
+        // Passer le ValueTree réel de la section à éditer
+        int index = selectedElementId.getTrailingIntValue();
+        if (appController != nullptr && index >= 0 && index < static_cast<int>(appController->getSectionCount()))
+        {
+            auto section = appController->getPiece().getSection(static_cast<size_t>(index));
+            sectionEditor->setSectionState(section.getState());
+        }
+        else
+        {
+            sectionEditor->setSectionState(juce::ValueTree());
+        }
         sectionEditor->setVisible(true);
     }
     else if (selectionType == "Modulation" && !selectedElementId.isEmpty())
@@ -120,6 +132,7 @@ void ProgressionArea::updateContentBasedOnSelection()
         welcomeView.setVisible(false);
         sectionEditor->setVisible(false);
         sectionEditor->setSectionToEdit(""); // Clear l'éditeur de section
+        sectionEditor->setSectionState(juce::ValueTree());
         modulationEditor->setModulationToEdit(selectedElementId);
         modulationEditor->setVisible(true);
     }
@@ -128,6 +141,7 @@ void ProgressionArea::updateContentBasedOnSelection()
         // Cas par défaut : afficher WelcomeView et cacher les éditeurs
         sectionEditor->setVisible(false);
         sectionEditor->setSectionToEdit(""); // Clear l'éditeur de section
+        sectionEditor->setSectionState(juce::ValueTree());
         modulationEditor->setVisible(false);
         modulationEditor->setModulationToEdit(""); // Clear l'éditeur de modulation
         welcomeView.setVisible(true);

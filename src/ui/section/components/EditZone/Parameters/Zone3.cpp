@@ -67,7 +67,9 @@ void Zone3::setupStyledButtons()
                 styledButtons[j]->setSelected(j == i);
             }
             
-            // TODO: Ajouter la logique pour communiquer la sélection au modèle
+            // Notifier l'aval si un binding est présent
+            if (onModeChanged)
+                onModeChanged(selectedMode);
         };
         
         // Définir "Major" comme sélectionné par défaut
@@ -78,6 +80,20 @@ void Zone3::setupStyledButtons()
         
         addAndMakeVisible(*styledButtons[i]);
     }
+}
+
+void Zone3::setSelectedMode(Diatony::Mode mode)
+{
+    if (selectedMode == mode)
+        return;
+
+    selectedMode = mode;
+    for (size_t j = 0; j < styledButtons.size(); ++j)
+    {
+        bool isSelected = (modes[j] == selectedMode);
+        styledButtons[j]->setSelected(isSelected);
+    }
+    repaint();
 }
 
 void Zone3::layoutStyledButtons()

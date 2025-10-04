@@ -19,6 +19,10 @@ public:
     void paint(juce::Graphics& g) override;
     void resized() override;
 
+    // Binding depuis SectionEditor
+    std::function<void(Diatony::Mode)> onModeChanged; // UI -> Modèle
+    void setSelectedMode(Diatony::Mode mode);         // Modèle -> UI
+
 private:
     // Couleur de fond pour cette zone
     juce::Colour titleBackgroundColour = juce::Colours::lightyellow.withAlpha(0.3f);

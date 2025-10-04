@@ -67,7 +67,9 @@ void Zone2::setupStyledButtons()
                 styledButtons[j]->setSelected(j == i);
             }
             
-            // TODO: Ajouter la logique pour communiquer la sélection au modèle
+            // Notifier l'aval si un binding est présent
+            if (onAlterationChanged)
+                onAlterationChanged(selectedAlteration);
         };
         
         // Définir "Natural" comme sélectionné par défaut
@@ -78,6 +80,22 @@ void Zone2::setupStyledButtons()
         
         addAndMakeVisible(*styledButtons[i]);
     }
+}
+
+void Zone2::setSelectedAlteration(Diatony::Alteration alt)
+{
+    if (selectedAlteration == alt)
+        return;
+
+    selectedAlteration = alt;
+
+    for (size_t j = 0; j < styledButtons.size(); ++j)
+    {
+        bool isSelected = (alterations[j] == selectedAlteration);
+        styledButtons[j]->setSelected(isSelected);
+    }
+
+    repaint();
 }
 
 void Zone2::layoutStyledButtons()

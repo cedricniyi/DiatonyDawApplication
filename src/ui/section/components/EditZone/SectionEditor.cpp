@@ -11,11 +11,14 @@ SectionEditor::SectionEditor()
     addAndMakeVisible(zone3Component);
     addAndMakeVisible(zone4Component);
     
+    bindZonesToModel();
     updateContent();
 }
 
 SectionEditor::~SectionEditor()
 {
+    if (currentSectionState.isValid())
+        currentSectionState.removeListener(this);
 }
 
 void SectionEditor::paint(juce::Graphics& g)
@@ -54,8 +57,25 @@ void SectionEditor::setSectionToEdit(const juce::String& sectionId)
     {
         currentSectionId = sectionId;
         updateContent();
+        syncZonesFromModel();
         repaint();
     }
+}
+
+void SectionEditor::setSectionState(juce::ValueTree sectionState)
+{
+    if (currentSectionState == sectionState)
+        return;
+
+    if (currentSectionState.isValid())
+        currentSectionState.removeListener(this);
+
+    currentSectionState = sectionState;
+
+    if (currentSectionState.isValid())
+        currentSectionState.addListener(this);
+
+    syncZonesFromModel();
 }
 
 void SectionEditor::setupSectionNameLabel()
@@ -170,3 +190,68 @@ void SectionEditor::calculateContentZones()
     zone3Area = zone3Component.getBounds();
     zone4Area = zone4Component.getBounds();
 } 
+
+void SectionEditor::bindZonesToModel()
+{
+    // Zone1: Base note
+    zone1Component.onBaseNoteChanged = [this](Diatony::BaseNote base)
+    {
+        if (!currentSectionState.isValid()) return;
+        Section section(currentSectionState);
+        auto alt = section.getAlteration();
+        auto note = Diatony::toDiatonyNote(base, alt);
+        section.setNote(note);
+    };
+
+    // Zone2: Alteration
+    zone2Component.onAlterationChanged = [this](Diatony::Alteration alt)
+    {
+        if (!currentSectionState.isValid()) return;
+        Section section(currentSectionState);
+        // Conserver la lettre (BaseNote) courante: la déduire avec l'ancienne altération
+        auto oldAlt = section.getAlteration();
+        auto note = section.getNote();
+        auto base = Diatony::toBaseNote(note, oldAlt);
+
+        // Appliquer la nouvelle altération et recalculer la note chromatique
+        section.setAlteration(alt);
+        section.setNote(Diatony::toDiatonyNote(base, alt));
+    };
+
+    // Zone3: Mode
+    zone3Component.onModeChanged = [this](Diatony::Mode mode)
+    {
+        if (!currentSectionState.isValid()) return;
+        Section section(currentSectionState);
+        section.setIsMajor(mode == Diatony::Mode::Major);
+    };
+}
+
+void SectionEditor::syncZonesFromModel()
+{
+    if (!currentSectionState.isValid())
+        return;
+
+    Section section(currentSectionState);
+
+    auto note = section.getNote();
+    auto alt = section.getAlteration();
+    auto isMajor = section.getIsMajor();
+
+    // Déduire BaseNote depuis Note + Altération
+    auto base = Diatony::toBaseNote(note, alt);
+
+    zone1Component.setSelectedBaseNote(base);
+    zone2Component.setSelectedAlteration(alt);
+    zone3Component.setSelectedMode(isMajor ? Diatony::Mode::Major : Diatony::Mode::Minor);
+}
+
+void SectionEditor::valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged,
+                                             const juce::Identifier& property)
+{
+    if (!currentSectionState.isValid()) return;
+    if (treeWhosePropertyHasChanged != currentSectionState) return;
+
+    // Resynchroniser l'UI quand la section change (quelqu'un d'autre ou nous)
+    syncZonesFromModel();
+}

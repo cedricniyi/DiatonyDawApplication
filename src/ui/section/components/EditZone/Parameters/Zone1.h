@@ -19,6 +19,10 @@ public:
     void paint(juce::Graphics& g) override;
     void resized() override;
 
+    // Binding depuis SectionEditor
+    std::function<void(Diatony::BaseNote)> onBaseNoteChanged; // UI -> Modèle
+    void setSelectedBaseNote(Diatony::BaseNote note);         // Modèle -> UI
+
 private:
     // Couleur de fond pour cette zone
     juce::Colour titleBackgroundColour = juce::Colours::lightcoral.withAlpha(0.3f);
