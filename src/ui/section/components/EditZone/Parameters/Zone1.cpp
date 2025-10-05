@@ -55,8 +55,10 @@ void Zone1::setupCircularButtons()
         // Ajouter le callback pour les clics avec gestion de sélection
         circularButtons[i]->onClick = [i, this]() {
             auto selectedNote = baseNotes[i];
-            auto noteName = DiatonyText::getBaseNoteName(selectedNote);
-            DBG("Note de base " << noteName.toStdString() << " sélectionnée!");
+            
+            // Log optionnel: décommenter si nécessaire pour le debug
+            // auto noteName = DiatonyText::getBaseNoteName(selectedNote);
+            // DBG("[Zone1] Note de base " << noteName.toStdString() << " selectionnee");
             
             // Mettre à jour la note sélectionnée
             selectedBaseNote = selectedNote;
@@ -94,7 +96,8 @@ void Zone1::setupCircularButtons()
 
 void Zone1::setSelectedBaseNote(Diatony::BaseNote note)
 {
-    DBG("Zone1::setSelectedBaseNote called with note=" << static_cast<int>(note));
+    // Log optionnel: décommenter si nécessaire pour le debug
+    // DBG("[Zone1] setSelectedBaseNote: note=" << static_cast<int>(note));
 
     selectedBaseNote = note;
 
@@ -104,7 +107,6 @@ void Zone1::setSelectedBaseNote(Diatony::BaseNote note)
         circularButtons[j]->setSelected(isSelected);
         if (isSelected)
         {
-            DBG("Zone1: Setting button " << j << " as SELECTED (blue)");
             circularButtons[j]->setBaseColour(juce::Colours::blue);
             circularButtons[j]->setTextColour(juce::Colours::white);
         }

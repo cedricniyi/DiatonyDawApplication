@@ -57,7 +57,9 @@ void SectionEditor::setSectionToEdit(const juce::String& sectionId)
     {
         currentSectionId = sectionId;
         updateContent();
-        syncZonesFromModel();
+        // NOTE: Ne pas appeler syncZonesFromModel() ici car currentSectionState
+        // n'est pas encore initialisé. setSectionState() sera appelé juste après
+        // par le code appelant et fera le sync au bon moment.
         repaint();
     }
 }
@@ -73,9 +75,12 @@ void SectionEditor::setSectionState(juce::ValueTree sectionState)
     currentSectionState = sectionState;
 
     if (currentSectionState.isValid())
+    {
         currentSectionState.addListener(this);
-
-    syncZonesFromModel();
+        // Synchroniser les zones seulement si on a un ValueTree valide
+        syncZonesFromModel();
+    }
+    // Si invalide, c'est un "clear" intentionnel, pas besoin de sync ni de log
 }
 
 void SectionEditor::setupSectionNameLabel()
@@ -231,7 +236,7 @@ void SectionEditor::syncZonesFromModel()
 {
     if (!currentSectionState.isValid())
     {
-        DBG("syncZonesFromModel: currentSectionState is INVALID");
+        DBG("[SectionEditor] syncZones: currentSectionState INVALIDE");
         return;
     }
 
@@ -244,16 +249,13 @@ void SectionEditor::syncZonesFromModel()
     // Déduire BaseNote depuis Note + Altération
     auto base = Diatony::toBaseNote(note, alt);
 
-    // DBG("syncZonesFromModel: note=" << static_cast<int>(note) 
-    //     << ", alt=" << static_cast<int>(alt) 
-    //     << ", isMajor=" << (isMajor ? 1 : 0)
-    //     << ", base=" << static_cast<int>(base));
-
     zone1Component.setSelectedBaseNote(base);
     zone2Component.setSelectedAlteration(alt);
     zone3Component.setSelectedMode(isMajor ? Diatony::Mode::Major : Diatony::Mode::Minor);
     
-    DBG("syncZonesFromModel: zones updated");
+    // Log concis: afficher seulement si vraiment nécessaire (commenter pour réduire encore)
+    // DBG("[SectionEditor] Zones synced: note=" << static_cast<int>(note) 
+    //     << " alt=" << static_cast<int>(alt) << " mode=" << (isMajor ? "Maj" : "Min"));
 }
 
 void SectionEditor::valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged,

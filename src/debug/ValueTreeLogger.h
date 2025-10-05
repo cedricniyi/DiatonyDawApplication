@@ -4,63 +4,86 @@
 #if DEBUG
 
 // ==============================================================================
+// Niveaux de verbosité pour le logger
+enum class LogLevel
+{
+    MINIMAL,   // Seulement les changements critiques (ajout/suppression d'enfants)
+    NORMAL,    // Changements de propriétés importantes + enfants (par défaut)
+    VERBOSE    // Tous les détails + dumps XML
+};
+
+// Macro pour contrôler le niveau de log global (à changer selon les besoins)
+#ifndef VALUE_TREE_LOG_LEVEL
+#define VALUE_TREE_LOG_LEVEL LogLevel::NORMAL
+#endif
+
+// ==============================================================================
 // Classe utilitaire pour logger les changements du ValueTree en temps réel.
 // Cette classe n'est compilée qu'en mode DEBUG.
 class ValueTreeLogger : public juce::ValueTree::Listener
 {
 public:
-    ValueTreeLogger(const juce::String& name) : treeName(name) {}
+    ValueTreeLogger(const juce::String& name, LogLevel level = VALUE_TREE_LOG_LEVEL) 
+        : treeName(name), logLevel(level) {}
 
     void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property) override
     {
-        DBG("Logger<" << treeName << ">: Propriété changée -> "
-            << property.toString() << " = "
+        // En mode MINIMAL, ignorer les changements de propriétés
+        if (logLevel == LogLevel::MINIMAL)
+            return;
+            
+        // Log basique du changement
+        DBG("[" << treeName << "] " << property.toString() << " = " 
             << tree.getProperty(property).toString());
             
-        // Si c'est le logger de la pièce, afficher un résumé complet
-        if (treeName.contains("Piece"))
+        // En mode VERBOSE, afficher les résumés détaillés
+        if (logLevel == LogLevel::VERBOSE)
         {
-            logPieceStateSummary(tree);
-        }
-        // Si c'est le logger de sélection, afficher un résumé de sélection
-        else if (treeName.contains("Selection"))
-        {
-            logSelectionStateSummary(tree);
+            if (treeName.contains("Piece"))
+                logPieceStateSummary(tree);
+            else if (treeName.contains("Selection"))
+                logSelectionStateSummary(tree);
         }
     }
 
     void valueTreeChildAdded(juce::ValueTree& parentTree, juce::ValueTree& childWhichHasBeenAdded) override
     {
-        DBG("Logger<" << treeName << ">: Enfant ajouté -> " 
+        // Toujours logger l'ajout d'enfants (important)
+        DBG("[" << treeName << "] +Enfant: " 
             << childWhichHasBeenAdded.getType().toString());
             
-        if (treeName.contains("Piece"))
+        // En mode VERBOSE, afficher les résumés détaillés
+        if (logLevel == LogLevel::VERBOSE)
         {
-            logPieceStateSummary(parentTree);
-        }
-        else if (treeName.contains("Selection"))
-        {
-            logSelectionStateSummary(parentTree);
+            if (treeName.contains("Piece"))
+                logPieceStateSummary(parentTree);
+            else if (treeName.contains("Selection"))
+                logSelectionStateSummary(parentTree);
         }
     }
 
     void valueTreeChildRemoved(juce::ValueTree& parentTree, juce::ValueTree& childWhichHasBeenRemoved, int index) override
     {
-        DBG("Logger<" << treeName << ">: Enfant retiré -> " 
+        // Toujours logger la suppression d'enfants (important)
+        DBG("[" << treeName << "] -Enfant: " 
             << childWhichHasBeenRemoved.getType().toString() << " (index: " << index << ")");
             
-        if (treeName.contains("Piece"))
+        // En mode VERBOSE, afficher les résumés détaillés
+        if (logLevel == LogLevel::VERBOSE)
         {
-            logPieceStateSummary(parentTree);
-        }
-        else if (treeName.contains("Selection"))
-        {
-            logSelectionStateSummary(parentTree);
+            if (treeName.contains("Piece"))
+                logPieceStateSummary(parentTree);
+            else if (treeName.contains("Selection"))
+                logSelectionStateSummary(parentTree);
         }
     }
+    
+    // Méthode pour changer le niveau de log à la volée
+    void setLogLevel(LogLevel level) { logLevel = level; }
 
 private:
     juce::String treeName;
+    LogLevel logLevel;
     
     void logPieceStateSummary(const juce::ValueTree& pieceState)
     {
@@ -71,43 +94,43 @@ private:
         auto xml = pieceState.createXml();
         if (!xml)
         {
-            DBG("=== ERREUR: Impossible de créer XML pour le ValueTree ===");
+            DBG("[" << treeName << "] ERREUR: Impossible de creer XML");
             return;
         }
         
-        juce::String summary = "=== ETAT DE LA PIECE (XML) ===\n";
+        juce::String summary = "\n=== ETAT PIECE (XML) ===\n";
         summary += xml->toString();
-        summary += "\n========================";
         
-        // Ajouter aussi un résumé rapide basé sur le XML
+        // Ajouter un résumé rapide
         int numChildren = pieceState.getNumChildren();
         int numProperties = pieceState.getNumProperties();
         
-        summary += "\nResume rapide:";
-        summary += "\n  Nombre d'enfants directs: " + juce::String(numChildren);
-        summary += "\n  Nombre de proprietes: " + juce::String(numProperties);
+        summary += "\n--- Resume: " + juce::String(numChildren) + " enfant(s), " 
+                   + juce::String(numProperties) + " propriete(s)";
         
-        // Lister les types d'enfants pour diagnostic
+        // Lister les types d'enfants
         if (numChildren > 0)
         {
-            summary += "\n  Types d'enfants:";
+            summary += " [";
             for (int i = 0; i < numChildren; ++i)
             {
-                auto child = pieceState.getChild(i);
-                summary += "\n    [" + juce::String(i) + "] " + child.getType().toString();
+                if (i > 0) summary += ", ";
+                summary += pieceState.getChild(i).getType().toString();
             }
+            summary += "]";
         }
         
         summary += "\n========================";
         
-        DBG(juce::String::fromUTF8(summary.toUTF8()));
+        // Éviter les problèmes d'encodage UTF-8 en utilisant directement le String
+        DBG(summary);
     }
     
     void logSelectionStateSummary(const juce::ValueTree& selectionState)
     {
         if (!selectionState.isValid())
         {
-            DBG("=== ETAT DE SELECTION: INVALIDE ===");
+            DBG("[" << treeName << "] Selection: INVALIDE");
             return;
         }
         
@@ -115,35 +138,17 @@ private:
         juce::String selectionType = selectionState.getProperty("selectionType", "None").toString();
         juce::String selectedElementId = selectionState.getProperty("selectedElementId", "").toString();
         
-        juce::String summary = "=== ETAT DE SELECTION ===\n";
-        summary += "Type de sélection: " + selectionType + "\n";
-        summary += "ID de l'élément: " + selectedElementId + "\n";
+        // Log concis sur une seule ligne
+        juce::String summary = "[" + treeName + "] Selection: " + selectionType;
         
-        // Ajouter des détails contextuels selon le type
-        if (selectionType == "Section")
+        if (selectedElementId.isNotEmpty())
         {
-            // Extraire l'index de la section depuis l'ID (format: "Section_0")
+            // Extraire l'index depuis l'ID (format: "Type_index")
             juce::String indexStr = selectedElementId.fromLastOccurrenceOf("_", false, false);
-            summary += "-> Section sélectionnée (index: " + indexStr + ")\n";
-        }
-        else if (selectionType == "Chord")
-        {
-            juce::String indexStr = selectedElementId.fromLastOccurrenceOf("_", false, false);
-            summary += "-> Accord sélectionné (index: " + indexStr + ")\n";
-        }
-        else if (selectionType == "Modulation")
-        {
-            juce::String indexStr = selectedElementId.fromLastOccurrenceOf("_", false, false);
-            summary += "-> Modulation sélectionnée (index: " + indexStr + ")\n";
-        }
-        else if (selectionType == "None")
-        {
-            summary += "-> Aucune sélection active\n";
+            summary += " #" + indexStr;
         }
         
-        summary += "========================";
-        
-        DBG(juce::String::fromUTF8(summary.toUTF8()));
+        DBG(summary);
     }
 };
 //==============================================================================
