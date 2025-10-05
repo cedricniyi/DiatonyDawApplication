@@ -55,6 +55,9 @@ void Zone4ContentArea::addRectangle()
     // Configuration du rectangle
     newRectangle->setAlpha(0.8f);
     
+    // Peupler les combobox avec les valeurs validées depuis DiatonyTypes
+    populateInfoColoredPanel(newRectangle.get());
+    
     // Ajout au contenu scrollable
     std::unique_ptr<juce::Component> component(newRectangle.release());
     scrollableContent->addRectangle(std::move(component));
@@ -150,4 +153,36 @@ juce::Colour Zone4ContentArea::getNextColour()
     auto colour = availableColours[(nextRectangleId - 1) % availableColours.size()];
     nextRectangleId++;
     return colour;
+}
+
+void Zone4ContentArea::populateInfoColoredPanel(InfoColoredPanel* panel)
+{
+    if (!panel)
+        return;
+    
+    // Préparer les listes de noms pour chaque combobox
+    
+    // 1. ChordDegree (degré d'accord) - Zone gauche
+    juce::StringArray degreeNames;
+    for (const auto& degree : chordDegrees)
+    {
+        degreeNames.add(DiatonyText::getChordDegreeName(degree));
+    }
+    panel->populateLeftCombo(degreeNames);
+    
+    // 2. ChordState (état d'inversion) - Zone top-right
+    juce::StringArray stateNames;
+    for (const auto& state : chordStates)
+    {
+        stateNames.add(DiatonyText::getChordStateName(state));
+    }
+    panel->populateTopRightCombo(stateNames);
+    
+    // 3. ChordQuality (qualité d'accord) - Zone bottom-right
+    juce::StringArray qualityNames;
+    for (const auto& quality : chordQualities)
+    {
+        qualityNames.add(DiatonyText::getChordQualityName(quality));
+    }
+    panel->populateBottomRightCombo(qualityNames);
 }

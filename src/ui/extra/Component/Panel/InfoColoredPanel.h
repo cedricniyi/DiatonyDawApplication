@@ -29,6 +29,11 @@ public:
     DiatonyComboBox& getTopRightCombo() { return topRightCombo; }
     DiatonyComboBox& getBottomRightCombo() { return bottomRightCombo; }
     
+    // Méthodes pour injecter les items dans les combobox (découplage du modèle métier)
+    void populateLeftCombo(const juce::StringArray& items);
+    void populateTopRightCombo(const juce::StringArray& items);
+    void populateBottomRightCombo(const juce::StringArray& items);
+    
     // Contrôle de la visibilité de la partie droite
     void showRightSide(bool show);
     void hideRightSide() { showRightSide(false); }

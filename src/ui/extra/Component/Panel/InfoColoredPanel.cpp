@@ -168,27 +168,13 @@ void InfoColoredPanel::setupZones(juce::Colour baseColor)
     topRightZone->setOpaque(false);
     bottomRightZone->setOpaque(false);
     
-    // Configuration du ComboBox pour la zone gauche
-    leftCombo.addItem("Accord 1", 1);
-    leftCombo.addItem("Accord 2", 2);
-    leftCombo.addItem("Accord 3", 3);
-    leftCombo.addItem("Accord 4", 4);
-    leftCombo.setSelectedId(1);
+    // Configuration des ComboBox (vides au départ, à peupler depuis l'extérieur)
     leftCombo.adaptToBackgroundColour(baseColor);
     leftZone->addAndMakeVisible(leftCombo);
     
-    // Configuration des combo boxes avec style personnalisé
-    topRightCombo.addItem("Option 1", 1);
-    topRightCombo.addItem("Option 2", 2);
-    topRightCombo.addItem("Option 3", 3);
-    topRightCombo.setSelectedId(1);
     topRightCombo.adaptToBackgroundColour(baseColor);
     topRightZone->addAndMakeVisible(topRightCombo);
     
-    bottomRightCombo.addItem("Choix A", 1);
-    bottomRightCombo.addItem("Choix B", 2);
-    bottomRightCombo.addItem("Choix C", 3);
-    bottomRightCombo.setSelectedId(1);
     bottomRightCombo.adaptToBackgroundColour(baseColor);
     bottomRightZone->addAndMakeVisible(bottomRightCombo);
     
@@ -196,6 +182,39 @@ void InfoColoredPanel::setupZones(juce::Colour baseColor)
     addAndMakeVisible(leftZone.get());
     addAndMakeVisible(topRightZone.get());
     addAndMakeVisible(bottomRightZone.get());
+}
+
+void InfoColoredPanel::populateLeftCombo(const juce::StringArray& items)
+{
+    leftCombo.clear();
+    for (int i = 0; i < items.size(); ++i)
+    {
+        leftCombo.addItem(items[i], i + 1);
+    }
+    if (items.size() > 0)
+        leftCombo.setSelectedId(1);
+}
+
+void InfoColoredPanel::populateTopRightCombo(const juce::StringArray& items)
+{
+    topRightCombo.clear();
+    for (int i = 0; i < items.size(); ++i)
+    {
+        topRightCombo.addItem(items[i], i + 1);
+    }
+    if (items.size() > 0)
+        topRightCombo.setSelectedId(1);
+}
+
+void InfoColoredPanel::populateBottomRightCombo(const juce::StringArray& items)
+{
+    bottomRightCombo.clear();
+    for (int i = 0; i < items.size(); ++i)
+    {
+        bottomRightCombo.addItem(items[i], i + 1);
+    }
+    if (items.size() > 0)
+        bottomRightCombo.setSelectedId(1);
 }
 
 void InfoColoredPanel::showRightSide(bool show)
