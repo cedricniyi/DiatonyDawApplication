@@ -9,7 +9,7 @@ Zone4::Zone4()
                 FontManager::FontWeight::Medium)
 {
     // Configuration du titre
-    titleLabel.setText("Zone 4", juce::dontSendNotification);
+    titleLabel.setText("Editeur de section", juce::dontSendNotification);
     titleLabel.setJustificationType(juce::Justification::centredLeft);
     titleLabel.setColour(juce::Label::textColourId, juce::Colours::black);
     

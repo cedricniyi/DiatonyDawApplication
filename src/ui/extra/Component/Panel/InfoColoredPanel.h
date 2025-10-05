@@ -25,7 +25,7 @@ public:
     juce::Component* getBottomRightZone() const { return bottomRightZone.get(); }
     
     // Accès au contenu des zones
-    juce::Label& getCenterLabel() { return centerLabel; }
+    DiatonyComboBox& getLeftCombo() { return leftCombo; }
     DiatonyComboBox& getTopRightCombo() { return topRightCombo; }
     DiatonyComboBox& getBottomRightCombo() { return bottomRightCombo; }
     
@@ -46,8 +46,8 @@ private:
     juce::Colour topRightZoneColor;
     juce::Colour bottomRightZoneColor;
     
-    // Contenu des zones
-    juce::Label centerLabel;
+    // Contenu des zones - maintenant 3 ComboBox
+    DiatonyComboBox leftCombo;
     DiatonyComboBox topRightCombo;
     DiatonyComboBox bottomRightCombo;
     

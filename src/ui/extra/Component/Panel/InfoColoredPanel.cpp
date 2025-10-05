@@ -52,13 +52,17 @@ void InfoColoredPanel::resized()
     // Positionner les composants à l'intérieur de chaque zone
     if (leftZone && topRightZone && bottomRightZone)
     {
-        // Label centré dans la zone gauche
+        // ComboBox dans la zone gauche avec padding
         auto leftBounds = leftZone->getLocalBounds();
-        centerLabel.setBounds(leftBounds.withTrimmedLeft(5).withTrimmedRight(5));
+        auto comboHeight = 20;
+        auto leftComboY = (leftBounds.getHeight() - comboHeight) / 2;
+        leftCombo.setBounds(leftBounds.withTrimmedLeft(5)
+                                      .withTrimmedRight(5)
+                                      .withTop(leftComboY)
+                                      .withHeight(comboHeight));
         
         // ComboBox dans la zone top-right avec padding
         auto topRightBounds = topRightZone->getLocalBounds();
-        auto comboHeight = 20;
         auto topComboY = (topRightBounds.getHeight() - comboHeight) / 2;
         topRightCombo.setBounds(topRightBounds.withTrimmedLeft(5)
                                               .withTrimmedRight(5)
@@ -138,10 +142,8 @@ void InfoColoredPanel::setColor(juce::Colour color)
     topRightZoneColor = color;
     bottomRightZoneColor = color;
     
-    // Mettre à jour la couleur du texte pour contraster avec la nouvelle couleur
-    centerLabel.setColour(juce::Label::textColourId, color.contrasting());
-    
-    // Adapter les ComboBox à la nouvelle couleur
+    // Adapter tous les ComboBox à la nouvelle couleur
+    leftCombo.adaptToBackgroundColour(color);
     topRightCombo.adaptToBackgroundColour(color);
     bottomRightCombo.adaptToBackgroundColour(color);
     
@@ -166,11 +168,14 @@ void InfoColoredPanel::setupZones(juce::Colour baseColor)
     topRightZone->setOpaque(false);
     bottomRightZone->setOpaque(false);
     
-    // Configuration du label centré pour la zone gauche
-    centerLabel.setText("Zone Info", juce::dontSendNotification);
-    centerLabel.setJustificationType(juce::Justification::centred);
-    centerLabel.setColour(juce::Label::textColourId, baseColor.contrasting());
-    leftZone->addAndMakeVisible(centerLabel);
+    // Configuration du ComboBox pour la zone gauche
+    leftCombo.addItem("Accord 1", 1);
+    leftCombo.addItem("Accord 2", 2);
+    leftCombo.addItem("Accord 3", 3);
+    leftCombo.addItem("Accord 4", 4);
+    leftCombo.setSelectedId(1);
+    leftCombo.adaptToBackgroundColour(baseColor);
+    leftZone->addAndMakeVisible(leftCombo);
     
     // Configuration des combo boxes avec style personnalisé
     topRightCombo.addItem("Option 1", 1);

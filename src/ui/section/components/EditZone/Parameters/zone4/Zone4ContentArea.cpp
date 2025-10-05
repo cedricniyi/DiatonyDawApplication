@@ -61,6 +61,28 @@ void Zone4ContentArea::addRectangle()
     
     updateVisibility();
     resized();
+    
+    // Faire défiler automatiquement vers le dernier élément ajouté
+    // Attendre que le layout soit terminé avant de scroller
+    juce::MessageManager::callAsync([this]() {
+        if (scrollableContent)
+        {
+            // Calculer la position X du dernier rectangle
+            int numRectangles = scrollableContent->getNumRectangles();
+            if (numRectangles > 0)
+            {
+                // Largeur totale du contenu - largeur de la zone visible
+                int contentWidth = scrollableContent->getWidth();
+                int viewWidth = viewport.getViewWidth();
+                
+                // Position X pour afficher le dernier élément (scroll à droite)
+                int scrollToX = juce::jmax(0, contentWidth - viewWidth);
+                
+                // Faire défiler horizontalement (Y reste à 0)
+                viewport.setViewPosition(scrollToX, 0);
+            }
+        }
+    });
 }
 
 void Zone4ContentArea::clearAllRectangles()
@@ -101,7 +123,7 @@ void Zone4ContentArea::setupViewport()
 void Zone4ContentArea::setupEmptyLabel()
 {
     // Configuration du label d'état vide
-    emptyLabel.setText("Aucun élément ajouté", juce::dontSendNotification);
+    emptyLabel.setText(juce::String::fromUTF8("Aucun élément ajouté"), juce::dontSendNotification);
     emptyLabel.setJustificationType(juce::Justification::centred);
     emptyLabel.setColour(juce::Label::textColourId, juce::Colours::grey.withAlpha(0.7f));
     
