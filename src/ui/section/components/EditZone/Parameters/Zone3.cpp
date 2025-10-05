@@ -72,11 +72,8 @@ void Zone3::setupStyledButtons()
                 onModeChanged(selectedMode);
         };
         
-        // Définir "Major" comme sélectionné par défaut
-        if (modes[i] == Diatony::Mode::Major)
-        {
-            styledButtons[i]->setSelected(true);
-        }
+        // Pas de sélection par défaut hardcodée
+        // La valeur réelle sera appliquée par setSelectedMode() depuis le modèle
         
         addAndMakeVisible(*styledButtons[i]);
     }
@@ -84,9 +81,6 @@ void Zone3::setupStyledButtons()
 
 void Zone3::setSelectedMode(Diatony::Mode mode)
 {
-    if (selectedMode == mode)
-        return;
-
     selectedMode = mode;
     for (size_t j = 0; j < styledButtons.size(); ++j)
     {

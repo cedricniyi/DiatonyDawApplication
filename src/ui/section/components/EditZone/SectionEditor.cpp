@@ -230,7 +230,10 @@ void SectionEditor::bindZonesToModel()
 void SectionEditor::syncZonesFromModel()
 {
     if (!currentSectionState.isValid())
+    {
+        DBG("syncZonesFromModel: currentSectionState is INVALID");
         return;
+    }
 
     Section section(currentSectionState);
 
@@ -241,9 +244,16 @@ void SectionEditor::syncZonesFromModel()
     // Déduire BaseNote depuis Note + Altération
     auto base = Diatony::toBaseNote(note, alt);
 
+    // DBG("syncZonesFromModel: note=" << static_cast<int>(note) 
+    //     << ", alt=" << static_cast<int>(alt) 
+    //     << ", isMajor=" << (isMajor ? 1 : 0)
+    //     << ", base=" << static_cast<int>(base));
+
     zone1Component.setSelectedBaseNote(base);
     zone2Component.setSelectedAlteration(alt);
     zone3Component.setSelectedMode(isMajor ? Diatony::Mode::Major : Diatony::Mode::Minor);
+    
+    DBG("syncZonesFromModel: zones updated");
 }
 
 void SectionEditor::valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged,

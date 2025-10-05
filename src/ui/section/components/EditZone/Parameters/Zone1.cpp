@@ -85,13 +85,8 @@ void Zone1::setupCircularButtons()
                 onBaseNoteChanged(selectedBaseNote);
         };
         
-        // Définir "C" comme sélectionné par défaut (comme Zone2 et Zone3)
-        if (baseNotes[i] == Diatony::BaseNote::C)
-        {
-            circularButtons[i]->setSelected(true);
-            circularButtons[i]->setBaseColour(juce::Colours::blue);
-            circularButtons[i]->setTextColour(juce::Colours::white);
-        }
+        // Pas de sélection par défaut hardcodée
+        // La valeur réelle sera appliquée par setSelectedBaseNote() depuis le modèle
         
         addAndMakeVisible(*circularButtons[i]);
     }
@@ -99,8 +94,7 @@ void Zone1::setupCircularButtons()
 
 void Zone1::setSelectedBaseNote(Diatony::BaseNote note)
 {
-    if (selectedBaseNote == note && !circularButtons.empty())
-        return;
+    DBG("Zone1::setSelectedBaseNote called with note=" << static_cast<int>(note));
 
     selectedBaseNote = note;
 
@@ -110,6 +104,7 @@ void Zone1::setSelectedBaseNote(Diatony::BaseNote note)
         circularButtons[j]->setSelected(isSelected);
         if (isSelected)
         {
+            DBG("Zone1: Setting button " << j << " as SELECTED (blue)");
             circularButtons[j]->setBaseColour(juce::Colours::blue);
             circularButtons[j]->setTextColour(juce::Colours::white);
         }

@@ -72,11 +72,8 @@ void Zone2::setupStyledButtons()
                 onAlterationChanged(selectedAlteration);
         };
         
-        // Définir "Natural" comme sélectionné par défaut
-        if (alterations[i] == Diatony::Alteration::Natural)
-        {
-            styledButtons[i]->setSelected(true);
-        }
+        // Pas de sélection par défaut hardcodée
+        // La valeur réelle sera appliquée par setSelectedAlteration() depuis le modèle
         
         addAndMakeVisible(*styledButtons[i]);
     }
@@ -84,9 +81,6 @@ void Zone2::setupStyledButtons()
 
 void Zone2::setSelectedAlteration(Diatony::Alteration alt)
 {
-    if (selectedAlteration == alt)
-        return;
-
     selectedAlteration = alt;
 
     for (size_t j = 0; j < styledButtons.size(); ++j)
