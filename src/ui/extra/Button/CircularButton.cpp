@@ -59,9 +59,6 @@ void CircularButtonLookAndFeel::drawButtonText(juce::Graphics& g, juce::TextButt
 //==============================================================================
 // CircularButton Implementation
 
-// LookAndFeel statique partagé
-CircularButtonLookAndFeel CircularButton::sharedLookAndFeel;
-
 CircularButton::CircularButton(const juce::String& buttonText,
                               juce::Colour baseColourToUse,
                               juce::Colour textColourToUse,
@@ -75,7 +72,8 @@ CircularButton::CircularButton(const juce::String& buttonText,
     // Initialiser la font avec FontManager (comme OutlineTextButton)
     customFont = fontManager->getSFProDisplay(fontSize, fontWeight);
     
-    // Appliquer le LookAndFeel statique partagé
+    // Utiliser une instance statique locale de LookAndFeel (plus sûr que static membre)
+    static CircularButtonLookAndFeel sharedLookAndFeel;
     setLookAndFeel(&sharedLookAndFeel);
 }
 
