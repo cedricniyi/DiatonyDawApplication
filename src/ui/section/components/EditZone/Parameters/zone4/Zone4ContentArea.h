@@ -6,6 +6,7 @@
 #include "Zone4ScrollablePanel.h"
 #include "utils/FontManager.h"
 #include "model/DiatonyTypes.h"
+#include "model/ModelIdentifiers.h"
 #include "ui/DiatonyText.h"
 
 //==============================================================================
@@ -23,7 +24,8 @@ public:
     void resized() override;
     
     // Gestion du contenu
-    void addRectangle();
+    void addRectangle();  // Version sans ValueTree (valeurs par défaut)
+    void addRectangle(juce::ValueTree chordState);  // Version avec ValueTree connecté
     void clearAllRectangles();
     bool hasContent() const;
     

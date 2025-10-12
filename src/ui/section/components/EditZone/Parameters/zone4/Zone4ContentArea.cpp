@@ -46,6 +46,12 @@ void Zone4ContentArea::resized()
 
 void Zone4ContentArea::addRectangle()
 {
+    // Version sans ValueTree - appelle la version complète avec un ValueTree invalide
+    addRectangle(juce::ValueTree());
+}
+
+void Zone4ContentArea::addRectangle(juce::ValueTree chordState)
+{
     if (!scrollableContent)
         return;
     
@@ -60,6 +66,42 @@ void Zone4ContentArea::addRectangle()
     
     // Peupler les combobox avec les valeurs validées depuis DiatonyTypes
     populateInfoColoredPanel(newRectangle.get());
+    
+    // Si un ValueTree est fourni, initialiser les comboboxes et connecter au modèle
+    if (chordState.isValid())
+    {
+        // Lire les valeurs actuelles du chord
+        int degree = chordState.getProperty(ModelIdentifiers::degree, 0);
+        int quality = chordState.getProperty(ModelIdentifiers::quality, 0);
+        int state = chordState.getProperty(ModelIdentifiers::state, 0);
+        
+        // Initialiser les comboboxes avec ces valeurs
+        newRectangle->getDegreeCombo().setSelectedItemIndex(degree, juce::dontSendNotification);
+        newRectangle->getStateCombo().setSelectedItemIndex(state, juce::dontSendNotification);
+        newRectangle->getQualityCombo().setSelectedItemIndex(quality, juce::dontSendNotification);
+        
+        // Connecter les onChange des comboboxes au ValueTree
+        // On capture le ValueTree par valeur (c'est léger, juste un pointeur interne)
+        // et les pointeurs vers les comboboxes
+        auto* degreeCombo = &newRectangle->getDegreeCombo();
+        auto* stateCombo = &newRectangle->getStateCombo();
+        auto* qualityCombo = &newRectangle->getQualityCombo();
+        
+        degreeCombo->onChange = [chordState, degreeCombo]() mutable {
+            int newDegree = degreeCombo->getSelectedItemIndex();
+            chordState.setProperty(ModelIdentifiers::degree, newDegree, nullptr);
+        };
+        
+        stateCombo->onChange = [chordState, stateCombo]() mutable {
+            int newState = stateCombo->getSelectedItemIndex();
+            chordState.setProperty(ModelIdentifiers::state, newState, nullptr);
+        };
+        
+        qualityCombo->onChange = [chordState, qualityCombo]() mutable {
+            int newQuality = qualityCombo->getSelectedItemIndex();
+            chordState.setProperty(ModelIdentifiers::quality, newQuality, nullptr);
+        };
+    }
     
     // Ajout au contenu scrollable
     std::unique_ptr<juce::Component> component(newRectangle.release());
