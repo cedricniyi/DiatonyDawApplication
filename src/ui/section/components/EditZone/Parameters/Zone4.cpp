@@ -20,7 +20,19 @@ Zone4::Zone4()
     
     // Configuration du callback du bouton d'ajout
     addButton.onClick = [this]() {
+        // Ajouter le rectangle visuel à l'UI
         contentAreaComponent.addRectangle();
+        
+        // Notifier le SectionEditor via le callback (même pattern que Zone1/2/3)
+        if (onChordAdded)
+        {
+            // Ajouter un accord avec des valeurs par défaut : Degré I, Majeur, Fondamental
+            onChordAdded(
+                Diatony::ChordDegree::First,
+                Diatony::ChordQuality::Major,
+                Diatony::ChordState::Fundamental
+            );
+        }
     };
     addAndMakeVisible(addButton);
     
@@ -101,4 +113,16 @@ void Zone4::setupGrid()
     // Rangée 2, Colonnes 1-2 : Content Area (span sur 2 colonnes)
     mainGrid.items.add(juce::GridItem(contentAreaComponent)
         .withArea(juce::GridItem::Span(1), juce::GridItem::Span(2)));
+}
+
+void Zone4::syncWithProgression(int chordCount)
+{
+    // Effacer tous les rectangles actuels
+    contentAreaComponent.clearAllRectangles();
+    
+    // Ajouter autant de rectangles qu'il y a d'accords dans la progression
+    for (int i = 0; i < chordCount; ++i)
+    {
+        contentAreaComponent.addRectangle();
+    }
 }

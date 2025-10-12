@@ -5,6 +5,7 @@
 #include "ui/extra/Component/Panel/ColoredPanel.h"
 #include "ui/extra/Button/StyledButton.h"
 #include "zone4/Zone4ContentArea.h"
+#include "model/DiatonyTypes.h"
 
 /**
  * Zone 4 - Quatrième paramètre/contrôle de section
@@ -20,6 +21,12 @@ public:
     
     void paint(juce::Graphics& g) override;
     void resized() override;
+    
+    // Binding depuis SectionEditor (même pattern que Zone1/2/3)
+    std::function<void(Diatony::ChordDegree, Diatony::ChordQuality, Diatony::ChordState)> onChordAdded; // UI -> Modèle
+    
+    // Synchronisation Modèle -> UI (afficher les accords existants)
+    void syncWithProgression(int chordCount);
 
 private:
     // Couleur de fond pour cette zone
