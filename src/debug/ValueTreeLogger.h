@@ -23,8 +23,30 @@ enum class LogLevel
 class ValueTreeLogger : public juce::ValueTree::Listener
 {
 public:
-    ValueTreeLogger(const juce::String& name, LogLevel level = VALUE_TREE_LOG_LEVEL) 
-        : treeName(name), logLevel(level) {}
+    ValueTreeLogger(const juce::String& name, LogLevel level = VALUE_TREE_LOG_LEVEL, bool recursive = true) 
+        : treeName(name), logLevel(level), isRecursive(recursive) {}
+
+    // Attacher le listener à un ValueTree et tous ses descendants
+    void attachTo(juce::ValueTree& tree)
+    {
+        tree.addListener(this);
+        
+        if (isRecursive)
+        {
+            attachToAllChildren(tree);
+        }
+    }
+    
+    // Détacher le listener d'un ValueTree et tous ses descendants
+    void detachFrom(juce::ValueTree& tree)
+    {
+        tree.removeListener(this);
+        
+        if (isRecursive)
+        {
+            detachFromAllChildren(tree);
+        }
+    }
 
     void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property) override
     {
@@ -32,8 +54,9 @@ public:
         if (logLevel == LogLevel::MINIMAL)
             return;
             
-        // Log basique du changement
-        DBG("[" << treeName << "] " << property.toString() << " = " 
+        // Log avec le chemin dans l'arborescence
+        DBG("[" << treeName << "] " << getTreePath(tree) << " → " 
+            << property.toString() << " = " 
             << tree.getProperty(property).toString());
             
         // En mode VERBOSE, afficher les résumés détaillés
@@ -49,8 +72,15 @@ public:
     void valueTreeChildAdded(juce::ValueTree& parentTree, juce::ValueTree& childWhichHasBeenAdded) override
     {
         // Toujours logger l'ajout d'enfants (important)
-        DBG("[" << treeName << "] +Enfant: " 
-            << childWhichHasBeenAdded.getType().toString());
+        DBG("[" << treeName << "] +Enfant: " << getTreePath(parentTree) 
+            << " ← " << childWhichHasBeenAdded.getType().toString());
+            
+        // Si mode récursif, attacher le listener au nouvel enfant et ses descendants
+        if (isRecursive)
+        {
+            childWhichHasBeenAdded.addListener(this);
+            attachToAllChildren(childWhichHasBeenAdded);
+        }
             
         // En mode VERBOSE, afficher les résumés détaillés
         if (logLevel == LogLevel::VERBOSE)
@@ -65,8 +95,15 @@ public:
     void valueTreeChildRemoved(juce::ValueTree& parentTree, juce::ValueTree& childWhichHasBeenRemoved, int index) override
     {
         // Toujours logger la suppression d'enfants (important)
-        DBG("[" << treeName << "] -Enfant: " 
-            << childWhichHasBeenRemoved.getType().toString() << " (index: " << index << ")");
+        DBG("[" << treeName << "] -Enfant: " << getTreePath(parentTree)
+            << " ✗ " << childWhichHasBeenRemoved.getType().toString() << " (index: " << index << ")");
+            
+        // Si mode récursif, détacher le listener de l'enfant et ses descendants
+        if (isRecursive)
+        {
+            childWhichHasBeenRemoved.removeListener(this);
+            detachFromAllChildren(childWhichHasBeenRemoved);
+        }
             
         // En mode VERBOSE, afficher les résumés détaillés
         if (logLevel == LogLevel::VERBOSE)
@@ -84,6 +121,46 @@ public:
 private:
     juce::String treeName;
     LogLevel logLevel;
+    bool isRecursive;
+    
+    // Attacher récursivement à tous les enfants
+    void attachToAllChildren(juce::ValueTree& tree)
+    {
+        for (int i = 0; i < tree.getNumChildren(); ++i)
+        {
+            auto child = tree.getChild(i);
+            child.addListener(this);
+            attachToAllChildren(child); // Récursion pour les petits-enfants
+        }
+    }
+    
+    // Détacher récursivement de tous les enfants
+    void detachFromAllChildren(juce::ValueTree& tree)
+    {
+        for (int i = 0; i < tree.getNumChildren(); ++i)
+        {
+            auto child = tree.getChild(i);
+            child.removeListener(this);
+            detachFromAllChildren(child); // Récursion pour les petits-enfants
+        }
+    }
+    
+    // Obtenir le chemin complet dans l'arborescence (ex: "PIECE/SECTION/PROGRESSION")
+    juce::String getTreePath(const juce::ValueTree& tree) const
+    {
+        if (!tree.isValid())
+            return "INVALID";
+            
+        juce::String path = tree.getType().toString();
+        
+        // Ajouter l'ID si disponible
+        if (tree.hasProperty("id"))
+        {
+            path += "#" + tree.getProperty("id").toString();
+        }
+        
+        return path;
+    }
     
     void logPieceStateSummary(const juce::ValueTree& pieceState)
     {

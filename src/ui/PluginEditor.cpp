@@ -21,13 +21,14 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     appState.setProperty(UIStateIdentifiers::interactivePianoVisible, false, nullptr);
     
     #if DEBUG
-        // Attache un logger pour déboguer les changements du ValueTree.
+        // Attache un logger pour déboguer les changements du ValueTree (mode non-récursif pour l'UI State).
         appState.addListener(&appStateLogger);
     
-        // Attache un logger à l'état du modèle (la pièce) pour suivre ses changements.
-        appController->getState().addListener(&pieceStateLogger);
+        // Attache un logger RÉCURSIF à l'état du modèle (la pièce) pour suivre ses changements à tous les niveaux.
+        // Cela permet de tracker les accords ajoutés dans PIECE → SECTION → PROGRESSION → CHORD
+        pieceStateLogger.attachTo(appController->getState());
         
-        // Attache un logger à l'état de sélection (contexte applicatif) pour suivre ses changements.
+        // Attache un logger à l'état de sélection (contexte applicatif) pour suivre ses changements (mode non-récursif).
         appController->getSelectionState().addListener(&selectionStateLogger);
 
         // Test: Modifions une propriété de la pièce pour vérifier que le logger fonctionne.
@@ -71,6 +72,12 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
 
 AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
 {
+    #if DEBUG
+        // Détacher le logger récursif du modèle avant destruction
+        if (appController)
+            pieceStateLogger.detachFrom(appController->getState());
+    #endif
+    
     setLookAndFeel(nullptr);
 }
 
