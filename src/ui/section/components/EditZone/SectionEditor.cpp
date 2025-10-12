@@ -19,6 +19,9 @@ SectionEditor::~SectionEditor()
 {
     if (currentSectionState.isValid())
         currentSectionState.removeListener(this);
+    
+    if (currentProgressionState.isValid())
+        currentProgressionState.removeListener(this);
 }
 
 void SectionEditor::paint(juce::Graphics& g)
@@ -69,18 +72,36 @@ void SectionEditor::setSectionState(juce::ValueTree sectionState)
     if (currentSectionState == sectionState)
         return;
 
+    // Détacher les anciens listeners
     if (currentSectionState.isValid())
         currentSectionState.removeListener(this);
+    
+    if (currentProgressionState.isValid())
+        currentProgressionState.removeListener(this);
 
     currentSectionState = sectionState;
 
     if (currentSectionState.isValid())
     {
+        // Écouter la section
         currentSectionState.addListener(this);
+        
+        // Écouter aussi la progression pour détecter les ajouts/suppressions d'accords
+        Section section(currentSectionState);
+        currentProgressionState = section.getProgression().getState();
+        if (currentProgressionState.isValid())
+        {
+            currentProgressionState.addListener(this);
+        }
+        
         // Synchroniser les zones seulement si on a un ValueTree valide
         syncZonesFromModel();
     }
-    // Si invalide, c'est un "clear" intentionnel, pas besoin de sync ni de log
+    else
+    {
+        // Invalide : clear
+        currentProgressionState = juce::ValueTree();
+    }
 }
 
 void SectionEditor::setupSectionNameLabel()
@@ -230,6 +251,19 @@ void SectionEditor::bindZonesToModel()
         Section section(currentSectionState);
         section.setIsMajor(mode == Diatony::Mode::Major);
     };
+    
+    // Zone4: Ajout d'accord
+    zone4Component.onChordAdded = [this](Diatony::ChordDegree degree, 
+                                         Diatony::ChordQuality quality, 
+                                         Diatony::ChordState state)
+    {
+        if (!currentSectionState.isValid()) return;
+        
+        // Obtenir la progression de la section et ajouter l'accord
+        Section section(currentSectionState);
+        auto progression = section.getProgression();
+        progression.addChord(degree, quality, state);
+    };
 }
 
 void SectionEditor::syncZonesFromModel()
@@ -253,6 +287,10 @@ void SectionEditor::syncZonesFromModel()
     zone2Component.setSelectedAlteration(alt);
     zone3Component.setSelectedMode(isMajor ? Diatony::Mode::Major : Diatony::Mode::Minor);
     
+    // Synchroniser Zone4 avec la progression d'accords
+    auto progression = section.getProgression();
+    zone4Component.syncWithProgression(static_cast<int>(progression.size()));
+    
     // Log concis: afficher seulement si vraiment nécessaire (commenter pour réduire encore)
     // DBG("[SectionEditor] Zones synced: note=" << static_cast<int>(note) 
     //     << " alt=" << static_cast<int>(alt) << " mode=" << (isMajor ? "Maj" : "Min"));
@@ -266,4 +304,32 @@ void SectionEditor::valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyH
 
     // Resynchroniser l'UI quand la section change (quelqu'un d'autre ou nous)
     syncZonesFromModel();
+}
+
+void SectionEditor::valueTreeChildAdded(juce::ValueTree& parentTree, juce::ValueTree& childWhichHasBeenAdded)
+{
+    if (!currentProgressionState.isValid()) return;
+    
+    // Si un CHORD a été ajouté dans notre PROGRESSION, resynchroniser Zone4
+    if (parentTree == currentProgressionState && 
+        childWhichHasBeenAdded.hasType(ModelIdentifiers::CHORD))
+    {
+        Section section(currentSectionState);
+        auto progression = section.getProgression();
+        zone4Component.syncWithProgression(static_cast<int>(progression.size()));
+    }
+}
+
+void SectionEditor::valueTreeChildRemoved(juce::ValueTree& parentTree, juce::ValueTree& childWhichHasBeenRemoved, int index)
+{
+    if (!currentProgressionState.isValid()) return;
+    
+    // Si un CHORD a été supprimé de notre PROGRESSION, resynchroniser Zone4
+    if (parentTree == currentProgressionState && 
+        childWhichHasBeenRemoved.hasType(ModelIdentifiers::CHORD))
+    {
+        Section section(currentSectionState);
+        auto progression = section.getProgression();
+        zone4Component.syncWithProgression(static_cast<int>(progression.size()));
+    }
 }
