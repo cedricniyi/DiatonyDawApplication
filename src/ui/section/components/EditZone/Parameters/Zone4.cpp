@@ -20,10 +20,8 @@ Zone4::Zone4()
     
     // Configuration du callback du bouton d'ajout
     addButton.onClick = [this]() {
-        // Ajouter le rectangle visuel à l'UI
-        contentAreaComponent.addRectangle();
-        
-        // Notifier le SectionEditor via le callback (même pattern que Zone1/2/3)
+        // Notifier le SectionEditor via le callback pour créer l'accord dans le modèle
+        // (même pattern que Zone1/2/3)
         if (onChordAdded)
         {
             // Ajouter un accord avec des valeurs par défaut : Degré I, Majeur, Fondamental
@@ -33,6 +31,9 @@ Zone4::Zone4()
                 Diatony::ChordState::Fundamental
             );
         }
+        
+        // Note: Le rectangle visuel sera ajouté automatiquement via valueTreeChildAdded()
+        // qui appelle syncWithProgression() et crée le rectangle connecté au ValueTree
     };
     addAndMakeVisible(addButton);
     
@@ -115,14 +116,15 @@ void Zone4::setupGrid()
         .withArea(juce::GridItem::Span(1), juce::GridItem::Span(2)));
 }
 
-void Zone4::syncWithProgression(int chordCount)
+void Zone4::syncWithProgression(const std::vector<juce::ValueTree>& chords)
 {
     // Effacer tous les rectangles actuels
     contentAreaComponent.clearAllRectangles();
     
-    // Ajouter autant de rectangles qu'il y a d'accords dans la progression
-    for (int i = 0; i < chordCount; ++i)
+    // Ajouter autant de rectangles qu'il y a d'accords avec leurs valeurs connectées au ValueTree
+    for (const auto& chordState : chords)
     {
-        contentAreaComponent.addRectangle();
+        // Passer le ValueTree pour initialiser et connecter les comboboxes au modèle
+        contentAreaComponent.addRectangle(chordState);
     }
 }

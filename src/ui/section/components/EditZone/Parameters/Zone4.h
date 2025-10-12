@@ -25,8 +25,8 @@ public:
     // Binding depuis SectionEditor (même pattern que Zone1/2/3)
     std::function<void(Diatony::ChordDegree, Diatony::ChordQuality, Diatony::ChordState)> onChordAdded; // UI -> Modèle
     
-    // Synchronisation Modèle -> UI (afficher les accords existants)
-    void syncWithProgression(int chordCount);
+    // Synchronisation Modèle -> UI (afficher les accords existants avec leurs valeurs)
+    void syncWithProgression(const std::vector<juce::ValueTree>& chords);
 
 private:
     // Couleur de fond pour cette zone
