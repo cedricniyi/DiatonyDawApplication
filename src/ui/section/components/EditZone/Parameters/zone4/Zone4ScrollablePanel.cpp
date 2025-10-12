@@ -87,7 +87,7 @@ void Zone4ScrollablePanel::layoutRectangles()
         
         if (auto* infoPanel = dynamic_cast<InfoColoredPanel*>(rectInfo.component.get()))
         {
-            if (rectangleHeight <= 50)
+            if (rectangleHeight <= 60)
             {
                 // Hauteur trop petite : masquer la partie droite
                 infoPanel->hideRightSide();
@@ -104,7 +104,7 @@ void Zone4ScrollablePanel::layoutRectangles()
         // - Si hauteur <= 80px (mode complet, petit) : largeur = hauteur × 4
         // - Sinon (mode complet, normal) : largeur = hauteur × 3
         int rectangleWidth;
-        if (rectangleHeight <= 50)
+        if (rectangleHeight <= 60)
         {
             rectangleWidth = static_cast<int>(rectangleHeight * 5.5f); // Mode réduit : plus large pour numérotation + combobox
         }
@@ -137,7 +137,7 @@ int Zone4ScrollablePanel::calculateRequiredWidth() const
     // - Si hauteur <= 80px (mode complet, petit) : largeur = hauteur × 4
     // - Sinon (mode complet, normal) : largeur = hauteur × 3
     int rectangleWidth;
-    if (rectangleHeight <= 50)
+    if (rectangleHeight <= 60)
     {
         rectangleWidth = static_cast<int>(rectangleHeight * 5.5f); // Mode réduit : plus large pour numérotation + combobox
     }
