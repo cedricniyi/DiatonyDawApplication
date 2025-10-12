@@ -55,6 +55,9 @@ void Zone4ContentArea::addRectangle()
     // Configuration du rectangle
     newRectangle->setAlpha(0.8f);
     
+    // Définir le numéro de ce panel (utilise nextRectangleId avant son incrémentation dans getNextColour)
+    newRectangle->setNumber(nextRectangleId - 1);
+    
     // Peupler les combobox avec les valeurs validées depuis DiatonyTypes
     populateInfoColoredPanel(newRectangle.get());
     
