@@ -287,9 +287,14 @@ void SectionEditor::syncZonesFromModel()
     zone2Component.setSelectedAlteration(alt);
     zone3Component.setSelectedMode(isMajor ? Diatony::Mode::Major : Diatony::Mode::Minor);
     
-    // Synchroniser Zone4 avec la progression d'accords
+    // Synchroniser Zone4 avec la progression d'accords (avec les valeurs réelles)
     auto progression = section.getProgression();
-    zone4Component.syncWithProgression(static_cast<int>(progression.size()));
+    std::vector<juce::ValueTree> chords;
+    for (size_t i = 0; i < progression.size(); ++i)
+    {
+        chords.push_back(progression.getChordState(i));
+    }
+    zone4Component.syncWithProgression(chords);
     
     // Log concis: afficher seulement si vraiment nécessaire (commenter pour réduire encore)
     // DBG("[SectionEditor] Zones synced: note=" << static_cast<int>(note) 
@@ -316,7 +321,12 @@ void SectionEditor::valueTreeChildAdded(juce::ValueTree& parentTree, juce::Value
     {
         Section section(currentSectionState);
         auto progression = section.getProgression();
-        zone4Component.syncWithProgression(static_cast<int>(progression.size()));
+        std::vector<juce::ValueTree> chords;
+        for (size_t i = 0; i < progression.size(); ++i)
+        {
+            chords.push_back(progression.getChordState(i));
+        }
+        zone4Component.syncWithProgression(chords);
     }
 }
 
@@ -330,6 +340,11 @@ void SectionEditor::valueTreeChildRemoved(juce::ValueTree& parentTree, juce::Val
     {
         Section section(currentSectionState);
         auto progression = section.getProgression();
-        zone4Component.syncWithProgression(static_cast<int>(progression.size()));
+        std::vector<juce::ValueTree> chords;
+        for (size_t i = 0; i < progression.size(); ++i)
+        {
+            chords.push_back(progression.getChordState(i));
+        }
+        zone4Component.syncWithProgression(chords);
     }
 }
