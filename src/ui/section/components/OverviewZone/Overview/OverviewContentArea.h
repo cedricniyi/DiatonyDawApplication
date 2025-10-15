@@ -44,6 +44,12 @@ public:
     void addSmallPanel();
     void clearAllPanels();
     bool hasContent() const;
+    // == limitation 1 section
+    int getNumPanels() const;  // Retourne le nombre de panels actuels
+    
+    // Callback appelé quand le nombre de panels change
+    std::function<void(int)> onContentCountChanged;
+    // =======================
     
     // Configuration
     juce::Rectangle<int> getPreferredSize() const;
