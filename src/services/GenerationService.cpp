@@ -127,6 +127,57 @@ void GenerationService::reset() {
     ready = true;
 }
 
+void GenerationService::logGenerationInfo(const Piece& piece) {
+    DBG("=================================================================");
+    DBG("📄 INFORMATIONS DE LA PIÈCE MUSICALE");
+    DBG("=================================================================");
+    
+    // Titre
+    DBG("🎵 Titre : " << piece.getTitle());
+    DBG("");
+    
+    // Nombre d'éléments
+    DBG("📊 Structure :");
+    DBG("  - Nombre de sections : " << piece.getSectionCount());
+    DBG("  - Nombre de modulations : " << piece.getModulationCount());
+    DBG("  - Nombre total d'accords : " << piece.getTotalChordCount());
+    DBG("");
+    
+    // Détails des sections
+    DBG("📑 DÉTAILS DES SECTIONS :");
+    DBG("-----------------------------------------------------------------");
+    for (size_t i = 0; i < piece.getSectionCount(); ++i) {
+        auto section = piece.getSection(static_cast<int>(i));
+        DBG("  Section " << (i + 1) << " : " << section.toString());
+        DBG("");
+    }
+    
+    // Détails des modulations
+    if (piece.getModulationCount() > 0) {
+        DBG("🔄 DÉTAILS DES MODULATIONS :");
+        DBG("-----------------------------------------------------------------");
+        for (size_t i = 0; i < piece.getModulationCount(); ++i) {
+            auto modulation = piece.getModulation(static_cast<int>(i));
+            DBG("  Modulation " << (i + 1) << " : " << modulation.toString());
+        }
+        DBG("");
+    }
+    
+    // Résumé global
+    DBG("📝 RÉSUMÉ GLOBAL :");
+    DBG("-----------------------------------------------------------------");
+    DBG(piece.getDetailedSummary());
+    DBG("");
+    
+    // État du service
+    DBG("=================================================================");
+    DBG("⚙️  État du service :");
+    DBG("  - Service prêt : " << (isReady() ? "✓" : "✗"));
+    DBG("  - Dernière erreur : " << (lastError.isEmpty() ? "(aucune)" : lastError));
+    DBG("=================================================================");
+    DBG("");
+}
+
 void* GenerationService::createDiatonyParametersFromPiece(const Piece& piece) {
     // TODO: Implémenter la traduction Piece -> FourVoiceTextureParameters
     // Cette méthode sera le cœur de la traduction entre notre modèle et Diatony

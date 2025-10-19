@@ -60,6 +60,17 @@ public:
      * @brief Réinitialise l'état du service
      */
     void reset();
+    
+    /**
+     * @brief Affiche (log) toutes les informations de la pièce
+     * 
+     * Cette méthode est utilisée pour tester le flux de données complet
+     * avant d'implémenter la génération réelle. Elle affiche dans la console
+     * toutes les informations de la pièce musicale.
+     * 
+     * @param piece La pièce musicale à analyser et afficher
+     */
+    void logGenerationInfo(const Piece& piece);
 
 private:
     // Implémentation cachée pour éviter les fuites de dépendances 

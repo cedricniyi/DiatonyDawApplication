@@ -5,6 +5,7 @@
 #include "../model/Piece.h"
 #include "../model/ModelIdentifiers.h"
 #include "ContextIdentifiers.h"
+#include "../services/GenerationService.h"
 
 /**
  * Contrôleur principal de l'application - Le "cerveau" découplé de l'UI
@@ -53,6 +54,9 @@ public:
     void clearPiece();
     void setPieceTitle(const juce::String& title);
     
+    // Génération
+    void startGeneration();
+    
     // Undo/Redo
     void undo();
     void redo();
@@ -87,6 +91,7 @@ private:
     Piece piece;                    // Le modèle de données (propriétaire unique)
     EditMode currentEditMode;       // Mode d'édition actuel
     juce::ValueTree selectionState; // État de sélection centralisé
+    GenerationService generationService; // Service de génération
     
     // === MÉTHODES PRIVÉES ===
     
