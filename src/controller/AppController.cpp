@@ -180,15 +180,9 @@ void AppController::startGeneration()
     
     DBG("  ✓ Pièce valide, appel du service de génération...");
     
-    // Définir le chemin de sortie du fichier MIDI
-    juce::String outputPath = juce::File::getSpecialLocation(
-        juce::File::userDesktopDirectory
-    ).getChildFile("generated_piece.mid").getFullPathName();
-    
-    DBG("  📁 Chemin de sortie : " << outputPath);
-    
-    // Appeler le service de génération
-    bool success = generationService.generateMidiFromPiece(piece, outputPath);
+    // Appeler le service de génération (le chemin est généré automatiquement)
+    juce::String dummyPath = "";  // Non utilisé, le service génère son propre chemin
+    bool success = generationService.generateMidiFromPiece(piece, dummyPath);
     
     if (success)
     {

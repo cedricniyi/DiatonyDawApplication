@@ -12,6 +12,7 @@
 #include "../../Diatony/c++/headers/aux/MinorTonality.hpp"
 #include "../../Diatony/c++/headers/diatony/TonalProgressionParameters.hpp"
 #include "../../Diatony/c++/headers/diatony/FourVoiceTextureParameters.hpp"
+#include "../../Diatony/c++/headers/diatony/FourVoiceTexture.hpp"
 #include "../../Diatony/c++/headers/diatony/ModulationParameters.hpp"
 #include "../../Diatony/c++/headers/aux/MidiFileGeneration.hpp"
 #include "../../Diatony/c++/headers/diatony/SolveDiatony.hpp"
@@ -182,17 +183,86 @@ bool GenerationService::generateMidiFromPiece(const Piece& piece, const juce::St
         DBG("");
         
         // ========================================
-        // 7. TODO: RÉSOLUTION ET GÉNÉRATION MIDI
+        // 7. PRÉPARER LE CHEMIN DE SAUVEGARDE
         // ========================================
-        DBG("⏸️  Génération MIDI non implémentée (prochaine étape)");
+        
+        // Créer le dossier dans Application Support
+        juce::File appSupportDir = juce::File::getSpecialLocation(juce::File::userHomeDirectory)
+            .getChildFile(APPLICATION_SUPPORT_PATH)
+            .getChildFile("DiatonyDawApplication")
+            .getChildFile("Solutions")
+            .getChildFile("MidiFiles");
+        
+        if (!appSupportDir.exists()) {
+            appSupportDir.createDirectory();
+            DBG("📁 Dossier créé : " << appSupportDir.getFullPathName());
+        }
+        
+        // Générer un nom de fichier unique avec timestamp
+        auto now = juce::Time::getCurrentTime();
+        juce::String timestamp = now.formatted("%Y%m%d_%H%M%S");
+        juce::String fileName = "diatony_piece_" + timestamp + ".mid";
+        juce::File midiFile = appSupportDir.getChildFile(fileName);
+        juce::String finalPath = midiFile.getFullPathName();
+        
+        DBG("📄 Fichier MIDI : " << finalPath);
         DBG("");
         
         // ========================================
-        // 8. CLEANUP
+        // 8. RÉSOLUTION AVEC DIATONY
+        // ========================================
+        DBG("🔍 Résolution du problème avec Diatony...");
+        DBG("  - Utilisation des options par défaut (timeout: 60s)");
+        DBG("");
+        
+        // Appel de solve_diatony avec options par défaut (nullptr)
+        auto solution = solve_diatony(pieceParams, nullptr, true);
+        
+        if (solution == nullptr) {
+            lastError = "No solution found by Diatony solver";
+            DBG("❌ ERREUR : Aucune solution trouvée");
+            DBG("");
+            
+            // Cleanup avant de retourner
+            delete pieceParams;
+            delete sectionParams;
+            return false;
+        }
+        
+        DBG("✅ Solution trouvée !");
+        DBG("");
+        
+        // ========================================
+        // 9. GÉNÉRATION DU FICHIER MIDI
+        // ========================================
+        DBG("🎼 Génération du fichier MIDI...");
+        
+        try {
+            writeSolToMIDIFile(
+                totalChords,
+                finalPath.toStdString(),
+                solution
+            );
+            
+            DBG("✅ Fichier MIDI généré avec succès !");
+            DBG("📁 Emplacement : " << finalPath);
+            DBG("");
+            
+        } catch (const std::exception& e) {
+            lastError = juce::String("Error writing MIDI file: ") + e.what();
+            DBG("❌ ERREUR lors de l'écriture du fichier MIDI : " << e.what());
+            
+            // Cleanup
+            delete pieceParams;
+            delete sectionParams;
+            return false;
+        }
+        
+        // ========================================
+        // 10. CLEANUP
         // ========================================
         // Note: On ne delete pas la tonalité car Tonality n'a pas de destructeur virtuel
         // et on ne sait pas qui possède le pointeur (TonalProgressionParameters ou nous)
-        // TODO: Vérifier la gestion de la mémoire dans Diatony
         delete pieceParams;
         delete sectionParams;
         
