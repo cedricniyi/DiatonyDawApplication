@@ -180,8 +180,24 @@ void AppController::startGeneration()
     
     DBG("  ✓ Pièce valide, appel du service de génération...");
     
-    // Appeler le service de génération pour logger les infos
-    generationService.logGenerationInfo(piece);
+    // Définir le chemin de sortie du fichier MIDI
+    juce::String outputPath = juce::File::getSpecialLocation(
+        juce::File::userDesktopDirectory
+    ).getChildFile("generated_piece.mid").getFullPathName();
+    
+    DBG("  📁 Chemin de sortie : " << outputPath);
+    
+    // Appeler le service de génération
+    bool success = generationService.generateMidiFromPiece(piece, outputPath);
+    
+    if (success)
+    {
+        DBG("  ✅ Génération réussie !");
+    }
+    else
+    {
+        DBG("  ❌ Erreur lors de la génération : " << generationService.getLastError());
+    }
     
     DBG("AppController::startGeneration() - Fin");
 }

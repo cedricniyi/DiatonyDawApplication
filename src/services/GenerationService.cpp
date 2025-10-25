@@ -1,12 +1,20 @@
 #include "GenerationService.h"
 #include "../model/DiatonyTypes.h"
+#include "../model/Section.h"
+#include "../model/Progression.h"
+#include "../model/Chord.h"
 
 // ⚠️ POINT DE CONTACT UNIQUE AVEC LA LIBRAIRIE DIATONY ⚠️
 // Ce fichier est le SEUL endroit du projet où nous incluons les headers Diatony
 #include "../../Diatony/c++/headers/aux/Utilities.hpp"
+#include "../../Diatony/c++/headers/aux/Tonality.hpp"
+#include "../../Diatony/c++/headers/aux/MajorTonality.hpp"
+#include "../../Diatony/c++/headers/aux/MinorTonality.hpp"
+#include "../../Diatony/c++/headers/diatony/TonalProgressionParameters.hpp"
 #include "../../Diatony/c++/headers/diatony/FourVoiceTextureParameters.hpp"
+#include "../../Diatony/c++/headers/diatony/ModulationParameters.hpp"
 #include "../../Diatony/c++/headers/aux/MidiFileGeneration.hpp"
-#include "../../Diatony/c++/headers/diatony/SolveDiatony.hpp" // Ajout du solveur
+#include "../../Diatony/c++/headers/diatony/SolveDiatony.hpp"
 
 
 /**
@@ -86,6 +94,9 @@ GenerationService::GenerationService()
 GenerationService::~GenerationService() = default;
 
 bool GenerationService::generateMidiFromPiece(const Piece& piece, const juce::String& outputPath) {
+    // ========================================
+    // 1. VALIDATION
+    // ========================================
     if (!ready) {
         lastError = "Service not ready";
         return false;
@@ -96,17 +107,101 @@ bool GenerationService::generateMidiFromPiece(const Piece& piece, const juce::St
         return false;
     }
     
-    try {
-        // TODO: Implémenter la logique de génération MIDI
-        // 1. Convertir Piece vers FourVoiceTextureParameters
-        // 2. Appeler solve_diatony()
-        // 3. Générer le fichier MIDI
-        
-        lastError = "Generation not yet implemented";
+    if (piece.getSectionCount() != 1) {
+        lastError = "Only 1 section supported for now (got " + 
+                    juce::String(static_cast<int>(piece.getSectionCount())) + ")";
+        DBG("❌ ERREUR : " << lastError);
         return false;
+    }
+    
+    DBG("=================================================================");
+    DBG("🎹 GÉNÉRATION MIDI - CONVERSION VERS DIATONY");
+    DBG("=================================================================");
+    
+    try {
+        // ========================================
+        // 2. RÉCUPÉRER LA SECTION
+        // ========================================
+        auto section = piece.getSection(0);
+        int totalChords = static_cast<int>(section.getProgression().size());
+        
+        DBG("📊 Section récupérée :");
+        DBG("  - Nombre d'accords : " << totalChords);
+        DBG("  - Tonalité : " << section.toString());
+        DBG("");
+        
+        // ========================================
+        // 3. CRÉER LES PARAMÈTRES DE SECTION
+        // ========================================
+        auto sectionParams = createSectionParams(
+            section,
+            0,              // sectionIndex = 0 (première section)
+            0,              // startChordIndex = 0 (commence au début)
+            totalChords - 1 // endChordIndex = totalChords - 1
+        );
+        
+        DBG("✅ TonalProgressionParameters créé");
+        DBG("");
+        
+        // ========================================
+        // 4. LOGGER LES PARAMÈTRES (version pretty)
+        // ========================================
+        DBG("📄 PARAMÈTRES DE LA SECTION (format lisible) :");
+        DBG("-----------------------------------------------------------------");
+        std::cout << *sectionParams << std::endl;  // Utilise operator<<
+        DBG("");
+        
+        DBG("📄 PARAMÈTRES DE LA SECTION (format complet) :");
+        DBG("-----------------------------------------------------------------");
+        std::cout << sectionParams->to_string() << std::endl;
+        DBG("");
+        
+        // ========================================
+        // 5. CRÉER LES PARAMÈTRES GLOBAUX
+        // ========================================
+        vector<TonalProgressionParameters*> sections = { sectionParams };
+        vector<ModulationParameters*> modulations = {};  // Pas de modulation
+        
+        auto pieceParams = new FourVoiceTextureParameters(
+            totalChords,    // totalNumberOfChords
+            1,              // numberOfSections
+            sections,       // sectionParameters
+            modulations     // modulationParameters (vide)
+        );
+        
+        DBG("✅ FourVoiceTextureParameters créé");
+        DBG("");
+        
+        // ========================================
+        // 6. LOGGER LES PARAMÈTRES GLOBAUX
+        // ========================================
+        DBG("📄 PARAMÈTRES GLOBAUX DE LA PIÈCE :");
+        DBG("=================================================================");
+        std::cout << pieceParams->toString() << std::endl;
+        DBG("=================================================================");
+        DBG("");
+        
+        // ========================================
+        // 7. TODO: RÉSOLUTION ET GÉNÉRATION MIDI
+        // ========================================
+        DBG("⏸️  Génération MIDI non implémentée (prochaine étape)");
+        DBG("");
+        
+        // ========================================
+        // 8. CLEANUP
+        // ========================================
+        // Note: On ne delete pas la tonalité car Tonality n'a pas de destructeur virtuel
+        // et on ne sait pas qui possède le pointeur (TonalProgressionParameters ou nous)
+        // TODO: Vérifier la gestion de la mémoire dans Diatony
+        delete pieceParams;
+        delete sectionParams;
+        
+        lastError.clear();
+        return true;
         
     } catch (const std::exception& e) {
         lastError = juce::String("Error during generation: ") + e.what();
+        DBG("❌ ERREUR : " << lastError);
         return false;
     }
 }
@@ -126,6 +221,85 @@ void GenerationService::reset() {
     }
     ready = true;
 }
+
+// ========================================
+// FONCTIONS DE CONVERSION (HELPERS)
+// ========================================
+
+/**
+ * Crée une Tonality* (MajorTonality ou MinorTonality) depuis une Section
+ * ⚠️ IMPORTANT : Le pointeur doit être libéré par l'appelant (delete)
+ */
+Tonality* GenerationService::createTonalityFromSection(const Section& section)
+{
+    int tonic = static_cast<int>(section.getNote());
+    
+    if (section.getIsMajor()) {
+        return new MajorTonality(tonic);
+    } else {
+        return new MinorTonality(tonic);
+    }
+}
+
+/**
+ * Extrait les vectors d'accords depuis une Progression
+ * Convertit nos enums vers les int attendus par Diatony
+ */
+GenerationService::ChordVectors GenerationService::extractChordVectors(const Progression& progression)
+{
+    ChordVectors result;
+    
+    for (size_t i = 0; i < progression.size(); ++i) {
+        auto chord = progression.getChord(i);
+        
+        // Conversion enum → int (cast direct car nos enums matchent Diatony)
+        result.degrees.push_back(static_cast<int>(chord.getDegree()));
+        result.qualities.push_back(static_cast<int>(chord.getQuality()));
+        result.states.push_back(static_cast<int>(chord.getChordState()));  // Corrigé: getChordState() au lieu de getState()
+    }
+    
+    return result;
+}
+
+/**
+ * Crée un TonalProgressionParameters* depuis une Section
+ * Pour une seule section : start=0, end=size-1
+ * ⚠️ IMPORTANT : Le pointeur doit être libéré par l'appelant (delete)
+ */
+TonalProgressionParameters* GenerationService::createSectionParams(
+    const Section& section,
+    int sectionIndex,
+    int startChordIndex,
+    int endChordIndex
+)
+{
+    // 1. Créer la tonalité
+    Tonality* tonality = createTonalityFromSection(section);
+    
+    // 2. Extraire les accords
+    auto progression = section.getProgression();
+    auto chordVectors = extractChordVectors(progression);
+    
+    // 3. Créer les paramètres
+    int numberOfChords = static_cast<int>(progression.size());
+    
+    auto params = new TonalProgressionParameters(
+        sectionIndex,                   // progression_number
+        numberOfChords,                 // size
+        startChordIndex,                // start (global)
+        endChordIndex,                  // end (global)
+        tonality,                       // tonality*
+        chordVectors.degrees,           // chord_degrees
+        chordVectors.qualities,         // chord_qualities
+        chordVectors.states             // chord_states
+    );
+    
+    return params;
+}
+
+// ========================================
+// LOGGING
+// ========================================
 
 void GenerationService::logGenerationInfo(const Piece& piece) {
     DBG("=================================================================");

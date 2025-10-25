@@ -81,6 +81,40 @@ private:
     // Cette méthode convertira notre Piece vers les paramètres Diatony
     void* createDiatonyParametersFromPiece(const Piece& piece);
     
+    // === FONCTIONS DE CONVERSION (HELPERS) ===
+    
+    /**
+     * Structure pour regrouper les vectors d'accords
+     */
+    struct ChordVectors {
+        std::vector<int> degrees;
+        std::vector<int> qualities;
+        std::vector<int> states;
+    };
+    
+    /**
+     * Crée une Tonality* (MajorTonality ou MinorTonality) depuis une Section
+     * ⚠️ IMPORTANT : Le pointeur doit être libéré par l'appelant (delete)
+     */
+    class Tonality* createTonalityFromSection(const Section& section);
+    
+    /**
+     * Extrait les vectors d'accords depuis une Progression
+     * Convertit nos enums vers les int attendus par Diatony
+     */
+    ChordVectors extractChordVectors(const Progression& progression);
+    
+    /**
+     * Crée un TonalProgressionParameters* depuis une Section
+     * ⚠️ IMPORTANT : Le pointeur doit être libéré par l'appelant (delete)
+     */
+    class TonalProgressionParameters* createSectionParams(
+        const Section& section,
+        int sectionIndex,
+        int startChordIndex,
+        int endChordIndex
+    );
+    
     // État interne
     mutable juce::String lastError;
     bool ready;
