@@ -64,3 +64,4 @@ done
 echo ""
 echo "✅ Tous les RPATHs Gecode ont été corrigés dans $FRAMEWORKS_DIR"
 
+
