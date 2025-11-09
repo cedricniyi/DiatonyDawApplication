@@ -23,11 +23,6 @@ private:
     juce::Label      overviewLabel;
     OverviewContentArea contentArea;
     OutlineTextButton actionButton;
-    // == limitation 1 section
-    
-    // Méthode pour mettre à jour l'état du bouton en fonction du contenu
-    void updateButtonState(int numPanels);
-    // =======================
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(OverviewArea)
 }; 
