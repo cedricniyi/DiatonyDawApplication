@@ -108,9 +108,8 @@ bool GenerationService::generateMidiFromPiece(const Piece& piece, const juce::St
         return false;
     }
     
-    if (piece.getSectionCount() != 1) {
-        lastError = "Only 1 section supported for now (got " + 
-                    juce::String(static_cast<int>(piece.getSectionCount())) + ")";
+    if (piece.getSectionCount() == 0) {
+        lastError = "Piece has no sections";
         DBG("❌ ERREUR : " << lastError);
         return false;
     }
@@ -118,59 +117,76 @@ bool GenerationService::generateMidiFromPiece(const Piece& piece, const juce::St
     DBG("=================================================================");
     DBG("🎹 GÉNÉRATION MIDI - CONVERSION VERS DIATONY");
     DBG("=================================================================");
+    DBG("📊 Pièce contient " << piece.getSectionCount() << " section(s)");
+    DBG("");
     
     try {
         // ========================================
-        // 2. RÉCUPÉRER LA SECTION
+        // 2. TRAITER TOUTES LES SECTIONS
         // ========================================
-        auto section = piece.getSection(0);
-        int totalChords = static_cast<int>(section.getProgression().size());
+        vector<TonalProgressionParameters*> sectionParamsList;
+        int cumulativeChordIndex = 0;  // Index global cumulatif des accords
+        int totalChords = static_cast<int>(piece.getTotalChordCount());
         
-        DBG("📊 Section récupérée :");
-        DBG("  - Nombre d'accords : " << totalChords);
-        DBG("  - Tonalité : " << section.toString());
-        DBG("");
-        
-        // ========================================
-        // 3. CRÉER LES PARAMÈTRES DE SECTION
-        // ========================================
-        auto sectionParams = createSectionParams(
-            section,
-            0,              // sectionIndex = 0 (première section)
-            0,              // startChordIndex = 0 (commence au début)
-            totalChords - 1 // endChordIndex = totalChords - 1
-        );
-        
-        DBG("✅ TonalProgressionParameters créé");
-        DBG("");
-        
-        // ========================================
-        // 4. LOGGER LES PARAMÈTRES (version pretty)
-        // ========================================
-        DBG("📄 PARAMÈTRES DE LA SECTION (format lisible) :");
+        DBG("📋 Traitement des sections :");
         DBG("-----------------------------------------------------------------");
-        std::cout << *sectionParams << std::endl;  // Utilise operator<<
-        DBG("");
         
-        DBG("📄 PARAMÈTRES DE LA SECTION (format complet) :");
-        DBG("-----------------------------------------------------------------");
-        std::cout << sectionParams->to_string() << std::endl;
+        for (size_t i = 0; i < piece.getSectionCount(); ++i)
+        {
+            auto section = piece.getSection(static_cast<int>(i));
+            int sectionChordCount = static_cast<int>(section.getProgression().size());
+            
+            // Calcul des indices globaux pour cette section
+            int startChordIndex = cumulativeChordIndex;
+            int endChordIndex = cumulativeChordIndex + sectionChordCount - 1;
+            
+            DBG("  Section " << (i + 1) << " :");
+            DBG("    - Tonalité : " << section.toString());
+            DBG("    - Nombre d'accords : " << sectionChordCount);
+            DBG("    - Indices globaux : [" << startChordIndex << ", " << endChordIndex << "]");
+            
+            // ========================================
+            // 3. CRÉER LES PARAMÈTRES POUR CETTE SECTION
+            // ========================================
+            auto sectionParams = createSectionParams(
+                section,
+                static_cast<int>(i),  // sectionIndex
+                startChordIndex,       // startChordIndex (global)
+                endChordIndex          // endChordIndex (global)
+            );
+            
+            sectionParamsList.push_back(sectionParams);
+            
+            // ========================================
+            // 4. LOGGER LES PARAMÈTRES DE CETTE SECTION
+            // ========================================
+            DBG("    📄 Paramètres (format lisible) :");
+            std::cout << *sectionParams << std::endl;
+            DBG("");
+            
+            // Avancer l'index cumulatif pour la prochaine section
+            cumulativeChordIndex += sectionChordCount;
+        }
+        
+        DBG("✅ Toutes les sections traitées");
+        DBG("📊 Total des accords : " << totalChords);
         DBG("");
         
         // ========================================
         // 5. CRÉER LES PARAMÈTRES GLOBAUX
         // ========================================
-        vector<TonalProgressionParameters*> sections = { sectionParams };
-        vector<ModulationParameters*> modulations = {};  // Pas de modulation
+        vector<ModulationParameters*> modulations = {};  // Pas de modulation pour l'instant
         
         auto pieceParams = new FourVoiceTextureParameters(
-            totalChords,    // totalNumberOfChords
-            1,              // numberOfSections
-            sections,       // sectionParameters
-            modulations     // modulationParameters (vide)
+            totalChords,                                  // totalNumberOfChords
+            static_cast<int>(piece.getSectionCount()),   // numberOfSections
+            sectionParamsList,                            // sectionParameters
+            modulations                                   // modulationParameters (vide)
         );
         
         DBG("✅ FourVoiceTextureParameters créé");
+        DBG("  - " << piece.getSectionCount() << " section(s)");
+        DBG("  - " << totalChords << " accord(s) total");
         DBG("");
         
         // ========================================
@@ -225,7 +241,9 @@ bool GenerationService::generateMidiFromPiece(const Piece& piece, const juce::St
             
             // Cleanup avant de retourner
             delete pieceParams;
-            delete sectionParams;
+            for (auto* sectionParams : sectionParamsList) {
+                delete sectionParams;
+            }
             return false;
         }
         
@@ -254,7 +272,9 @@ bool GenerationService::generateMidiFromPiece(const Piece& piece, const juce::St
             
             // Cleanup
             delete pieceParams;
-            delete sectionParams;
+            for (auto* sectionParams : sectionParamsList) {
+                delete sectionParams;
+            }
             return false;
         }
         
@@ -264,7 +284,11 @@ bool GenerationService::generateMidiFromPiece(const Piece& piece, const juce::St
         // Note: On ne delete pas la tonalité car Tonality n'a pas de destructeur virtuel
         // et on ne sait pas qui possède le pointeur (TonalProgressionParameters ou nous)
         delete pieceParams;
-        delete sectionParams;
+        
+        // Nettoyer tous les paramètres de sections
+        for (auto* sectionParams : sectionParamsList) {
+            delete sectionParams;
+        }
         
         lastError.clear();
         return true;
