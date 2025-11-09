@@ -450,49 +450,13 @@ add_custom_command(TARGET DiatonyDawApplication_Standalone POST_BUILD
 # et leurs RPATHs sont corrigés pour utiliser @loader_path
 # ============================================================
 
-# AU: Copier diatony.dylib ET Gecode dans le bundle
+# AU: Correction UNIQUEMENT de la version installée dans ~/Library
+# (JUCE copie automatiquement le bundle, on corrige ensuite les dylibs et RPATHs)
 if(TARGET DiatonyDawApplication_AU)
     add_custom_command(TARGET DiatonyDawApplication_AU POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E echo "Copying diatony.dylib and Gecode to AU bundle..."
+        COMMAND ${CMAKE_COMMAND} -E echo "Fixing AU plugin in ~/Library/Audio/Plug-Ins/Components/..."
         
-        # Copie dans le build
-        COMMAND ${CMAKE_COMMAND} -E make_directory
-            "$<TARGET_FILE_DIR:DiatonyDawApplication_AU>/../Frameworks"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${CMAKE_SOURCE_DIR}/Diatony/out/diatony.dylib"
-            "$<TARGET_FILE_DIR:DiatonyDawApplication_AU>/../Frameworks/diatony.dylib"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different "/opt/homebrew/opt/gecode/lib/libgecodedriver.49.dylib" "$<TARGET_FILE_DIR:DiatonyDawApplication_AU>/../Frameworks/"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different "/opt/homebrew/opt/gecode/lib/libgecodeflatzinc.49.dylib" "$<TARGET_FILE_DIR:DiatonyDawApplication_AU>/../Frameworks/"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different "/opt/homebrew/opt/gecode/lib/libgecodefloat.49.dylib" "$<TARGET_FILE_DIR:DiatonyDawApplication_AU>/../Frameworks/"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different "/opt/homebrew/opt/gecode/lib/libgecodeint.49.dylib" "$<TARGET_FILE_DIR:DiatonyDawApplication_AU>/../Frameworks/"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different "/opt/homebrew/opt/gecode/lib/libgecodekernel.49.dylib" "$<TARGET_FILE_DIR:DiatonyDawApplication_AU>/../Frameworks/"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different "/opt/homebrew/opt/gecode/lib/libgecodeminimodel.49.dylib" "$<TARGET_FILE_DIR:DiatonyDawApplication_AU>/../Frameworks/"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different "/opt/homebrew/opt/gecode/lib/libgecodesearch.49.dylib" "$<TARGET_FILE_DIR:DiatonyDawApplication_AU>/../Frameworks/"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different "/opt/homebrew/opt/gecode/lib/libgecodeset.49.dylib" "$<TARGET_FILE_DIR:DiatonyDawApplication_AU>/../Frameworks/"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different "/opt/homebrew/opt/gecode/lib/libgecodesupport.49.dylib" "$<TARGET_FILE_DIR:DiatonyDawApplication_AU>/../Frameworks/"
-        
-        # Correction des références Gecode dans le binaire AU (build)
-        COMMAND install_name_tool -change /opt/homebrew/opt/gecode/lib/libgecodekernel.49.dylib @rpath/libgecodekernel.49.dylib "$<TARGET_FILE:DiatonyDawApplication_AU>"
-        COMMAND install_name_tool -change /opt/homebrew/opt/gecode/lib/libgecodedriver.49.dylib @rpath/libgecodedriver.49.dylib "$<TARGET_FILE:DiatonyDawApplication_AU>"
-        COMMAND install_name_tool -change /opt/homebrew/opt/gecode/lib/libgecodeflatzinc.49.dylib @rpath/libgecodeflatzinc.49.dylib "$<TARGET_FILE:DiatonyDawApplication_AU>"
-        COMMAND install_name_tool -change /opt/homebrew/opt/gecode/lib/libgecodefloat.49.dylib @rpath/libgecodefloat.49.dylib "$<TARGET_FILE:DiatonyDawApplication_AU>"
-        COMMAND install_name_tool -change /opt/homebrew/opt/gecode/lib/libgecodeint.49.dylib @rpath/libgecodeint.49.dylib "$<TARGET_FILE:DiatonyDawApplication_AU>"
-        COMMAND install_name_tool -change /opt/homebrew/opt/gecode/lib/libgecodeminimodel.49.dylib @rpath/libgecodeminimodel.49.dylib "$<TARGET_FILE:DiatonyDawApplication_AU>"
-        COMMAND install_name_tool -change /opt/homebrew/opt/gecode/lib/libgecodesearch.49.dylib @rpath/libgecodesearch.49.dylib "$<TARGET_FILE:DiatonyDawApplication_AU>"
-        COMMAND install_name_tool -change /opt/homebrew/opt/gecode/lib/libgecodeset.49.dylib @rpath/libgecodeset.49.dylib "$<TARGET_FILE:DiatonyDawApplication_AU>"
-        COMMAND install_name_tool -change /opt/homebrew/opt/gecode/lib/libgecodesupport.49.dylib @rpath/libgecodesupport.49.dylib "$<TARGET_FILE:DiatonyDawApplication_AU>"
-        
-        # Correction des RPATHs Gecode (build)
-        COMMAND ${CMAKE_SOURCE_DIR}/fix_gecode_rpaths.sh
-            "$<TARGET_FILE_DIR:DiatonyDawApplication_AU>/../Frameworks"
-        
-        # Re-signature du bundle build
-        COMMAND codesign --force --deep --sign -
-            "$<TARGET_BUNDLE_DIR:DiatonyDawApplication_AU>"
-        
-        # Copie dans la version installée
-        COMMAND ${CMAKE_COMMAND} -E make_directory
-            "$ENV{HOME}/Library/Audio/Plug-Ins/Components/DiatonyDawApplication.component/Contents/Frameworks"
+        # 1. Copie des dylibs dans la version installée
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${CMAKE_SOURCE_DIR}/Diatony/out/diatony.dylib"
             "$ENV{HOME}/Library/Audio/Plug-Ins/Components/DiatonyDawApplication.component/Contents/Frameworks/diatony.dylib"
@@ -506,7 +470,7 @@ if(TARGET DiatonyDawApplication_AU)
         COMMAND ${CMAKE_COMMAND} -E copy_if_different "/opt/homebrew/opt/gecode/lib/libgecodeset.49.dylib" "$ENV{HOME}/Library/Audio/Plug-Ins/Components/DiatonyDawApplication.component/Contents/Frameworks/"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different "/opt/homebrew/opt/gecode/lib/libgecodesupport.49.dylib" "$ENV{HOME}/Library/Audio/Plug-Ins/Components/DiatonyDawApplication.component/Contents/Frameworks/"
         
-        # Correction des références Gecode dans le binaire AU (installé)
+        # 2. Correction des références Gecode dans le binaire AU installé
         COMMAND install_name_tool -change /opt/homebrew/opt/gecode/lib/libgecodekernel.49.dylib @rpath/libgecodekernel.49.dylib "$ENV{HOME}/Library/Audio/Plug-Ins/Components/DiatonyDawApplication.component/Contents/MacOS/DiatonyDawApplication"
         COMMAND install_name_tool -change /opt/homebrew/opt/gecode/lib/libgecodedriver.49.dylib @rpath/libgecodedriver.49.dylib "$ENV{HOME}/Library/Audio/Plug-Ins/Components/DiatonyDawApplication.component/Contents/MacOS/DiatonyDawApplication"
         COMMAND install_name_tool -change /opt/homebrew/opt/gecode/lib/libgecodeflatzinc.49.dylib @rpath/libgecodeflatzinc.49.dylib "$ENV{HOME}/Library/Audio/Plug-Ins/Components/DiatonyDawApplication.component/Contents/MacOS/DiatonyDawApplication"
@@ -517,15 +481,15 @@ if(TARGET DiatonyDawApplication_AU)
         COMMAND install_name_tool -change /opt/homebrew/opt/gecode/lib/libgecodeset.49.dylib @rpath/libgecodeset.49.dylib "$ENV{HOME}/Library/Audio/Plug-Ins/Components/DiatonyDawApplication.component/Contents/MacOS/DiatonyDawApplication"
         COMMAND install_name_tool -change /opt/homebrew/opt/gecode/lib/libgecodesupport.49.dylib @rpath/libgecodesupport.49.dylib "$ENV{HOME}/Library/Audio/Plug-Ins/Components/DiatonyDawApplication.component/Contents/MacOS/DiatonyDawApplication"
         
-        # Correction des RPATHs Gecode (installé)
+        # 3. Correction des RPATHs internes des dylibs Gecode
         COMMAND ${CMAKE_SOURCE_DIR}/fix_gecode_rpaths.sh
             "$ENV{HOME}/Library/Audio/Plug-Ins/Components/DiatonyDawApplication.component/Contents/Frameworks"
         
-        # Re-signature du bundle installé (CRITIQUE pour qu'Ableton le voit)
+        # 4. Re-signature finale du bundle installé (CRITIQUE pour qu'Ableton le charge)
         COMMAND codesign --force --deep --sign -
             "$ENV{HOME}/Library/Audio/Plug-Ins/Components/DiatonyDawApplication.component"
         
-        COMMENT "Copying diatony.dylib and Gecode to AU bundle"
+        COMMENT "Fixing AU plugin in ~/Library with all dependencies"
     )
 endif()
 
