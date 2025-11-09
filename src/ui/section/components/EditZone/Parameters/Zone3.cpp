@@ -11,27 +11,11 @@ Zone3::~Zone3()
 
 void Zone3::paint(juce::Graphics& g)
 {
-    // Dessiner le fond du titre
-    g.setColour(titleBackgroundColour);
-    g.fillRect(titleArea);
-    
-    // Dessiner le fond du contenu (plus foncé)
-    g.setColour(contentBackgroundColour);
-    g.fillRect(contentArea);
-    
-    // Dessiner la bordure globale
-    g.setColour(borderColour);
-    g.drawRect(getLocalBounds(), 1);
-    
-    // Dessiner une ligne de séparation entre titre et contenu
-    g.setColour(borderColour.withAlpha(0.3f));
-    g.drawHorizontalLine(titleArea.getBottom(), static_cast<float>(titleArea.getX()), static_cast<float>(titleArea.getRight()));
-    
     // Dessiner le titre avec FontManager
     g.setColour(juce::Colours::black);
     auto titleFont = juce::Font(fontManager->getSFProDisplay(16.0f, FontManager::FontWeight::Bold));
     g.setFont(titleFont);
-    g.drawText("Zone 3", titleArea, juce::Justification::centred);
+    g.drawText("Mode", titleArea, juce::Justification::centred);
 }
 
 void Zone3::resized()
@@ -50,36 +34,60 @@ void Zone3::resized()
 
 void Zone3::setupStyledButtons()
 {
-    // Créer les 2 boutons StyledButton
+    // Créer les 2 boutons SelectableStyledButton basés sur les modes
     for (int i = 0; i < 2; ++i)
     {
-        // Couleurs différentes pour chaque bouton (tons jaune/orange)
-        juce::Colour normalColour = juce::Colours::darkorange.withRotatedHue(i * 0.15f); // Rotation de teinte
-        juce::Colour highlightColour = normalColour.brighter(0.3f);
+        // Couleurs cohérentes : gris normal, bleu pour sélection
+        juce::Colour normalColour = juce::Colours::lightgrey;
+        juce::Colour selectedColour = juce::Colours::blue;
         
-        styledButtons[i] = std::make_unique<StyledButton>(
-            juce::String("Action ") + juce::String(i + 1),
+        // Obtenir le nom du mode pour le label
+        auto modeName = DiatonyText::getModeName(modes[i]);
+        
+        styledButtons[i] = std::make_unique<SelectableStyledButton>(
+            modeName,
             normalColour,
-            highlightColour,
-            13.0f, // Taille de police légèrement plus petite pour les rectangles
+            selectedColour,
+            20.0f, // Taille de police légèrement plus petite pour les rectangles
             FontManager::FontWeight::Medium
         );
         
         // Ajouter le callback pour les clics avec gestion de sélection
         styledButtons[i]->onClick = [i, this]() {
-            DBG("Bouton rectangulaire " << (i + 1) << " cliqué!");
+            auto selectedModeValue = modes[i];
+            auto modeName = DiatonyText::getModeName(selectedModeValue);
+            DBG("Mode " << modeName.toStdString() << " sélectionné!");
             
-            // Basculer l'état du bouton (toggle)
-            styledButtons[i]->setToggleState(!styledButtons[i]->getToggleState(), juce::dontSendNotification);
+            // Mettre à jour le mode sélectionné
+            selectedMode = selectedModeValue;
             
-            // TODO: Ajouter la logique spécifique pour chaque bouton
+            // Désélectionner tous les autres boutons et sélectionner le bon
+            for (int j = 0; j < 2; ++j)
+            {
+                styledButtons[j]->setSelected(j == i);
+            }
+            
+            // Notifier l'aval si un binding est présent
+            if (onModeChanged)
+                onModeChanged(selectedMode);
         };
         
-        // Rendre les boutons "toggleable"
-        styledButtons[i]->setClickingTogglesState(true);
+        // Pas de sélection par défaut hardcodée
+        // La valeur réelle sera appliquée par setSelectedMode() depuis le modèle
         
         addAndMakeVisible(*styledButtons[i]);
     }
+}
+
+void Zone3::setSelectedMode(Diatony::Mode mode)
+{
+    selectedMode = mode;
+    for (size_t j = 0; j < styledButtons.size(); ++j)
+    {
+        bool isSelected = (modes[j] == selectedMode);
+        styledButtons[j]->setSelected(isSelected);
+    }
+    repaint();
 }
 
 void Zone3::layoutStyledButtons()

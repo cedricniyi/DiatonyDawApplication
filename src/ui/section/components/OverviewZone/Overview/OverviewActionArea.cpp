@@ -1,5 +1,7 @@
 #include "OverviewActionArea.h"
 #include "utils/FontManager.h"
+#include "controller/AppController.h"
+#include "ui/PluginEditor.h"
 
 //==============================================================================
 OverviewActionArea::OverviewActionArea() 
@@ -76,4 +78,57 @@ PlaybackActionArea& OverviewActionArea::getPlaybackActionArea()
 OverviewArea& OverviewActionArea::getOverviewArea()
 {
     return overviewArea;
+}
+
+// === DÉCOUVERTE DE SERVICE ===
+
+void OverviewActionArea::parentHierarchyChanged()
+{
+    ColoredPanel::parentHierarchyChanged();
+    findAppController();
+}
+
+void OverviewActionArea::findAppController()
+{
+    // Recherche de l'AppController via la hiérarchie des composants
+    auto* pluginEditor = findParentComponentOfClass<AudioPluginAudioProcessorEditor>();
+    
+    if (pluginEditor != nullptr)
+    {
+        appController = &pluginEditor->getAppController();
+        DBG("OverviewActionArea: AppController trouvé !");
+        
+        // Connecter le bouton de génération une fois AppController trouvé
+        connectGenerationButton();
+    }
+    else
+    {
+        appController = nullptr;
+        DBG("OverviewActionArea: AppController NON trouvé");
+    }
+}
+
+void OverviewActionArea::connectGenerationButton()
+{
+    if (!appController)
+    {
+        DBG("OverviewActionArea::connectGenerationButton() - Pas de contrôleur disponible");
+        return;
+    }
+    
+    // Connecter le callback du bouton Generate au contrôleur
+    generationButtons.onGenerateClicked = [this]() {
+        DBG("🎵 Bouton Generate cliqué ! Appel du contrôleur...");
+        
+        if (appController)
+        {
+            appController->startGeneration();
+        }
+        else
+        {
+            DBG("  ❌ Erreur : AppController non disponible");
+        }
+    };
+    
+    DBG("OverviewActionArea: Bouton Generate connecté au contrôleur ✓");
 } 

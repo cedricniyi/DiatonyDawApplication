@@ -19,6 +19,8 @@ public:
     
     int getComboBoxTextHeight(juce::ComboBox& comboBox);
     
+    juce::Label* createComboBoxTextBox(juce::ComboBox& comboBox) override;
+    
     void drawPopupMenuItem(juce::Graphics& g, const juce::Rectangle<int>& area,
                           bool isSeparator, bool isActive, bool isHighlighted,
                           bool isTicked, bool hasSubMenu, const juce::String& text,

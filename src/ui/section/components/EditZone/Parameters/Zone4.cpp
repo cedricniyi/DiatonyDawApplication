@@ -9,7 +9,7 @@ Zone4::Zone4()
                 FontManager::FontWeight::Medium)
 {
     // Configuration du titre
-    titleLabel.setText("Zone 4", juce::dontSendNotification);
+    titleLabel.setText("Editeur de section", juce::dontSendNotification);
     titleLabel.setJustificationType(juce::Justification::centredLeft);
     titleLabel.setColour(juce::Label::textColourId, juce::Colours::black);
     
@@ -20,7 +20,20 @@ Zone4::Zone4()
     
     // Configuration du callback du bouton d'ajout
     addButton.onClick = [this]() {
-        contentAreaComponent.addRectangle();
+        // Notifier le SectionEditor via le callback pour créer l'accord dans le modèle
+        // (même pattern que Zone1/2/3)
+        if (onChordAdded)
+        {
+            // Ajouter un accord avec des valeurs par défaut : Degré I, Majeur, Fondamental
+            onChordAdded(
+                Diatony::ChordDegree::First,
+                Diatony::ChordQuality::Major,
+                Diatony::ChordState::Fundamental
+            );
+        }
+        
+        // Note: Le rectangle visuel sera ajouté automatiquement via valueTreeChildAdded()
+        // qui appelle syncWithProgression() et crée le rectangle connecté au ValueTree
     };
     addAndMakeVisible(addButton);
     
@@ -101,4 +114,17 @@ void Zone4::setupGrid()
     // Rangée 2, Colonnes 1-2 : Content Area (span sur 2 colonnes)
     mainGrid.items.add(juce::GridItem(contentAreaComponent)
         .withArea(juce::GridItem::Span(1), juce::GridItem::Span(2)));
+}
+
+void Zone4::syncWithProgression(const std::vector<juce::ValueTree>& chords)
+{
+    // Effacer tous les rectangles actuels
+    contentAreaComponent.clearAllRectangles();
+    
+    // Ajouter autant de rectangles qu'il y a d'accords avec leurs valeurs connectées au ValueTree
+    for (const auto& chordState : chords)
+    {
+        // Passer le ValueTree pour initialiser et connecter les comboboxes au modèle
+        contentAreaComponent.addRectangle(chordState);
+    }
 }

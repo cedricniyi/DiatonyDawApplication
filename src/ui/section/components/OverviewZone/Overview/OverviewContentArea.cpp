@@ -192,6 +192,11 @@ void OverviewContentArea::handleSectionRemoved()
 {
     // Reconstruction complète des panels après suppression
     refreshFromModel();
+    // == limitation 1 section
+    // 🔔 Notifier le changement de contenu
+    if (onContentCountChanged)
+        onContentCountChanged(getNumPanels());
+    // =======================
 }
 
 void OverviewContentArea::createPanelForSection(const juce::ValueTree& sectionNode, bool autoSelect)
@@ -241,6 +246,11 @@ void OverviewContentArea::createPanelForSection(const juce::ValueTree& sectionNo
     
     updateVisibility();
     resized();
+    // == limitation 1 section
+    // 🔔 Notifier le changement de contenu
+    if (onContentCountChanged)
+        onContentCountChanged(getNumPanels());
+    // =======================
 }
 
 void OverviewContentArea::createPanelForModulation(const juce::ValueTree& modulationNode)
@@ -359,6 +369,11 @@ void OverviewContentArea::addSmallPanel()
     
     updateVisibility();
     resized();
+    // == limitation 1 section
+    // 🔔 Notifier le changement de contenu
+    if (onContentCountChanged)
+        onContentCountChanged(getNumPanels());
+    // =======================
 }
 
 void OverviewContentArea::clearAllPanels()
@@ -368,6 +383,11 @@ void OverviewContentArea::clearAllPanels()
         scrollableContent->clearAllPanels();
         updateVisibility();
         resized();
+        // == limitation 1 section
+        // 🔔 Notifier le changement de contenu
+        if (onContentCountChanged)
+            onContentCountChanged(getNumPanels());
+        // =======================
     }
 }
 
@@ -375,7 +395,12 @@ bool OverviewContentArea::hasContent() const
 {
     return scrollableContent && scrollableContent->getNumPanels() > 0;
 }
-
+// == limitation 1 section
+int OverviewContentArea::getNumPanels() const
+{
+    return scrollableContent ? scrollableContent->getNumPanels() : 0;
+}
+// =======================
 juce::Rectangle<int> OverviewContentArea::getPreferredSize() const
 {
     return juce::Rectangle<int>(0, 0, PREFERRED_WIDTH, PREFERRED_HEIGHT);

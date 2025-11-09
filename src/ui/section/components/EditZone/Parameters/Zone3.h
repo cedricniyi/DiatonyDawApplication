@@ -2,7 +2,9 @@
 
 #include <JuceHeader.h>
 #include "utils/FontManager.h"
-#include "ui/extra/Button/StyledButton.h"
+#include "ui/extra/Button/SelectableStyledButton.h"
+#include "model/DiatonyTypes.h"
+#include "ui/DiatonyText.h"
 
 /**
  * Zone 3 - Troisième paramètre/contrôle de section
@@ -17,6 +19,10 @@ public:
     void paint(juce::Graphics& g) override;
     void resized() override;
 
+    // Binding depuis SectionEditor
+    std::function<void(Diatony::Mode)> onModeChanged; // UI -> Modèle
+    void setSelectedMode(Diatony::Mode mode);         // Modèle -> UI
+
 private:
     // Couleur de fond pour cette zone
     juce::Colour titleBackgroundColour = juce::Colours::lightyellow.withAlpha(0.3f);
@@ -30,8 +36,16 @@ private:
     // FontManager pour le titre
     juce::SharedResourcePointer<FontManager> fontManager;
     
-    // Les 2 boutons StyledButton rectangulaires
-    std::array<std::unique_ptr<StyledButton>, 2> styledButtons;
+    // Les 2 boutons SelectableStyledButton rectangulaires correspondant aux 2 modes
+    std::array<std::unique_ptr<SelectableStyledButton>, 2> styledButtons;
+    
+    // Les 2 modes dans l'ordre logique
+    static constexpr std::array<Diatony::Mode, 2> modes = {
+        Diatony::Mode::Major, Diatony::Mode::Minor
+    };
+    
+    // Mode actuellement sélectionné
+    Diatony::Mode selectedMode = Diatony::Mode::Major;
     
     void setupStyledButtons();
     void layoutStyledButtons();

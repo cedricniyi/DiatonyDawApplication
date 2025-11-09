@@ -19,6 +19,13 @@ GenerationButtons::GenerationButtons()
     addAndMakeVisible(generateButton);
     addAndMakeVisible(moreButton);
     
+    // Connecter le callback du bouton Generate
+    generateButton.onClick = [this]() {
+        if (onGenerateClicked) {
+            onGenerateClicked();
+        }
+    };
+    
     // Configuration du FlexBox
     flexBox.flexDirection = juce::FlexBox::Direction::row;
     flexBox.justifyContent = juce::FlexBox::JustifyContent::center;

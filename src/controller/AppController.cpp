@@ -162,6 +162,40 @@ void AppController::setPieceTitle(const juce::String& title)
     piece.setTitle(title);
 }
 
+// Génération
+void AppController::startGeneration()
+{
+    DBG("AppController::startGeneration() - Début de la génération");
+    
+    // Vérifier que la pièce n'est pas vide
+    if (piece.isEmpty())
+    {
+        DBG("  ❌ Erreur : La pièce est vide, impossible de générer");
+        return;
+    }
+    
+    // TODO: Dans le futur, on pourra mettre un statut "generating" dans le ValueTree
+    // pour que l'UI affiche un loader
+    // Ex: getState().setProperty("generationStatus", "generating", nullptr);
+    
+    DBG("  ✓ Pièce valide, appel du service de génération...");
+    
+    // Appeler le service de génération (le chemin est généré automatiquement)
+    juce::String dummyPath = "";  // Non utilisé, le service génère son propre chemin
+    bool success = generationService.generateMidiFromPiece(piece, dummyPath);
+    
+    if (success)
+    {
+        DBG("  ✅ Génération réussie !");
+    }
+    else
+    {
+        DBG("  ❌ Erreur lors de la génération : " << generationService.getLastError());
+    }
+    
+    DBG("AppController::startGeneration() - Fin");
+}
+
 // Undo/Redo
 void AppController::undo()
 {

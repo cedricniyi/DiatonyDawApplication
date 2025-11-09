@@ -2,7 +2,9 @@
 
 #include <JuceHeader.h>
 #include "utils/FontManager.h"
-#include "ui/extra/Button/StyledButton.h"
+#include "ui/extra/Button/SelectableStyledButton.h"
+#include "model/DiatonyTypes.h"
+#include "ui/DiatonyText.h"
 
 /**
  * Zone 2 - Deuxième paramètre/contrôle de section
@@ -17,6 +19,10 @@ public:
     void paint(juce::Graphics& g) override;
     void resized() override;
 
+    // Binding depuis SectionEditor
+    std::function<void(Diatony::Alteration)> onAlterationChanged; // UI -> Modèle
+    void setSelectedAlteration(Diatony::Alteration alt);          // Modèle -> UI
+
 private:
     // Couleur de fond pour cette zone
     juce::Colour titleBackgroundColour = juce::Colours::lightgreen.withAlpha(0.3f);
@@ -30,8 +36,16 @@ private:
     // FontManager pour le titre
     juce::SharedResourcePointer<FontManager> fontManager;
     
-    // Les 3 boutons StyledButton
-    std::array<std::unique_ptr<StyledButton>, 3> styledButtons;
+    // Les 3 boutons SelectableStyledButton correspondant aux 3 altérations
+    std::array<std::unique_ptr<SelectableStyledButton>, 3> styledButtons;
+    
+    // Les 3 altérations dans l'ordre logique
+    static constexpr std::array<Diatony::Alteration, 3> alterations = {
+        Diatony::Alteration::Flat, Diatony::Alteration::Natural, Diatony::Alteration::Sharp
+    };
+    
+    // Altération actuellement sélectionnée
+    Diatony::Alteration selectedAlteration = Diatony::Alteration::Natural;
     
     void setupStyledButtons();
     void layoutStyledButtons();

@@ -32,14 +32,6 @@ void CircularButtonLookAndFeel::drawButtonBackground(juce::Graphics& g, juce::Bu
     // Dessiner le cercle plein (style simple, pas de gradient)
     g.setColour(currentColor);
     g.fillEllipse(circleBounds);
-    
-    // Si sélectionné, dessiner une bordure (comme OutlineTextButton)
-    if (circularButton->getSelected())
-    {
-        float borderThickness = 2.0f;
-        g.setColour(juce::Colours::darkblue);
-        g.drawEllipse(circleBounds.reduced(borderThickness * 0.5f), borderThickness);
-    }
 }
 
 void CircularButtonLookAndFeel::drawButtonText(juce::Graphics& g, juce::TextButton& button,
@@ -67,9 +59,6 @@ void CircularButtonLookAndFeel::drawButtonText(juce::Graphics& g, juce::TextButt
 //==============================================================================
 // CircularButton Implementation
 
-// LookAndFeel statique partagé
-CircularButtonLookAndFeel CircularButton::sharedLookAndFeel;
-
 CircularButton::CircularButton(const juce::String& buttonText,
                               juce::Colour baseColourToUse,
                               juce::Colour textColourToUse,
@@ -83,7 +72,8 @@ CircularButton::CircularButton(const juce::String& buttonText,
     // Initialiser la font avec FontManager (comme OutlineTextButton)
     customFont = fontManager->getSFProDisplay(fontSize, fontWeight);
     
-    // Appliquer le LookAndFeel statique partagé
+    // Utiliser une instance statique locale de LookAndFeel (plus sûr que static membre)
+    static CircularButtonLookAndFeel sharedLookAndFeel;
     setLookAndFeel(&sharedLookAndFeel);
 }
 

@@ -20,6 +20,9 @@ public:
     // Méthode pour calculer la taille préférée du composant
     juce::Rectangle<int> getPreferredSize() const;
     
+    // Callback pour le bouton Generate
+    std::function<void()> onGenerateClicked;
+    
 private:
     StyledButton generateButton;
     StyledButton moreButton;

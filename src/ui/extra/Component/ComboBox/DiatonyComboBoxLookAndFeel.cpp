@@ -44,6 +44,21 @@ int DiatonyComboBoxLookAndFeel::getComboBoxTextHeight(juce::ComboBox& comboBox)
     return font.getHeight() + (textPadding * 2);
 }
 
+juce::Label* DiatonyComboBoxLookAndFeel::createComboBoxTextBox(juce::ComboBox& comboBox)
+{
+    auto* label = new juce::Label();
+    
+    // Ne PAS définir les couleurs ici - elles seront définies via setColour sur le ComboBox
+    // Le label utilisera automatiquement ComboBox::textColourId du parent
+    
+    // Configuration du style
+    label->setFont(juce::Font(juce::FontOptions(14.0f)));
+    label->setJustificationType(juce::Justification::centredLeft);
+    label->setBorderSize(juce::BorderSize<int>(textPadding, textPadding, textPadding, textPadding));
+    
+    return label;
+}
+
 void DiatonyComboBoxLookAndFeel::drawPopupMenuItem(juce::Graphics& g, const juce::Rectangle<int>& area,
                                                   bool isSeparator, bool isActive, bool isHighlighted,
                                                   bool isTicked, bool hasSubMenu, const juce::String& text,
