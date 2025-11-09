@@ -30,6 +30,15 @@ OverviewArea::OverviewArea()
     actionButton.onClick = [this]() {
         contentArea.addSmallPanel();
     };
+    // == limitation 1 section
+    // 🔒 LIMITATION : S'abonner aux changements de contenu pour limiter à une section
+    contentArea.onContentCountChanged = [this](int numPanels) {
+        updateButtonState(numPanels);
+    };
+    
+    // Initialiser l'état du bouton
+    updateButtonState(contentArea.getNumPanels());
+    // =======================
 }
 
 void OverviewArea::paint(juce::Graphics& g)
@@ -84,4 +93,12 @@ void OverviewArea::resized()
 juce::Rectangle<int> OverviewArea::getPreferredSize() const
 {
     return juce::Rectangle<int>(0, 0, 200, 75); // Hauteur augmentée à 75 pour assurer l'espace
-} 
+}
+    // == limitation 1 section
+
+void OverviewArea::updateButtonState(int numPanels)
+{
+    // 🔒 LIMITATION : Désactiver le bouton si on a déjà une section ou plus
+    actionButton.setEnabled(numPanels < 1);
+}
+    // =======================

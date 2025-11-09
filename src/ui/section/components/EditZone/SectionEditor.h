@@ -48,6 +48,7 @@ public:
 private:
     juce::String currentSectionId;
     juce::ValueTree currentSectionState; // ValueTree de la section éditée
+    juce::ValueTree currentProgressionState; // ValueTree de la progression (pour écouter les ajouts/suppressions d'accords)
     juce::Label sectionNameLabel;  // Label pour le nom de la section
     
     juce::SharedResourcePointer<FontManager> fontManager;
@@ -91,8 +92,8 @@ private:
     // ValueTree::Listener
     void valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged,
                                   const juce::Identifier& property) override;
-    void valueTreeChildAdded(juce::ValueTree&, juce::ValueTree&) override {}
-    void valueTreeChildRemoved(juce::ValueTree&, juce::ValueTree&, int) override {}
+    void valueTreeChildAdded(juce::ValueTree& parentTree, juce::ValueTree& childWhichHasBeenAdded) override;
+    void valueTreeChildRemoved(juce::ValueTree& parentTree, juce::ValueTree& childWhichHasBeenRemoved, int index) override;
     void valueTreeChildOrderChanged(juce::ValueTree&, int, int) override {}
     void valueTreeParentChanged(juce::ValueTree&) override {}
     

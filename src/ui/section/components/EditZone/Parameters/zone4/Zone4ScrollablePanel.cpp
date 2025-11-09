@@ -82,16 +82,12 @@ void Zone4ScrollablePanel::layoutRectangles()
     
     for (auto& rectInfo : rectangles)
     {
-        // Largeur adaptative selon la hauteur :
-        // - Si hauteur <= 80px : largeur = hauteur × 4
-        // - Sinon : largeur = hauteur × 3
-        int rectangleWidth = (rectangleHeight <= 80) ? rectangleHeight * 4 : rectangleHeight * 3;
-        rectInfo.component->setBounds(x, 0, rectangleWidth, rectangleHeight);
-        
         // Contrôle automatique de la partie droite des InfoColoredPanel selon la hauteur
+        bool rightSideVisible = rectangleHeight > 50;
+        
         if (auto* infoPanel = dynamic_cast<InfoColoredPanel*>(rectInfo.component.get()))
         {
-            if (rectangleHeight <= 50)
+            if (rectangleHeight <= 60)
             {
                 // Hauteur trop petite : masquer la partie droite
                 infoPanel->hideRightSide();
@@ -102,6 +98,26 @@ void Zone4ScrollablePanel::layoutRectangles()
                 infoPanel->showRightSidePanel();
             }
         }
+        
+        // Largeur adaptative selon la hauteur ET la visibilité de la partie droite :
+        // - Si hauteur <= 50px (mode réduit, zone gauche seule) : largeur = hauteur × 5.5 (plus large pour numéro + combobox)
+        // - Si hauteur <= 80px (mode complet, petit) : largeur = hauteur × 4
+        // - Sinon (mode complet, normal) : largeur = hauteur × 3
+        int rectangleWidth;
+        if (rectangleHeight <= 60)
+        {
+            rectangleWidth = static_cast<int>(rectangleHeight * 5.5f); // Mode réduit : plus large pour numérotation + combobox
+        }
+        else if (rectangleHeight <= 80)
+        {
+            rectangleWidth = rectangleHeight * 4;
+        }
+        else
+        {
+            rectangleWidth = rectangleHeight * 3;
+        }
+        
+        rectInfo.component->setBounds(x, 0, rectangleWidth, rectangleHeight);
         
         x += rectangleWidth + RECTANGLE_SPACING;
     }
@@ -117,9 +133,22 @@ int Zone4ScrollablePanel::calculateRequiredWidth() const
     int rectangleHeight = totalHeight - SCROLLBAR_SPACE;
     
     // Largeur adaptative selon la hauteur (même logique que dans layoutRectangles())
-    // - Si hauteur <= 80px : largeur = hauteur × 4
-    // - Sinon : largeur = hauteur × 3
-    int rectangleWidth = (rectangleHeight <= 80) ? rectangleHeight * 4 : rectangleHeight * 3;
+    // - Si hauteur <= 50px (mode réduit, zone gauche seule) : largeur = hauteur × 5.5 (plus large pour numéro + combobox)
+    // - Si hauteur <= 80px (mode complet, petit) : largeur = hauteur × 4
+    // - Sinon (mode complet, normal) : largeur = hauteur × 3
+    int rectangleWidth;
+    if (rectangleHeight <= 60)
+    {
+        rectangleWidth = static_cast<int>(rectangleHeight * 5.5f); // Mode réduit : plus large pour numérotation + combobox
+    }
+    else if (rectangleHeight <= 80)
+    {
+        rectangleWidth = rectangleHeight * 4;
+    }
+    else
+    {
+        rectangleWidth = rectangleHeight * 3;
+    }
     
     // Calculer la largeur totale nécessaire
     for (size_t i = 0; i < rectangles.size(); ++i)

@@ -60,6 +60,17 @@ public:
      * @brief Réinitialise l'état du service
      */
     void reset();
+    
+    /**
+     * @brief Affiche (log) toutes les informations de la pièce
+     * 
+     * Cette méthode est utilisée pour tester le flux de données complet
+     * avant d'implémenter la génération réelle. Elle affiche dans la console
+     * toutes les informations de la pièce musicale.
+     * 
+     * @param piece La pièce musicale à analyser et afficher
+     */
+    void logGenerationInfo(const Piece& piece);
 
 private:
     // Implémentation cachée pour éviter les fuites de dépendances 
@@ -69,6 +80,40 @@ private:
     // Méthode privée de traduction (déclarée ici, implémentée dans le .cpp)
     // Cette méthode convertira notre Piece vers les paramètres Diatony
     void* createDiatonyParametersFromPiece(const Piece& piece);
+    
+    // === FONCTIONS DE CONVERSION (HELPERS) ===
+    
+    /**
+     * Structure pour regrouper les vectors d'accords
+     */
+    struct ChordVectors {
+        std::vector<int> degrees;
+        std::vector<int> qualities;
+        std::vector<int> states;
+    };
+    
+    /**
+     * Crée une Tonality* (MajorTonality ou MinorTonality) depuis une Section
+     * ⚠️ IMPORTANT : Le pointeur doit être libéré par l'appelant (delete)
+     */
+    class Tonality* createTonalityFromSection(const Section& section);
+    
+    /**
+     * Extrait les vectors d'accords depuis une Progression
+     * Convertit nos enums vers les int attendus par Diatony
+     */
+    ChordVectors extractChordVectors(const Progression& progression);
+    
+    /**
+     * Crée un TonalProgressionParameters* depuis une Section
+     * ⚠️ IMPORTANT : Le pointeur doit être libéré par l'appelant (delete)
+     */
+    class TonalProgressionParameters* createSectionParams(
+        const Section& section,
+        int sectionIndex,
+        int startChordIndex,
+        int endChordIndex
+    );
     
     // État interne
     mutable juce::String lastError;

@@ -59,8 +59,5 @@ private:
     juce::FontOptions customFont;
     juce::SharedResourcePointer<FontManager> fontManager;
     
-    // LookAndFeel statique partagé
-    static CircularButtonLookAndFeel sharedLookAndFeel;
-    
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(CircularButton)
 };

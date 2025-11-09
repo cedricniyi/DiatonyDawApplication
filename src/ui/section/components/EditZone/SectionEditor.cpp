@@ -19,6 +19,9 @@ SectionEditor::~SectionEditor()
 {
     if (currentSectionState.isValid())
         currentSectionState.removeListener(this);
+    
+    if (currentProgressionState.isValid())
+        currentProgressionState.removeListener(this);
 }
 
 void SectionEditor::paint(juce::Graphics& g)
@@ -57,7 +60,9 @@ void SectionEditor::setSectionToEdit(const juce::String& sectionId)
     {
         currentSectionId = sectionId;
         updateContent();
-        syncZonesFromModel();
+        // NOTE: Ne pas appeler syncZonesFromModel() ici car currentSectionState
+        // n'est pas encore initialisé. setSectionState() sera appelé juste après
+        // par le code appelant et fera le sync au bon moment.
         repaint();
     }
 }
@@ -67,15 +72,36 @@ void SectionEditor::setSectionState(juce::ValueTree sectionState)
     if (currentSectionState == sectionState)
         return;
 
+    // Détacher les anciens listeners
     if (currentSectionState.isValid())
         currentSectionState.removeListener(this);
+    
+    if (currentProgressionState.isValid())
+        currentProgressionState.removeListener(this);
 
     currentSectionState = sectionState;
 
     if (currentSectionState.isValid())
+    {
+        // Écouter la section
         currentSectionState.addListener(this);
-
-    syncZonesFromModel();
+        
+        // Écouter aussi la progression pour détecter les ajouts/suppressions d'accords
+        Section section(currentSectionState);
+        currentProgressionState = section.getProgression().getState();
+        if (currentProgressionState.isValid())
+        {
+            currentProgressionState.addListener(this);
+        }
+        
+        // Synchroniser les zones seulement si on a un ValueTree valide
+        syncZonesFromModel();
+    }
+    else
+    {
+        // Invalide : clear
+        currentProgressionState = juce::ValueTree();
+    }
 }
 
 void SectionEditor::setupSectionNameLabel()
@@ -225,12 +251,28 @@ void SectionEditor::bindZonesToModel()
         Section section(currentSectionState);
         section.setIsMajor(mode == Diatony::Mode::Major);
     };
+    
+    // Zone4: Ajout d'accord
+    zone4Component.onChordAdded = [this](Diatony::ChordDegree degree, 
+                                         Diatony::ChordQuality quality, 
+                                         Diatony::ChordState state)
+    {
+        if (!currentSectionState.isValid()) return;
+        
+        // Obtenir la progression de la section et ajouter l'accord
+        Section section(currentSectionState);
+        auto progression = section.getProgression();
+        progression.addChord(degree, quality, state);
+    };
 }
 
 void SectionEditor::syncZonesFromModel()
 {
     if (!currentSectionState.isValid())
+    {
+        DBG("[SectionEditor] syncZones: currentSectionState INVALIDE");
         return;
+    }
 
     Section section(currentSectionState);
 
@@ -244,6 +286,19 @@ void SectionEditor::syncZonesFromModel()
     zone1Component.setSelectedBaseNote(base);
     zone2Component.setSelectedAlteration(alt);
     zone3Component.setSelectedMode(isMajor ? Diatony::Mode::Major : Diatony::Mode::Minor);
+    
+    // Synchroniser Zone4 avec la progression d'accords (avec les valeurs réelles)
+    auto progression = section.getProgression();
+    std::vector<juce::ValueTree> chords;
+    for (size_t i = 0; i < progression.size(); ++i)
+    {
+        chords.push_back(progression.getChordState(i));
+    }
+    zone4Component.syncWithProgression(chords);
+    
+    // Log concis: afficher seulement si vraiment nécessaire (commenter pour réduire encore)
+    // DBG("[SectionEditor] Zones synced: note=" << static_cast<int>(note) 
+    //     << " alt=" << static_cast<int>(alt) << " mode=" << (isMajor ? "Maj" : "Min"));
 }
 
 void SectionEditor::valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged,
@@ -254,4 +309,42 @@ void SectionEditor::valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyH
 
     // Resynchroniser l'UI quand la section change (quelqu'un d'autre ou nous)
     syncZonesFromModel();
+}
+
+void SectionEditor::valueTreeChildAdded(juce::ValueTree& parentTree, juce::ValueTree& childWhichHasBeenAdded)
+{
+    if (!currentProgressionState.isValid()) return;
+    
+    // Si un CHORD a été ajouté dans notre PROGRESSION, resynchroniser Zone4
+    if (parentTree == currentProgressionState && 
+        childWhichHasBeenAdded.hasType(ModelIdentifiers::CHORD))
+    {
+        Section section(currentSectionState);
+        auto progression = section.getProgression();
+        std::vector<juce::ValueTree> chords;
+        for (size_t i = 0; i < progression.size(); ++i)
+        {
+            chords.push_back(progression.getChordState(i));
+        }
+        zone4Component.syncWithProgression(chords);
+    }
+}
+
+void SectionEditor::valueTreeChildRemoved(juce::ValueTree& parentTree, juce::ValueTree& childWhichHasBeenRemoved, int index)
+{
+    if (!currentProgressionState.isValid()) return;
+    
+    // Si un CHORD a été supprimé de notre PROGRESSION, resynchroniser Zone4
+    if (parentTree == currentProgressionState && 
+        childWhichHasBeenRemoved.hasType(ModelIdentifiers::CHORD))
+    {
+        Section section(currentSectionState);
+        auto progression = section.getProgression();
+        std::vector<juce::ValueTree> chords;
+        for (size_t i = 0; i < progression.size(); ++i)
+        {
+            chords.push_back(progression.getChordState(i));
+        }
+        zone4Component.syncWithProgression(chords);
+    }
 }

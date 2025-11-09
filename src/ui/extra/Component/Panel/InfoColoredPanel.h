@@ -3,10 +3,12 @@
 #include <JuceHeader.h>
 #include "ColoredPanel.h"
 #include "ui/extra/Component/ComboBox/DiatonyComboBox.h"
+#include "utils/FontManager.h"
 
 //==============================================================================
-// Panel coloré divisé en 3 zones utilisant le système Grid de JUCE
-// Zone de gauche (50% largeur) + 2 zones à droite (50% largeur chacune, empilées verticalement)
+// Panel coloré divisé en 2 zones verticales utilisant le système Grid de JUCE
+// Zone haute (50% hauteur) : numérotation + ComboBox degré
+// Zone basse (50% hauteur) : 2 ComboBox côte à côte (état 60% + qualité 40%)
 class InfoColoredPanel : public ColoredPanel
 {
 public:
@@ -20,46 +22,76 @@ public:
     void setColor(juce::Colour color) override;
     
     // Accès aux zones individuelles pour personnalisation
-    juce::Component* getLeftZone() const { return leftZone.get(); }
-    juce::Component* getTopRightZone() const { return topRightZone.get(); }
-    juce::Component* getBottomRightZone() const { return bottomRightZone.get(); }
+    juce::Component* getTopZone() const { return topZone.get(); }
+    juce::Component* getBottomZone() const { return bottomZone.get(); }
     
     // Accès au contenu des zones
-    juce::Label& getCenterLabel() { return centerLabel; }
-    DiatonyComboBox& getTopRightCombo() { return topRightCombo; }
-    DiatonyComboBox& getBottomRightCombo() { return bottomRightCombo; }
+    DiatonyComboBox& getDegreeCombo() { return degreeCombo; }
+    DiatonyComboBox& getStateCombo() { return stateCombo; }
+    DiatonyComboBox& getQualityCombo() { return qualityCombo; }
     
-    // Contrôle de la visibilité de la partie droite
-    void showRightSide(bool show);
-    void hideRightSide() { showRightSide(false); }
-    void showRightSidePanel() { showRightSide(true); }
-    bool isRightSideVisible() const { return rightSideVisible; }
+    // Méthodes pour injecter les items dans les combobox (découplage du modèle métier)
+    void populateDegreeCombo(const juce::StringArray& items);
+    void populateStateCombo(const juce::StringArray& items);
+    void populateQualityCombo(const juce::StringArray& items);
+    
+    // Méthodes legacy pour compatibilité
+    void populateLeftCombo(const juce::StringArray& items) { populateDegreeCombo(items); }
+    void populateTopRightCombo(const juce::StringArray& items) { populateStateCombo(items); }
+    void populateBottomRightCombo(const juce::StringArray& items) { populateQualityCombo(items); }
+    
+    // Contrôle de la visibilité de la partie basse
+    void showBottomZone(bool show);
+    void hideBottomZone() { showBottomZone(false); }
+    void showBottomZonePanel() { showBottomZone(true); }
+    bool isBottomZoneVisible() const { return bottomZoneVisible; }
+    
+    // Méthodes legacy pour compatibilité
+    void showRightSide(bool show) { showBottomZone(show); }
+    void hideRightSide() { hideBottomZone(); }
+    void showRightSidePanel() { showBottomZonePanel(); }
+    bool isRightSideVisible() const { return isBottomZoneVisible(); }
+    
+    // Gestion de la numérotation
+    void setNumber(int number);
+    int getNumber() const { return panelNumber; }
     
 private:
-    // Les 3 zones
-    std::unique_ptr<juce::Component> leftZone;
-    std::unique_ptr<juce::Component> topRightZone;
+    // Les 2 zones principales
+    std::unique_ptr<juce::Component> topZone;
+    std::unique_ptr<juce::Component> bottomZone;
+    
+    // Conteneur pour les 2 ComboBox du bas
+    std::unique_ptr<juce::Component> bottomLeftZone;
     std::unique_ptr<juce::Component> bottomRightZone;
     
-    // Couleurs des zones
-    juce::Colour leftZoneColor;
-    juce::Colour topRightZoneColor;
-    juce::Colour bottomRightZoneColor;
+    // Couleurs
+    juce::Colour panelColor;
     
-    // Contenu des zones
-    juce::Label centerLabel;
-    DiatonyComboBox topRightCombo;
-    DiatonyComboBox bottomRightCombo;
+    // Contenu des zones - 3 ComboBox
+    DiatonyComboBox degreeCombo;   // Zone haute (numéro + degré)
+    DiatonyComboBox stateCombo;    // Zone basse gauche (état)
+    DiatonyComboBox qualityCombo;  // Zone basse droite (qualité)
     
     // Système Grid pour la disposition
-    juce::Grid grid;
+    juce::Grid mainGrid;        // Grid principal (haut/bas)
+    juce::Grid bottomGrid;      // Grid pour la zone basse (2 ComboBox)
     
-    // Contrôle de visibilité de la partie droite
-    bool rightSideVisible = true;
+    // Contrôle de visibilité de la partie basse
+    bool bottomZoneVisible = true;
     
-    void setupGrid();
+    // Numérotation
+    juce::Label numberLabel;
+    int panelNumber = 0;
+    
+    // FontManager pour le label de numérotation
+    juce::SharedResourcePointer<FontManager> fontManager;
+    
+    void setupMainGrid();
+    void setupBottomGrid();
     void setupZones(juce::Colour baseColor);
-    void reconfigureGrid();
+    void reconfigureMainGrid();
+    void setupNumberLabel();
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(InfoColoredPanel)
 };

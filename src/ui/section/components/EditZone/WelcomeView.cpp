@@ -13,7 +13,7 @@ WelcomeView::WelcomeView()
     addAndMakeVisible(welcomeIconLabel);
     
     // 2. Titre principal
-    welcomeTitleLabel.setText("Welcome to DiatonyDAW", juce::dontSendNotification);
+    welcomeTitleLabel.setText("Welcome to DiatonyDAW (v0.1.5)", juce::dontSendNotification);
     welcomeTitleLabel.setJustificationType(juce::Justification::centred);
     welcomeTitleLabel.setFont(juce::Font(fontManager->getBoldFont(24.0f)));
     welcomeTitleLabel.setColour(juce::Label::textColourId, juce::Colour(0xff2c3e50));
