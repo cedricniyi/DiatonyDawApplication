@@ -57,7 +57,7 @@ juce_add_plugin(DiatonyDawApplication
     PLUGIN_MANUFACTURER_CODE Juce               # A four-character manufacturer id with at least one upper-case character
     PLUGIN_CODE Dda1                            # A unique four-character plugin id with exactly one upper-case character
                                                 # GarageBand 10.3 requires the first letter to be upper-case, and the remaining letters to be lower-case
-    FORMATS AU VST3 Standalone                  # The formats to build. Other valid formats are: AAX Unity VST AU AUv3
+    FORMATS AU Standalone                       # The formats to build. Other valid formats are: AAX Unity VST AU AUv3
     PRODUCT_NAME "DiatonyDawApplication")       # The name of the final executable, which can differ from the target name
 
 get_target_property(TARGET_TYPE DiatonyDawApplication TYPE)
@@ -275,7 +275,6 @@ target_compile_definitions(DiatonyDawApplication
         # JUCE_WEB_BROWSER and JUCE_USE_CURL would be on by default, but you might not need them.
         JUCE_WEB_BROWSER=0  # If you remove this, add `NEEDS_WEB_BROWSER TRUE` to the `juce_add_plugin` call
         JUCE_USE_CURL=0     # If you remove this, add `NEEDS_CURL TRUE` to the `juce_add_plugin` call
-        JUCE_VST3_CAN_REPLACE_VST2=0
         JUCE_STRINGS_ARE_UNICODE=1
         JUCE_USE_UTF8_FILESYSTEM=1
         JucePlugin_Name="DiatonyDawApplication")
