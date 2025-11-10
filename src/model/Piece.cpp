@@ -17,9 +17,16 @@ void Piece::addSection(const Section& section)
     // Si ce n'est pas la première section, on doit d'abord ajouter une modulation
     if (getSectionCount() > 0)
     {
-        // Ajoute une modulation par défaut entre les sections
-        // Les index -1 indiquent une modulation symbolique à définir ultérieurement
-        addModulation(Diatony::ModulationType::PerfectCadence, -1, -1);
+        // Récupérer l'ID de la dernière section
+        auto lastSection = getSection(getSectionCount() - 1);
+        int lastSectionId = lastSection.getState().getProperty(ModelIdentifiers::id, -1);
+        
+        // Récupérer l'ID de la nouvelle section
+        int newSectionId = section.getState().getProperty(ModelIdentifiers::id, -1);
+        
+        // Ajoute une modulation par défaut entre les sections avec les IDs
+        // Les index d'accords -1 indiquent qu'ils seront définis ultérieurement
+        addModulation(Diatony::ModulationType::PivotChord, lastSectionId, newSectionId, -1, -1);
     }
     
     state.appendChild(section.getState().createCopy(), &undoManager);
@@ -27,15 +34,22 @@ void Piece::addSection(const Section& section)
 
 void Piece::addSection(const juce::String& sectionName)
 {
+    // Créer d'abord le nœud de section pour avoir son ID
+    auto sectionNode = Section::createSectionNode(sectionName);
+    int newSectionId = sectionNode.getProperty(ModelIdentifiers::id, -1);
+    
     // Si ce n'est pas la première section, on doit d'abord ajouter une modulation
     if (getSectionCount() > 0)
     {
-        // Ajoute une modulation par défaut entre les sections
-        // Les index -1 indiquent une modulation symbolique à définir ultérieurement
-        addModulation(Diatony::ModulationType::PerfectCadence, -1, -1);
+        // Récupérer l'ID de la dernière section
+        auto lastSection = getSection(getSectionCount() - 1);
+        int lastSectionId = lastSection.getState().getProperty(ModelIdentifiers::id, -1);
+        
+        // Ajoute une modulation par défaut entre les sections avec les IDs
+        // Les index d'accords -1 indiquent qu'ils seront définis ultérieurement
+        addModulation(Diatony::ModulationType::PivotChord, lastSectionId, newSectionId, -1, -1);
     }
     
-    auto sectionNode = Section::createSectionNode(sectionName);
     state.appendChild(sectionNode, &undoManager);
 }
 
@@ -91,15 +105,18 @@ void Piece::addModulation(const Modulation& modulation)
     state.appendChild(modulation.getState().createCopy(), &undoManager);
 }
 
-void Piece::addModulation(Diatony::ModulationType type, int fromChord, int toChord)
+void Piece::addModulation(Diatony::ModulationType type, int fromSectionId, int toSectionId, 
+                         int fromChord, int toChord)
 {
-    auto modulationNode = Modulation::createModulationNode(type, fromChord, toChord);
+    auto modulationNode = Modulation::createModulationNode(type, fromSectionId, toSectionId, 
+                                                          fromChord, toChord);
     state.appendChild(modulationNode, &undoManager);
 }
 
-Modulation Piece::createModulation(Diatony::ModulationType type, int fromChord, int toChord)
+Modulation Piece::createModulation(Diatony::ModulationType type, int fromSectionId, int toSectionId,
+                                  int fromChord, int toChord)
 {
-    return Modulation::createIn(state, type, fromChord, toChord);
+    return Modulation::createIn(state, type, fromSectionId, toSectionId, fromChord, toChord);
 }
 
 // Accès aux éléments par type
@@ -151,6 +168,102 @@ Modulation Piece::getModulation(size_t index)
 {
     validateModulationIndex(index);
     return Modulation(getChildOfType(ModelIdentifiers::MODULATION, index));
+}
+
+// Accès aux éléments par ID
+Section Piece::getSectionById(int id) const
+{
+    for (int i = 0; i < state.getNumChildren(); ++i)
+    {
+        auto child = state.getChild(i);
+        if (child.hasType(ModelIdentifiers::SECTION))
+        {
+            int childId = child.getProperty(ModelIdentifiers::id, -1);
+            if (childId == id)
+            {
+                return Section(child);
+            }
+        }
+    }
+    
+    // Si pas trouvé, retourner une section invalide
+    jassertfalse; // En debug, on veut savoir qu'il y a un problème
+    return Section(juce::ValueTree(ModelIdentifiers::SECTION));
+}
+
+Modulation Piece::getModulationById(int id) const
+{
+    for (int i = 0; i < state.getNumChildren(); ++i)
+    {
+        auto child = state.getChild(i);
+        if (child.hasType(ModelIdentifiers::MODULATION))
+        {
+            int childId = child.getProperty(ModelIdentifiers::id, -1);
+            if (childId == id)
+            {
+                return Modulation(child);
+            }
+        }
+    }
+    
+    // Si pas trouvé, retourner une modulation invalide
+    jassertfalse; // En debug, on veut savoir qu'il y a un problème
+    return Modulation(juce::ValueTree(ModelIdentifiers::MODULATION));
+}
+
+// Helper pour récupérer les sections adjacentes d'une modulation
+std::pair<Section, Section> Piece::getAdjacentSections(const Modulation& modulation) const
+{
+    int fromSectionId = modulation.getFromSectionId();
+    int toSectionId = modulation.getToSectionId();
+    
+    Section fromSection = getSectionById(fromSectionId);
+    Section toSection = getSectionById(toSectionId);
+    
+    return std::make_pair(fromSection, toSection);
+}
+
+// Conversion ID → Index (retourne l'index RELATIF parmi les éléments du même type)
+int Piece::getSectionIndexById(int id) const
+{
+    int sectionIndex = 0;  // Compteur pour les sections uniquement
+    
+    for (int i = 0; i < state.getNumChildren(); ++i)
+    {
+        auto child = state.getChild(i);
+        if (child.hasType(ModelIdentifiers::SECTION))
+        {
+            int childId = static_cast<int>(child.getProperty(ModelIdentifiers::id, -1));
+            if (childId == id)
+                return sectionIndex;  // Retourner l'index relatif
+            
+            sectionIndex++;  // Incrémenter uniquement si c'est une section
+        }
+    }
+    
+    // Si pas trouvé, retourner -1
+    return -1;
+}
+
+int Piece::getModulationIndexById(int id) const
+{
+    int modulationIndex = 0;  // Compteur pour les modulations uniquement
+    
+    for (int i = 0; i < state.getNumChildren(); ++i)
+    {
+        auto child = state.getChild(i);
+        if (child.hasType(ModelIdentifiers::MODULATION))
+        {
+            int childId = static_cast<int>(child.getProperty(ModelIdentifiers::id, -1));
+            if (childId == id)
+                return modulationIndex;  // Retourner l'index relatif
+            
+            modulationIndex++;  // Incrémenter uniquement si c'est une modulation
+        }
+    }
+    
+    // Si pas trouvé, retourner -1
+    return -1;
 }
 
 // Informations sur la pièce

@@ -27,8 +27,10 @@ public:
     
     // Gestion des modulations
     void addModulation(const Modulation& modulation);
-    void addModulation(Diatony::ModulationType type, int fromChord, int toChord);
-    Modulation createModulation(Diatony::ModulationType type, int fromChord, int toChord);
+    void addModulation(Diatony::ModulationType type, int fromSectionId, int toSectionId, 
+                      int fromChord, int toChord);
+    Modulation createModulation(Diatony::ModulationType type, int fromSectionId, int toSectionId,
+                               int fromChord, int toChord);
     
     // Accès aux éléments par type
     std::vector<Section> getSections() const;
@@ -39,6 +41,17 @@ public:
     
     Modulation getModulation(size_t index) const;
     Modulation getModulation(size_t index);
+    
+    // Accès aux éléments par ID
+    Section getSectionById(int id) const;
+    Modulation getModulationById(int id) const;
+    
+    // Conversion ID → Index
+    int getSectionIndexById(int id) const;
+    int getModulationIndexById(int id) const;
+    
+    // Helper pour récupérer les sections adjacentes d'une modulation
+    std::pair<Section, Section> getAdjacentSections(const Modulation& modulation) const;
     
     // Informations sur la pièce
     size_t getSectionCount() const;
