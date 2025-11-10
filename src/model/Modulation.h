@@ -17,16 +17,21 @@ public:
     
     // Méthode statique pour créer une nouvelle Modulation dans un parent
     static Modulation createIn(juce::ValueTree parentTree, Diatony::ModulationType type, 
+                              int fromSectionId, int toSectionId,
                               int fromChordIndex, int toChordIndex);
     
     // Setters (modifient directement le ValueTree)
     void setModulationType(Diatony::ModulationType newType);
+    void setFromSectionId(int newFromSectionId);
+    void setToSectionId(int newToSectionId);
     void setFromChordIndex(int newFromChordIndex);
     void setToChordIndex(int newToChordIndex);
     void setName(const juce::String& newName);
     
     // Getters (lisent directement du ValueTree)
     Diatony::ModulationType getModulationType() const;
+    int getFromSectionId() const;
+    int getToSectionId() const;
     int getFromChordIndex() const;
     int getToChordIndex() const;
     const juce::String getName() const;
@@ -40,6 +45,8 @@ public:
     
     // Création d'un nouveau nœud Modulation dans un ValueTree
     static juce::ValueTree createModulationNode(Diatony::ModulationType type,
+                                               int fromSectionId,
+                                               int toSectionId,
                                                int fromChordIndex,
                                                int toChordIndex);
     

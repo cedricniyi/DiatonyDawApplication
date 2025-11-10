@@ -8,9 +8,10 @@ Modulation::Modulation(juce::ValueTree state) : state(state)
 
 // Méthode statique pour créer une nouvelle Modulation dans un parent
 Modulation Modulation::createIn(juce::ValueTree parentTree, Diatony::ModulationType type, 
+                                int fromSectionId, int toSectionId,
                                 int fromChordIndex, int toChordIndex)
 {
-    auto modulationNode = createModulationNode(type, fromChordIndex, toChordIndex);
+    auto modulationNode = createModulationNode(type, fromSectionId, toSectionId, fromChordIndex, toChordIndex);
     parentTree.appendChild(modulationNode, nullptr);
     return Modulation(modulationNode);
 }
@@ -20,6 +21,16 @@ void Modulation::setModulationType(Diatony::ModulationType newType)
 {
     state.setProperty(ModelIdentifiers::modulationType, modulationTypeToInt(newType), nullptr);
     updateName();
+}
+
+void Modulation::setFromSectionId(int newFromSectionId)
+{
+    state.setProperty(ModelIdentifiers::fromSectionId, newFromSectionId, nullptr);
+}
+
+void Modulation::setToSectionId(int newToSectionId)
+{
+    state.setProperty(ModelIdentifiers::toSectionId, newToSectionId, nullptr);
 }
 
 void Modulation::setFromChordIndex(int newFromChordIndex)
@@ -41,6 +52,16 @@ void Modulation::setName(const juce::String& newName)
 Diatony::ModulationType Modulation::getModulationType() const
 {
     return intToModulationType(state.getProperty(ModelIdentifiers::modulationType, 0));
+}
+
+int Modulation::getFromSectionId() const
+{
+    return state.getProperty(ModelIdentifiers::fromSectionId, -1);
+}
+
+int Modulation::getToSectionId() const
+{
+    return state.getProperty(ModelIdentifiers::toSectionId, -1);
 }
 
 int Modulation::getFromChordIndex() const
@@ -71,6 +92,8 @@ juce::String Modulation::toString() const
 
 // Création d'un nouveau nœud Modulation
 juce::ValueTree Modulation::createModulationNode(Diatony::ModulationType type,
+                                                int fromSectionId,
+                                                int toSectionId,
                                                 int fromChordIndex,
                                                 int toChordIndex)
 {
@@ -82,6 +105,8 @@ juce::ValueTree Modulation::createModulationNode(Diatony::ModulationType type,
     
     // Définir les propriétés
     modulationNode.setProperty(ModelIdentifiers::modulationType, modulationTypeToInt(type), nullptr);
+    modulationNode.setProperty(ModelIdentifiers::fromSectionId, fromSectionId, nullptr);
+    modulationNode.setProperty(ModelIdentifiers::toSectionId, toSectionId, nullptr);
     modulationNode.setProperty("fromChordIndex", fromChordIndex, nullptr);
     modulationNode.setProperty("toChordIndex", toChordIndex, nullptr);
     
