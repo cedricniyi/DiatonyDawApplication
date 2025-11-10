@@ -37,6 +37,16 @@ namespace DiatonyText {
         return {}; // Ne devrait jamais arriver
     }
     
+    inline juce::String getModulationTypeName(Diatony::ModulationType type) {
+        switch (type) {
+            case Diatony::ModulationType::PerfectCadence: return juce::String::fromUTF8("Cadence Parfaite");
+            case Diatony::ModulationType::PivotChord: return "Accord Pivot";
+            case Diatony::ModulationType::Alteration: return juce::String::fromUTF8("Altération");
+            case Diatony::ModulationType::Chromatic: return "Chromatique";
+        }
+        return {}; // Ne devrait jamais arriver
+    }
+    
     inline juce::String getChordDegreeName(Diatony::ChordDegree degree) {
         switch (degree) {
             case Diatony::ChordDegree::First: return "I";
