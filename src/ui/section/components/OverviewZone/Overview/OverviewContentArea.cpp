@@ -233,10 +233,16 @@ void OverviewContentArea::createPanelForSection(const juce::ValueTree& sectionNo
     std::unique_ptr<juce::Component> component(newPanel.release());
     scrollableContent->addSmallPanel(std::move(component), SECTION_WIDTH, SECTION_HEIGHT);
     
-    // ✅ SIMPLE : Sélection automatique directe avec l'ID (qui correspond à l'index)
+    // Sélection automatique : convertir l'ID en index
     if (autoSelect && appController && sectionId >= 0)
     {
-        appController->selectSection(sectionId);
+        auto& piece = appController->getPiece();
+        int sectionIndex = piece.getSectionIndexById(sectionId);
+        
+        if (sectionIndex >= 0)
+        {
+            appController->selectSection(sectionIndex);
+        }
     }
     
     updateVisibility();
@@ -272,19 +278,9 @@ void OverviewContentArea::createPanelForModulation(const juce::ValueTree& modula
     // Référence au panel avant transfert de propriété
     ButtonColoredPanel* newPanelPtr = newPanel.get();
     
-    // Configuration du callback de clic
+    // Configuration du callback de clic (utilise onPanelClicked qui gère la conversion ID→Index)
     newPanel->onClick = [this, newPanelPtr]() {
-        if (!appController)
-            return;
-            
-        // Obtenir l'index de la modulation à partir des données du panel
-        int modulationIndex = static_cast<int>(newPanelPtr->getUserData());
-        
-        // Appeler AppController pour gérer la sélection de modulation
-        if (modulationIndex >= 0)
-        {
-            appController->selectModulation(modulationIndex);
-        }
+        this->onPanelClicked(newPanelPtr);
     };
     
     // ✅ DÉCOUPLÉ : OverviewContentArea décide des dimensions selon la logique métier
@@ -424,13 +420,39 @@ void OverviewContentArea::onPanelClicked(ButtonColoredPanel* clickedPanel)
     if (!clickedPanel || !appController)
         return;
         
-    // Obtenir l'index de la section à partir des données du panel
-    int sectionIndex = clickedPanel->getUserData();
+    // ⚠️ IMPORTANT : getUserData() retourne l'ID, pas l'index !
+    int elementId = clickedPanel->getUserData();
+    auto contentType = clickedPanel->getContentType();
     
-    // Appeler AppController pour gérer la sélection de manière centralisée
-    if (sectionIndex >= 0)
+    if (contentType == PanelContentType::Section)
     {
-        appController->selectSection(sectionIndex);
+        // Convertir l'ID en index pour selectSection()
+        auto& piece = appController->getPiece();
+        int sectionIndex = piece.getSectionIndexById(elementId);
+        
+        if (sectionIndex >= 0)
+        {
+            appController->selectSection(sectionIndex);
+        }
+        else
+        {
+            DBG("[OverviewContentArea] Section avec ID " << elementId << " introuvable");
+        }
+    }
+    else if (contentType == PanelContentType::Modulation)
+    {
+        // Convertir l'ID en index pour selectModulation()
+        auto& piece = appController->getPiece();
+        int modulationIndex = piece.getModulationIndexById(elementId);
+        
+        if (modulationIndex >= 0)
+        {
+            appController->selectModulation(modulationIndex);
+        }
+        else
+        {
+            DBG("[OverviewContentArea] Modulation avec ID " << elementId << " introuvable");
+        }
     }
 }
 
