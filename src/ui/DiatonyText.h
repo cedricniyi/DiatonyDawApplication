@@ -1,5 +1,6 @@
 #pragma once
 #include "model/DiatonyTypes.h"
+#include "model/NoteConverter.h"
 #include <juce_core/juce_core.h>
 
 namespace DiatonyText {
@@ -26,6 +27,12 @@ namespace DiatonyText {
     }
     
     inline juce::String getFullNoteName(Diatony::BaseNote base, Diatony::Alteration alt) {
+        return getBaseNoteName(base) + getAlterationSymbol(alt);
+    }
+    
+    // Version avec Note chromatique (convertit en BaseNote d'abord)
+    inline juce::String getNoteName(Diatony::Note note, Diatony::Alteration alt) {
+        Diatony::BaseNote base = Diatony::toBaseNote(note, alt);
         return getBaseNoteName(base) + getAlterationSymbol(alt);
     }
     
@@ -95,6 +102,26 @@ namespace DiatonyText {
             case Diatony::ChordQuality::MinorMajorSeventh: return juce::String::fromUTF8("7e Min-Maj");
             case Diatony::ChordQuality::MajorNinthDominant: return juce::String::fromUTF8("9e Maj Dom");
             case Diatony::ChordQuality::MinorNinthDominant: return juce::String::fromUTF8("9e Min Dom");
+        }
+        return {}; // Ne devrait jamais arriver
+    }
+    
+    // Symboles compacts pour affichage dans les listes d'accords
+    inline juce::String getChordQualitySymbol(Diatony::ChordQuality quality) {
+        switch (quality) {
+            case Diatony::ChordQuality::Major: return "M";
+            case Diatony::ChordQuality::Minor: return "m";
+            case Diatony::ChordQuality::Diminished: return juce::String::fromUTF8("°");
+            case Diatony::ChordQuality::Augmented: return "+";
+            case Diatony::ChordQuality::AugmentedSixth: return "⁺⁶";
+            case Diatony::ChordQuality::DominantSeventh: return "⁷";
+            case Diatony::ChordQuality::MajorSeventh: return "M⁷";
+            case Diatony::ChordQuality::MinorSeventh: return "m⁷";
+            case Diatony::ChordQuality::DiminishedSeventh: return "°⁷";
+            case Diatony::ChordQuality::HalfDiminished: return "ø⁷";
+            case Diatony::ChordQuality::MinorMajorSeventh: return "mM⁷";
+            case Diatony::ChordQuality::MajorNinthDominant: return "⁹";
+            case Diatony::ChordQuality::MinorNinthDominant: return "m⁹";
         }
         return {}; // Ne devrait jamais arriver
     }
