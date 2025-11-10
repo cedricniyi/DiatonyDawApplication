@@ -133,7 +133,21 @@ void ProgressionArea::updateContentBasedOnSelection()
         sectionEditor->setVisible(false);
         sectionEditor->setSectionToEdit(""); // Clear l'éditeur de section
         sectionEditor->setSectionState(juce::ValueTree());
+        
+        // Passer le ValueTree réel de la modulation à éditer
         modulationEditor->setModulationToEdit(selectedElementId);
+        int index = selectedElementId.getTrailingIntValue();
+        if (appController != nullptr && index >= 0 && index < static_cast<int>(appController->getModulationCount()))
+        {
+            auto& piece = appController->getPiece();
+            auto modulation = piece.getModulation(index);
+            modulationEditor->setModulationState(modulation.getState());
+        }
+        else
+        {
+            modulationEditor->setModulationState(juce::ValueTree());
+        }
+        
         modulationEditor->setVisible(true);
     }
     else
@@ -144,6 +158,7 @@ void ProgressionArea::updateContentBasedOnSelection()
         sectionEditor->setSectionState(juce::ValueTree());
         modulationEditor->setVisible(false);
         modulationEditor->setModulationToEdit(""); // Clear l'éditeur de modulation
+        modulationEditor->setModulationState(juce::ValueTree());
         welcomeView.setVisible(true);
     }
 } 
