@@ -26,4 +26,6 @@ namespace ModelIdentifiers
     
     // Propriétés de Modulation
     const juce::Identifier modulationType { "modulationType" };
+    const juce::Identifier fromSectionId  { "fromSectionId" };  // ID de la section source
+    const juce::Identifier toSectionId    { "toSectionId" };    // ID de la section destination
 } 
