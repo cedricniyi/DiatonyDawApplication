@@ -305,10 +305,34 @@ void SectionEditor::valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyH
                                              const juce::Identifier& property)
 {
     if (!currentSectionState.isValid()) return;
-    if (treeWhosePropertyHasChanged != currentSectionState) return;
-
-    // Resynchroniser l'UI quand la section change (quelqu'un d'autre ou nous)
-    syncZonesFromModel();
+    
+    // Si la section elle-même change (tonalité, mode, altération, nom)
+    if (treeWhosePropertyHasChanged == currentSectionState)
+    {
+        DBG("[SectionEditor] Propriété de section changée: " << property.toString());
+        syncZonesFromModel();
+        return;
+    }
+    
+    // Si une propriété d'ACCORD change (degré, qualité, état) dans la progression surveillée
+    if (treeWhosePropertyHasChanged.hasType(ModelIdentifiers::CHORD))
+    {
+        auto parent = treeWhosePropertyHasChanged.getParent();
+        if (currentProgressionState.isValid() && parent == currentProgressionState)
+        {
+            DBG("[SectionEditor] Propriété d'accord changée: " << property.toString());
+            // Resynchroniser uniquement Zone4 (les accords)
+            Section section(currentSectionState);
+            auto progression = section.getProgression();
+            std::vector<juce::ValueTree> chords;
+            for (size_t i = 0; i < progression.size(); ++i)
+            {
+                chords.push_back(progression.getChordState(i));
+            }
+            zone4Component.syncWithProgression(chords);
+            return;
+        }
+    }
 }
 
 void SectionEditor::valueTreeChildAdded(juce::ValueTree& parentTree, juce::ValueTree& childWhichHasBeenAdded)
