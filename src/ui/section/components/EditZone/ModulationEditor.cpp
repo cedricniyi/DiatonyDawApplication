@@ -7,6 +7,8 @@ ModulationEditor::ModulationEditor()
 {
     setupModulationNameLabel();
     setupInfoLabels();
+    setupModulationTypeComboBox();
+    setupChordSelectionComboBoxes();
     updateContent();
 }
 
@@ -50,21 +52,26 @@ void ModulationEditor::resized()
     int labelHeight = 25;
     int spacing = 10;
     
-    modulationTypeLabel.setBounds(infoBounds.removeFromTop(labelHeight));
+    // Type de modulation : label + combobox sur la même ligne
+    auto typeBounds = infoBounds.removeFromTop(labelHeight);
+    int labelWidth = 60;
+    modulationTypeLabel.setBounds(typeBounds.removeFromLeft(labelWidth));
+    typeBounds.removeFromLeft(5); // Espacement
+    modulationTypeComboBox.setBounds(typeBounds);
     infoBounds.removeFromTop(spacing);
     
     fromSectionLabel.setBounds(infoBounds.removeFromTop(labelHeight));
     infoBounds.removeFromTop(spacing / 2);
     
-    // Liste des accords de la section source (multi-ligne)
-    fromChordsLabel.setBounds(infoBounds.removeFromTop(labelHeight * 2));
+    // ComboBox avec les accords de la section source (remplace le label textuel)
+    fromChordComboBox.setBounds(infoBounds.removeFromTop(labelHeight));
     infoBounds.removeFromTop(spacing);
     
     toSectionLabel.setBounds(infoBounds.removeFromTop(labelHeight));
     infoBounds.removeFromTop(spacing / 2);
     
-    // Liste des accords de la section destination (multi-ligne)
-    toChordsLabel.setBounds(infoBounds.removeFromTop(labelHeight * 2));
+    // ComboBox avec les accords de la section destination (remplace le label textuel)
+    toChordComboBox.setBounds(infoBounds.removeFromTop(labelHeight));
     infoBounds.removeFromTop(spacing);
     
     chordIndicesLabel.setBounds(infoBounds.removeFromTop(labelHeight));
@@ -255,22 +262,100 @@ void ModulationEditor::setupInfoLabels()
     chordIndicesLabel.setColour(juce::Label::textColourId, juce::Colours::darkgreen.darker(0.3f));
     chordIndicesLabel.setJustificationType(juce::Justification::centredLeft);
     addAndMakeVisible(chordIndicesLabel);
+}
+
+void ModulationEditor::setupModulationTypeComboBox()
+{
+    // Adapter les couleurs au fond vert clair
+    modulationTypeComboBox.adaptToBackgroundColour(getColor());
     
-    // Labels pour les listes d'accords (avec wrapping pour texte long)
-    auto chordsFontOptions = fontManager->getSFProText(14.0f, FontManager::FontWeight::Regular);
-    juce::Font chordsFont(chordsFontOptions);
+    // Remplir le ComboBox avec tous les types de modulation validés depuis DiatonyTypes.h
+    // (même pattern que populateInfoColoredPanel dans Zone4ContentArea)
+    for (const auto& type : modulationTypes)
+    {
+        modulationTypeComboBox.addItem(
+            DiatonyText::getModulationTypeName(type), 
+            static_cast<int>(type) + 1  // ID = enum value + 1 (ComboBox IDs start at 1)
+        );
+    }
     
-    fromChordsLabel.setFont(chordsFont);
-    fromChordsLabel.setColour(juce::Label::textColourId, juce::Colours::darkblue);
-    fromChordsLabel.setJustificationType(juce::Justification::topLeft);
-    fromChordsLabel.setMinimumHorizontalScale(1.0f);
-    addAndMakeVisible(fromChordsLabel);
+    // Configurer le callback
+    modulationTypeComboBox.onChange = [this]() {
+        onModulationTypeChanged();
+    };
     
-    toChordsLabel.setFont(chordsFont);
-    toChordsLabel.setColour(juce::Label::textColourId, juce::Colours::darkblue);
-    toChordsLabel.setJustificationType(juce::Justification::topLeft);
-    toChordsLabel.setMinimumHorizontalScale(1.0f);
-    addAndMakeVisible(toChordsLabel);
+    addAndMakeVisible(modulationTypeComboBox);
+}
+
+void ModulationEditor::setupChordSelectionComboBoxes()
+{
+    // Configuration des ComboBoxes qui remplaceront les labels textuels
+    fromChordComboBox.adaptToBackgroundColour(getColor());
+    fromChordComboBox.setTextWhenNothingSelected("Aucun accord");
+    fromChordComboBox.onChange = [this]() {
+        onFromChordChanged();
+    };
+    addAndMakeVisible(fromChordComboBox);
+    
+    toChordComboBox.adaptToBackgroundColour(getColor());
+    toChordComboBox.setTextWhenNothingSelected("Aucun accord");
+    toChordComboBox.onChange = [this]() {
+        onToChordChanged();
+    };
+    addAndMakeVisible(toChordComboBox);
+}
+
+void ModulationEditor::onModulationTypeChanged()
+{
+    if (!currentModulationState.isValid() || !appController)
+        return;
+    
+    // Récupérer le type sélectionné (ID - 1 car on a ajouté 1)
+    int selectedId = modulationTypeComboBox.getSelectedId();
+    if (selectedId == 0)
+        return; // Aucune sélection
+    
+    auto newType = static_cast<Diatony::ModulationType>(selectedId - 1);
+    
+    // Créer un wrapper Modulation et mettre à jour le type
+    Modulation modulation(currentModulationState);
+    modulation.setModulationType(newType);
+    
+    DBG("[ModulationEditor] Type de modulation changé: " << DiatonyText::getModulationTypeName(newType));
+}
+
+void ModulationEditor::onFromChordChanged()
+{
+    if (!currentModulationState.isValid())
+        return;
+    
+    // L'index sélectionné correspond directement à l'index de l'accord dans la section
+    int selectedIndex = fromChordComboBox.getSelectedItemIndex();
+    if (selectedIndex < 0)
+        return;
+    
+    // Mettre à jour le modèle
+    Modulation modulation(currentModulationState);
+    modulation.setFromChordIndex(selectedIndex);
+    
+    DBG("[ModulationEditor] fromChordIndex changé: " << selectedIndex);
+}
+
+void ModulationEditor::onToChordChanged()
+{
+    if (!currentModulationState.isValid())
+        return;
+    
+    // L'index sélectionné correspond directement à l'index de l'accord dans la section
+    int selectedIndex = toChordComboBox.getSelectedItemIndex();
+    if (selectedIndex < 0)
+        return;
+    
+    // Mettre à jour le modèle
+    Modulation modulation(currentModulationState);
+    modulation.setToChordIndex(selectedIndex);
+    
+    DBG("[ModulationEditor] toChordIndex changé: " << selectedIndex);
 }
 
 void ModulationEditor::updateContent()
@@ -279,11 +364,14 @@ void ModulationEditor::updateContent()
     {
         modulationNameLabel.setText("No Modulation", juce::dontSendNotification);
         modulationTypeLabel.setText("", juce::dontSendNotification);
+        modulationTypeComboBox.setEnabled(false);
         fromSectionLabel.setText("", juce::dontSendNotification);
-        fromChordsLabel.setText("", juce::dontSendNotification);
         toSectionLabel.setText("", juce::dontSendNotification);
-        toChordsLabel.setText("", juce::dontSendNotification);
         chordIndicesLabel.setText("", juce::dontSendNotification);
+        fromChordComboBox.clear(juce::dontSendNotification);
+        fromChordComboBox.setEnabled(false);
+        toChordComboBox.clear(juce::dontSendNotification);
+        toChordComboBox.setEnabled(false);
     }
     else
     {
@@ -298,6 +386,9 @@ void ModulationEditor::updateContent()
         }
         
         modulationNameLabel.setText(displayName, juce::dontSendNotification);
+        modulationTypeComboBox.setEnabled(true);
+        fromChordComboBox.setEnabled(true);
+        toChordComboBox.setEnabled(true);
     }
 }
 
@@ -308,10 +399,10 @@ void ModulationEditor::syncFromModel()
         DBG("[ModulationEditor] syncFromModel: currentModulationState INVALIDE");
         modulationTypeLabel.setText("Aucune information disponible", juce::dontSendNotification);
         fromSectionLabel.setText("", juce::dontSendNotification);
-        fromChordsLabel.setText("", juce::dontSendNotification);
         toSectionLabel.setText("", juce::dontSendNotification);
-        toChordsLabel.setText("", juce::dontSendNotification);
         chordIndicesLabel.setText("", juce::dontSendNotification);
+        fromChordComboBox.clear(juce::dontSendNotification);
+        toChordComboBox.clear(juce::dontSendNotification);
         return;
     }
     
@@ -319,8 +410,8 @@ void ModulationEditor::syncFromModel()
     {
         DBG("[ModulationEditor] syncFromModel: AppController non trouvé");
         modulationTypeLabel.setText("AppController non disponible", juce::dontSendNotification);
-        fromChordsLabel.setText("", juce::dontSendNotification);
-        toChordsLabel.setText("", juce::dontSendNotification);
+        fromChordComboBox.clear(juce::dontSendNotification);
+        toChordComboBox.clear(juce::dontSendNotification);
         return;
     }
     
@@ -329,8 +420,13 @@ void ModulationEditor::syncFromModel()
     
     // Récupérer le type de modulation
     auto modulationType = modulation.getModulationType();
-    juce::String typeText = "Type : " + DiatonyText::getModulationTypeName(modulationType);
-    modulationTypeLabel.setText(typeText, juce::dontSendNotification);
+    
+    // Synchroniser le ComboBox (ID = valeur enum + 1)
+    int comboBoxId = static_cast<int>(modulationType) + 1;
+    modulationTypeComboBox.setSelectedId(comboBoxId, juce::dontSendNotification);
+    
+    // Mettre à jour le label
+    modulationTypeLabel.setText("Type :", juce::dontSendNotification);
     
     // Récupérer les indices d'accords
     int fromChordIndex = modulation.getFromChordIndex();
@@ -351,10 +447,6 @@ void ModulationEditor::syncFromModel()
         fromText += ", " + juce::String(fromSection.getProgression().size()) + " accords)";
         fromSectionLabel.setText(fromText, juce::dontSendNotification);
         
-        // Liste des accords de la section source
-        juce::String fromChords = formatSectionChords(fromSection);
-        fromChordsLabel.setText(fromChords, juce::dontSendNotification);
-        
         // Informations de la section destination
         juce::String toText = "Vers : " + toSection.getName() + " (";
         toText += DiatonyText::getNoteName(toSection.getNote(), toSection.getAlteration());
@@ -362,19 +454,123 @@ void ModulationEditor::syncFromModel()
         toText += ", " + juce::String(toSection.getProgression().size()) + " accords)";
         toSectionLabel.setText(toText, juce::dontSendNotification);
         
-        // Liste des accords de la section destination
-        juce::String toChords = formatSectionChords(toSection);
-        toChordsLabel.setText(toChords, juce::dontSendNotification);
+        // Peupler les ComboBoxes avec les accords des sections adjacentes
+        populateChordComboBoxes();
         
-        DBG("[ModulationEditor] Sync réussi: " << typeText);
+        DBG("[ModulationEditor] Sync réussi: " << DiatonyText::getModulationTypeName(modulationType));
     }
     else
     {
         fromSectionLabel.setText("Section source invalide", juce::dontSendNotification);
-        fromChordsLabel.setText("", juce::dontSendNotification);
         toSectionLabel.setText("Section destination invalide", juce::dontSendNotification);
-        toChordsLabel.setText("", juce::dontSendNotification);
+        fromChordComboBox.clear(juce::dontSendNotification);
+        toChordComboBox.clear(juce::dontSendNotification);
         DBG("[ModulationEditor] syncFromModel: Sections invalides");
+    }
+}
+
+void ModulationEditor::populateChordComboBoxes()
+{
+    if (!currentModulationState.isValid() || !appController)
+        return;
+    
+    Modulation modulation(currentModulationState);
+    auto& piece = appController->getPiece();
+    auto [fromSection, toSection] = piece.getAdjacentSections(modulation);
+    
+    if (!fromSection.isValid() || !toSection.isValid())
+        return;
+    
+    // Vider les ComboBoxes
+    fromChordComboBox.clear(juce::dontSendNotification);
+    toChordComboBox.clear(juce::dontSendNotification);
+    
+    // Peupler fromChordComboBox avec les accords de la section source
+    auto fromProgression = fromSection.getProgression();
+    for (size_t i = 0; i < fromProgression.size(); ++i)
+    {
+        auto chord = fromProgression.getChord(i);
+        
+        // Format compact : "#N: Degré+Qualité+État"
+        juce::String chordLabel = juce::String(i + 1) + ": ";
+        
+        // Degré
+        chordLabel += DiatonyText::getChordDegreeName(chord.getDegree());
+        
+        // Qualité (uniquement si différent de Major)
+        auto quality = chord.getQuality();
+        if (quality != Diatony::ChordQuality::Major)
+        {
+            chordLabel += DiatonyText::getChordQualitySymbol(quality);
+        }
+        
+        // État (uniquement si différent de Fundamental)
+        auto state = chord.getChordState();
+        if (state != Diatony::ChordState::Fundamental)
+        {
+            chordLabel += " " + DiatonyText::getChordStateName(state);
+        }
+        
+        fromChordComboBox.addItem(chordLabel, static_cast<int>(i + 1));
+    }
+    
+    // Peupler toChordComboBox avec les accords de la section destination
+    auto toProgression = toSection.getProgression();
+    for (size_t i = 0; i < toProgression.size(); ++i)
+    {
+        auto chord = toProgression.getChord(i);
+        
+        // Format compact : "#N: Degré+Qualité+État"
+        juce::String chordLabel = juce::String(i + 1) + ": ";
+        
+        // Degré
+        chordLabel += DiatonyText::getChordDegreeName(chord.getDegree());
+        
+        // Qualité (uniquement si différent de Major)
+        auto quality = chord.getQuality();
+        if (quality != Diatony::ChordQuality::Major)
+        {
+            chordLabel += DiatonyText::getChordQualitySymbol(quality);
+        }
+        
+        // État (uniquement si différent de Fundamental)
+        auto state = chord.getChordState();
+        if (state != Diatony::ChordState::Fundamental)
+        {
+            chordLabel += " " + DiatonyText::getChordStateName(state);
+        }
+        
+        toChordComboBox.addItem(chordLabel, static_cast<int>(i + 1));
+    }
+    
+    // Sélectionner les indices actuels depuis le modèle
+    int fromChordIndex = modulation.getFromChordIndex();
+    int toChordIndex = modulation.getToChordIndex();
+    
+    // Si l'index est -1, sélectionner par défaut : dernier accord pour from, 2ème accord pour to
+    if (fromChordIndex == -1 && fromProgression.size() > 0)
+    {
+        fromChordIndex = static_cast<int>(fromProgression.size()) - 1;
+    }
+    
+    if (toChordIndex == -1 && toProgression.size() >= 2)
+    {
+        toChordIndex = 1;
+    }
+    else if (toChordIndex == -1 && toProgression.size() > 0)
+    {
+        toChordIndex = 0;
+    }
+    
+    // Sélectionner les indices (convertir index → itemIndex)
+    if (fromChordIndex >= 0 && fromChordIndex < static_cast<int>(fromProgression.size()))
+    {
+        fromChordComboBox.setSelectedItemIndex(fromChordIndex, juce::dontSendNotification);
+    }
+    
+    if (toChordIndex >= 0 && toChordIndex < static_cast<int>(toProgression.size()))
+    {
+        toChordComboBox.setSelectedItemIndex(toChordIndex, juce::dontSendNotification);
     }
 }
 

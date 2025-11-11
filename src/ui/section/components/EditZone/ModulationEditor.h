@@ -4,6 +4,7 @@
 #include <juce_data_structures/juce_data_structures.h>
 #include <juce_gui_basics/juce_gui_basics.h>
 #include "ui/extra/Component/Panel/ColoredPanel.h"
+#include "ui/extra/Component/ComboBox/DiatonyComboBox.h"
 #include "utils/FontManager.h"
 #include "model/Modulation.h"
 #include "model/Section.h"
@@ -73,12 +74,15 @@ private:
     
     // Labels pour afficher les informations
     juce::Label modulationNameLabel;        // Label pour le nom de la modulation
-    juce::Label modulationTypeLabel;        // Type de modulation
+    juce::Label modulationTypeLabel;        // Label "Type :"
+    DiatonyComboBox modulationTypeComboBox; // ComboBox pour sélectionner le type
     juce::Label fromSectionLabel;           // Section source
     juce::Label toSectionLabel;             // Section destination
     juce::Label chordIndicesLabel;          // Indices d'accords
-    juce::Label fromChordsLabel;            // Liste des accords de la section source
-    juce::Label toChordsLabel;              // Liste des accords de la section destination
+    
+    // ComboBoxes listant les accords des sections adjacentes
+    DiatonyComboBox fromChordComboBox;      // ComboBox avec accords de la section source
+    DiatonyComboBox toChordComboBox;        // ComboBox avec accords de la section destination
     
     juce::SharedResourcePointer<FontManager> fontManager;
     
@@ -91,12 +95,31 @@ private:
     float cornerRadius = 8.0f;
     juce::Colour borderColour = juce::Colours::darkgreen;
     
+    // Valeurs validées depuis DiatonyTypes.h (comme Zone4ContentArea)
+    // Les 4 types de modulation disponibles
+    static constexpr std::array<Diatony::ModulationType, 4> modulationTypes = {
+        Diatony::ModulationType::PerfectCadence,
+        Diatony::ModulationType::PivotChord,
+        Diatony::ModulationType::Alteration,
+        Diatony::ModulationType::Chromatic
+    };
+    
     void setupModulationNameLabel();
     void setupInfoLabels();
+    void setupModulationTypeComboBox();
+    void setupChordSelectionComboBoxes();
     void updateContent();
     void syncFromModel();
     void drawBorder(juce::Graphics& g);
     void drawSeparatorLine(juce::Graphics& g);
+    
+    // Callbacks pour les changements
+    void onModulationTypeChanged();
+    void onFromChordChanged();
+    void onToChordChanged();
+    
+    // Helper pour peupler les ComboBoxes d'accords
+    void populateChordComboBoxes();
     
     // Helper pour formater les accords d'une section
     juce::String formatSectionChords(const Section& section) const;
