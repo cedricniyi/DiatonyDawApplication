@@ -208,6 +208,9 @@ bool GenerationService::generateMidiFromPiece(const Piece& piece, const juce::St
                     continue;
                 }
                 
+                // Récupérer le type de modulation
+                auto modulationType = modulationModel.getModulationType();
+                
                 // Récupérer les indices d'accords depuis le modèle
                 int fromChordIndex = modulationModel.getFromChordIndex();
                 int toChordIndex = modulationModel.getToChordIndex();
@@ -216,39 +219,90 @@ bool GenerationService::generateMidiFromPiece(const Piece& piece, const juce::St
                 int fromSectionSize = static_cast<int>(fromSection.getProgression().size());
                 int toSectionSize = static_cast<int>(toSection.getProgression().size());
                 
-                // Si les indices sont -1 (valeurs par défaut), calculer automatiquement
-                // Stratégie : dernier accord de la section source → 2ème accord de la section destination
-                if (fromChordIndex == -1)
+                // Validation des tailles
+                if (fromSectionSize == 0)
                 {
-                    if (fromSectionSize > 0)
+                    DBG("  ⚠️  Modulation " << (i + 1) << " ignorée : section source vide");
+                    continue;
+                }
+                if (toSectionSize == 0)
+                {
+                    DBG("  ⚠️  Modulation " << (i + 1) << " ignorée : section destination vide");
+                    continue;
+                }
+                
+                // ====================================================================
+                // CALCUL AUTOMATIQUE DES INDICES SELON LE TYPE DE MODULATION
+                // ====================================================================
+                
+                // CAS 1 : Pivot Chord - Mode MANUEL (l'utilisateur a défini les indices)
+                if (modulationType == Diatony::ModulationType::PivotChord)
+                {
+                    // Si l'utilisateur n'a pas défini les indices, utiliser des valeurs par défaut
+                    if (fromChordIndex == -1)
                     {
-                        fromChordIndex = fromSectionSize - 1;  // Dernier accord
-                        DBG("  📝 fromChordIndex non défini, utilisation automatique : " << fromChordIndex << " (dernier accord)");
+                        fromChordIndex = fromSectionSize - 1;  // Dernier accord de la section source
+                        DBG("  📝 PivotChord: fromChordIndex non défini, défaut = " << fromChordIndex);
                     }
-                    else
+                    if (toChordIndex == -1)
                     {
-                        DBG("  ⚠️  Modulation " << (i + 1) << " ignorée : section source vide");
-                        continue;
+                        toChordIndex = (toSectionSize >= 2) ? 1 : 0;  // 2ème accord si possible, sinon 1er
+                        DBG("  📝 PivotChord: toChordIndex non défini, défaut = " << toChordIndex);
                     }
                 }
                 
-                if (toChordIndex == -1)
+                // CAS 2 : Perfect Cadence - Mode AUTOMATIQUE
+                // Intervalle : [avant-dernier accord de section i] → [dernier accord de section i]
+                // Les DEUX accords sont dans la section SOURCE
+                else if (modulationType == Diatony::ModulationType::PerfectCadence)
                 {
-                    if (toSectionSize >= 2)
+                    if (fromSectionSize < 2)
                     {
-                        toChordIndex = 1;  // 2ème accord (index 1)
-                        DBG("  📝 toChordIndex non défini, utilisation automatique : " << toChordIndex << " (2ème accord)");
-                    }
-                    else if (toSectionSize > 0)
-                    {
-                        toChordIndex = 0;  // Si moins de 2 accords, prendre le premier
-                        DBG("  📝 toChordIndex non défini, utilisation automatique : " << toChordIndex << " (1er accord, section < 2 accords)");
-                    }
-                    else
-                    {
-                        DBG("  ⚠️  Modulation " << (i + 1) << " ignorée : section destination vide");
+                        DBG("  ⚠️  Modulation " << (i + 1) << " (Perfect Cadence) ignorée : section source < 2 accords");
                         continue;
                     }
+                    fromChordIndex = fromSectionSize - 2;  // Avant-dernier accord de fromSection
+                    toChordIndex = fromSectionSize - 1;    // Dernier accord de fromSection
+                    
+                    // IMPORTANT : Les deux indices sont relatifs à fromSection, donc on force toSectionIndex = fromSectionIndex
+                    toSectionIndex = fromSectionIndex;
+                    toSectionSize = fromSectionSize;
+                    
+                    DBG("  🤖 Perfect Cadence (auto): [" << fromChordIndex << " → " << toChordIndex << "] (V-I de section " << (fromSectionIndex + 1) << ")");
+                }
+                
+                // CAS 3 : Alteration - Mode AUTOMATIQUE
+                // Intervalle : [1er accord de section i+1] → [2ème accord de section i+1]
+                // Les DEUX accords sont dans la section DESTINATION
+                else if (modulationType == Diatony::ModulationType::Alteration)
+                {
+                    if (toSectionSize < 2)
+                    {
+                        DBG("  ⚠️  Modulation " << (i + 1) << " (Alteration) ignorée : section destination < 2 accords");
+                        continue;
+                    }
+                    fromChordIndex = 0;  // 1er accord de toSection
+                    toChordIndex = 1;    // 2ème accord de toSection
+                    
+                    // IMPORTANT : Les deux indices sont relatifs à toSection, donc on force fromSectionIndex = toSectionIndex
+                    fromSectionIndex = toSectionIndex;
+                    fromSectionSize = toSectionSize;
+                    
+                    DBG("  🤖 Alteration (auto): [" << fromChordIndex << " → " << toChordIndex << "] (début section " << (toSectionIndex + 1) << ")");
+                }
+                
+                // CAS 4 : Chromatic - Mode AUTOMATIQUE
+                // Intervalle : [dernier accord de section i] → [1er accord de section i+1]
+                // Les accords sont dans DEUX SECTIONS DIFFÉRENTES (contrairement aux autres types auto)
+                else if (modulationType == Diatony::ModulationType::Chromatic)
+                {
+                    fromChordIndex = fromSectionSize - 1;  // Dernier accord de fromSection (préparation)
+                    toChordIndex = 0;                       // Premier accord de toSection (résolution sur V)
+                    
+                    // IMPORTANT : On GARDE les deux sections différentes (pas de "force")
+                    // fromSectionIndex et toSectionIndex restent différents
+                    
+                    DBG("  🤖 Chromatic (auto): [" << fromChordIndex << " → " << toChordIndex << "] (dernier de section " << (fromSectionIndex + 1) << " → 1er de section " << (toSectionIndex + 1) << ")");
                 }
                 
                 // Vérifier que les indices sont dans les bornes
@@ -276,10 +330,14 @@ bool GenerationService::generateMidiFromPiece(const Piece& piece, const juce::St
                 }
                 globalToChordIndex += toChordIndex;
                 
+                // Afficher les sections conceptuelles (du modèle)
+                int originalFromSectionIndex = piece.getSectionIndexById(modulationModel.getFromSectionId());
+                int originalToSectionIndex = piece.getSectionIndexById(modulationModel.getToSectionId());
+                
                 DBG("  Modulation " << (i + 1) << " :");
                 DBG("    - Type : " << modulationModel.toString());
-                DBG("    - De Section " << (fromSectionIndex + 1) << " (" << fromSection.getName() << ")");
-                DBG("    - Vers Section " << (toSectionIndex + 1) << " (" << toSection.getName() << ")");
+                DBG("    - Connecte Section " << (originalFromSectionIndex + 1) << " → Section " << (originalToSectionIndex + 1) << " (conceptuel)");
+                DBG("    - Intervalle réel : Section " << (fromSectionIndex + 1) << " → Section " << (toSectionIndex + 1) << " (solveur)");
                 DBG("    - Indices locaux : [accord " << (fromChordIndex + 1) << " de S" << (fromSectionIndex + 1) 
                     << " → accord " << (toChordIndex + 1) << " de S" << (toSectionIndex + 1) << "]");
                 DBG("    - Indices globaux : [" << globalFromChordIndex << " → " << globalToChordIndex << "]");
