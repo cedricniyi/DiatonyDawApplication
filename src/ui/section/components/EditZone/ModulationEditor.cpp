@@ -619,7 +619,7 @@ juce::String ModulationEditor::formatSectionChords(const Section& section) const
     }
     
     return result;
-}
+} 
 
 void ModulationEditor::drawBorder(juce::Graphics& g)
 {

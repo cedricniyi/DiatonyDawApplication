@@ -129,8 +129,9 @@ void OverviewContentArea::refreshFromModel()
 void OverviewContentArea::valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged,
                                                   const juce::Identifier& property)
 {
-    // Mise à jour de l'affichage lors du changement de nom de section
-    if (property == ModelIdentifiers::name)
+    // Mise à jour de l'affichage lors du changement de nom de SECTION uniquement
+    // (Les modulations n'affichent pas leur nom dans l'overview, donc pas besoin de refresh)
+    if (property == ModelIdentifiers::name && treeWhosePropertyHasChanged.hasType(ModelIdentifiers::SECTION))
     {
         refreshFromModel();
     }
