@@ -35,12 +35,12 @@ void Modulation::setToSectionId(int newToSectionId)
 
 void Modulation::setFromChordIndex(int newFromChordIndex)
 {
-    state.setProperty("fromChordIndex", newFromChordIndex, nullptr);
+    state.setProperty(ModelIdentifiers::fromChordIndex, newFromChordIndex, nullptr);
 }
 
 void Modulation::setToChordIndex(int newToChordIndex)
 {
-    state.setProperty("toChordIndex", newToChordIndex, nullptr);
+    state.setProperty(ModelIdentifiers::toChordIndex, newToChordIndex, nullptr);
 }
 
 void Modulation::setName(const juce::String& newName)
@@ -66,12 +66,12 @@ int Modulation::getToSectionId() const
 
 int Modulation::getFromChordIndex() const
 {
-    return state.getProperty("fromChordIndex", -1);
+    return state.getProperty(ModelIdentifiers::fromChordIndex, -1);
 }
 
 int Modulation::getToChordIndex() const
 {
-    return state.getProperty("toChordIndex", -1);
+    return state.getProperty(ModelIdentifiers::toChordIndex, -1);
 }
 
 const juce::String Modulation::getName() const
@@ -107,8 +107,8 @@ juce::ValueTree Modulation::createModulationNode(Diatony::ModulationType type,
     modulationNode.setProperty(ModelIdentifiers::modulationType, modulationTypeToInt(type), nullptr);
     modulationNode.setProperty(ModelIdentifiers::fromSectionId, fromSectionId, nullptr);
     modulationNode.setProperty(ModelIdentifiers::toSectionId, toSectionId, nullptr);
-    modulationNode.setProperty("fromChordIndex", fromChordIndex, nullptr);
-    modulationNode.setProperty("toChordIndex", toChordIndex, nullptr);
+    modulationNode.setProperty(ModelIdentifiers::fromChordIndex, fromChordIndex, nullptr);
+    modulationNode.setProperty(ModelIdentifiers::toChordIndex, toChordIndex, nullptr);
     
     // Générer le nom automatiquement
     juce::String name = "Modulation " + juce::String(static_cast<int>(type));
