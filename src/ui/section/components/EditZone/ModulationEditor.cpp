@@ -322,7 +322,7 @@ void ModulationEditor::setupAutoIntervalLabel()
     // Configuration du label pour les modulations automatiques
     autoIntervalLabel.setText(juce::String::fromUTF8("Transition gérée automatiquement par le solveur"), 
                               juce::dontSendNotification);
-    autoIntervalLabel.setJustificationType(juce::Justification::centred);
+    autoIntervalLabel.setJustificationType(juce::Justification::centredLeft);
     autoIntervalLabel.setColour(juce::Label::textColourId, juce::Colours::darkgreen.darker(0.2f));
     
     auto labelFont = fontManager->getSFProText(15.0f, FontManager::FontWeight::Regular);
