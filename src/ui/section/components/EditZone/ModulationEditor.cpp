@@ -9,6 +9,7 @@ ModulationEditor::ModulationEditor()
     setupInfoLabels();
     setupModulationTypeComboBox();
     setupChordSelectionComboBoxes();
+    setupAutoIntervalLabel();
     updateContent();
 }
 
@@ -60,21 +61,32 @@ void ModulationEditor::resized()
     modulationTypeComboBox.setBounds(typeBounds);
     infoBounds.removeFromTop(spacing);
     
-    fromSectionLabel.setBounds(infoBounds.removeFromTop(labelHeight));
-    infoBounds.removeFromTop(spacing / 2);
-    
-    // ComboBox avec les accords de la section source (remplace le label textuel)
-    fromChordComboBox.setBounds(infoBounds.removeFromTop(labelHeight));
-    infoBounds.removeFromTop(spacing);
-    
-    toSectionLabel.setBounds(infoBounds.removeFromTop(labelHeight));
-    infoBounds.removeFromTop(spacing / 2);
-    
-    // ComboBox avec les accords de la section destination (remplace le label textuel)
-    toChordComboBox.setBounds(infoBounds.removeFromTop(labelHeight));
-    infoBounds.removeFromTop(spacing);
-    
-    chordIndicesLabel.setBounds(infoBounds.removeFromTop(labelHeight));
+    // Zones pour les accords : si visibles (mode manuel), afficher les labels et comboboxes
+    // Si cachées (mode automatique), afficher le label "géré automatiquement"
+    if (fromChordComboBox.isVisible())
+    {
+        fromSectionLabel.setBounds(infoBounds.removeFromTop(labelHeight));
+        infoBounds.removeFromTop(spacing / 2);
+        
+        // ComboBox avec les accords de la section source
+        fromChordComboBox.setBounds(infoBounds.removeFromTop(labelHeight));
+        infoBounds.removeFromTop(spacing);
+        
+        toSectionLabel.setBounds(infoBounds.removeFromTop(labelHeight));
+        infoBounds.removeFromTop(spacing / 2);
+        
+        // ComboBox avec les accords de la section destination
+        toChordComboBox.setBounds(infoBounds.removeFromTop(labelHeight));
+        infoBounds.removeFromTop(spacing);
+        
+        chordIndicesLabel.setBounds(infoBounds.removeFromTop(labelHeight));
+    }
+    else if (autoIntervalLabel.isVisible())
+    {
+        // Mode automatique : afficher uniquement le label informatif, centré verticalement
+        infoBounds.removeFromTop(spacing * 2);
+        autoIntervalLabel.setBounds(infoBounds.removeFromTop(labelHeight * 2));
+    }
 }
 
 void ModulationEditor::setModulationToEdit(const juce::String& modulationId)
@@ -305,6 +317,21 @@ void ModulationEditor::setupChordSelectionComboBoxes()
     addAndMakeVisible(toChordComboBox);
 }
 
+void ModulationEditor::setupAutoIntervalLabel()
+{
+    // Configuration du label pour les modulations automatiques
+    autoIntervalLabel.setText(juce::String::fromUTF8("Transition gérée automatiquement par le solveur"), 
+                              juce::dontSendNotification);
+    autoIntervalLabel.setJustificationType(juce::Justification::centred);
+    autoIntervalLabel.setColour(juce::Label::textColourId, juce::Colours::darkgreen.darker(0.2f));
+    
+    auto labelFont = fontManager->getSFProText(15.0f, FontManager::FontWeight::Regular);
+    autoIntervalLabel.setFont(juce::Font(labelFont).italicised());
+    
+    addAndMakeVisible(autoIntervalLabel);
+    autoIntervalLabel.setVisible(false);  // Caché par défaut
+}
+
 void ModulationEditor::onModulationTypeChanged()
 {
     if (!currentModulationState.isValid() || !appController)
@@ -320,6 +347,9 @@ void ModulationEditor::onModulationTypeChanged()
     // Créer un wrapper Modulation et mettre à jour le type
     Modulation modulation(currentModulationState);
     modulation.setModulationType(newType);
+    
+    // Mettre à jour la visibilité des contrôles d'intervalle selon le type
+    updateIntervalControlsVisibility();
     
     DBG("[ModulationEditor] Type de modulation changé: " << DiatonyText::getModulationTypeName(newType));
 }
@@ -457,6 +487,9 @@ void ModulationEditor::syncFromModel()
         // Peupler les ComboBoxes avec les accords des sections adjacentes
         populateChordComboBoxes();
         
+        // Mettre à jour la visibilité des contrôles d'intervalle selon le type
+        updateIntervalControlsVisibility();
+        
         DBG("[ModulationEditor] Sync réussi: " << DiatonyText::getModulationTypeName(modulationType));
     }
     else
@@ -467,6 +500,41 @@ void ModulationEditor::syncFromModel()
         toChordComboBox.clear(juce::dontSendNotification);
         DBG("[ModulationEditor] syncFromModel: Sections invalides");
     }
+}
+
+void ModulationEditor::updateIntervalControlsVisibility()
+{
+    if (!currentModulationState.isValid())
+        return;
+    
+    // Récupérer le type de modulation actuel
+    Modulation modulation(currentModulationState);
+    auto modulationType = modulation.getModulationType();
+    
+    // CAS A : Accord Pivot (PivotChord) - L'utilisateur définit l'intervalle manuellement
+    if (modulationType == Diatony::ModulationType::PivotChord)
+    {
+        fromChordComboBox.setVisible(true);
+        toChordComboBox.setVisible(true);
+        fromSectionLabel.setVisible(true);
+        toSectionLabel.setVisible(true);
+        autoIntervalLabel.setVisible(false);
+        
+        DBG("[ModulationEditor] Mode manuel : Accord Pivot sélectionné");
+    }
+    // CAS B : Perfect Cadence, Alteration, Chromatic - Géré automatiquement
+    else
+    {
+        fromChordComboBox.setVisible(false);
+        toChordComboBox.setVisible(false);
+        fromSectionLabel.setVisible(false);
+        toSectionLabel.setVisible(false);
+        autoIntervalLabel.setVisible(true);
+        
+        DBG("[ModulationEditor] Mode automatique : " << DiatonyText::getModulationTypeName(modulationType));
+    }
+    
+    resized();  // Recalculer le layout
 }
 
 void ModulationEditor::populateChordComboBoxes()

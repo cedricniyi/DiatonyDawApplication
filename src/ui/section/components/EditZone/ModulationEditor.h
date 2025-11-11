@@ -84,6 +84,9 @@ private:
     DiatonyComboBox fromChordComboBox;      // ComboBox avec accords de la section source
     DiatonyComboBox toChordComboBox;        // ComboBox avec accords de la section destination
     
+    // Label pour indiquer quand l'intervalle est géré automatiquement
+    juce::Label autoIntervalLabel;          // "Transition gérée automatiquement par le solveur"
+    
     juce::SharedResourcePointer<FontManager> fontManager;
     
     // Zones de layout
@@ -108,8 +111,10 @@ private:
     void setupInfoLabels();
     void setupModulationTypeComboBox();
     void setupChordSelectionComboBoxes();
+    void setupAutoIntervalLabel();
     void updateContent();
     void syncFromModel();
+    void updateIntervalControlsVisibility();  // Affiche/cache les contrôles selon le type
     void drawBorder(juce::Graphics& g);
     void drawSeparatorLine(juce::Graphics& g);
     
