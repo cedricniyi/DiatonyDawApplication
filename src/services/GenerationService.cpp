@@ -173,24 +173,158 @@ bool GenerationService::generateMidiFromPiece(const Piece& piece, const juce::St
         DBG("");
         
         // ========================================
-        // 5. CRÉER LES PARAMÈTRES GLOBAUX
+        // 5. LIRE LES MODULATIONS DEPUIS LE MODÈLE
         // ========================================
-        vector<ModulationParameters*> modulations = {};  // Pas de modulation pour l'instant
+        vector<ModulationParameters*> modulations;
+        
+        if (piece.getModulationCount() > 0)
+        {
+            DBG("🔄 Lecture des modulations depuis le modèle :");
+            DBG("-----------------------------------------------------------------");
+            
+            for (size_t i = 0; i < piece.getModulationCount(); ++i)
+            {
+                auto modulationModel = piece.getModulation(static_cast<int>(i));
+                
+                // Récupérer les sections adjacentes via les IDs stockés
+                auto [fromSection, toSection] = piece.getAdjacentSections(modulationModel);
+                
+                if (!fromSection.isValid() || !toSection.isValid())
+                {
+                    DBG("  ⚠️  Modulation " << (i + 1) << " ignorée : sections invalides");
+                    continue;
+                }
+                
+                // Trouver les indices des sections dans sectionParamsList
+                int fromSectionId = modulationModel.getFromSectionId();
+                int toSectionId = modulationModel.getToSectionId();
+                
+                int fromSectionIndex = piece.getSectionIndexById(fromSectionId);
+                int toSectionIndex = piece.getSectionIndexById(toSectionId);
+                
+                if (fromSectionIndex < 0 || toSectionIndex < 0)
+                {
+                    DBG("  ⚠️  Modulation " << (i + 1) << " ignorée : impossible de trouver les indices des sections");
+                    continue;
+                }
+                
+                // Récupérer les indices d'accords depuis le modèle
+                int fromChordIndex = modulationModel.getFromChordIndex();
+                int toChordIndex = modulationModel.getToChordIndex();
+                
+                // Tailles des sections
+                int fromSectionSize = static_cast<int>(fromSection.getProgression().size());
+                int toSectionSize = static_cast<int>(toSection.getProgression().size());
+                
+                // Si les indices sont -1 (valeurs par défaut), calculer automatiquement
+                // Stratégie : dernier accord de la section source → 2ème accord de la section destination
+                if (fromChordIndex == -1)
+                {
+                    if (fromSectionSize > 0)
+                    {
+                        fromChordIndex = fromSectionSize - 1;  // Dernier accord
+                        DBG("  📝 fromChordIndex non défini, utilisation automatique : " << fromChordIndex << " (dernier accord)");
+                    }
+                    else
+                    {
+                        DBG("  ⚠️  Modulation " << (i + 1) << " ignorée : section source vide");
+                        continue;
+                    }
+                }
+                
+                if (toChordIndex == -1)
+                {
+                    if (toSectionSize >= 2)
+                    {
+                        toChordIndex = 1;  // 2ème accord (index 1)
+                        DBG("  📝 toChordIndex non défini, utilisation automatique : " << toChordIndex << " (2ème accord)");
+                    }
+                    else if (toSectionSize > 0)
+                    {
+                        toChordIndex = 0;  // Si moins de 2 accords, prendre le premier
+                        DBG("  📝 toChordIndex non défini, utilisation automatique : " << toChordIndex << " (1er accord, section < 2 accords)");
+                    }
+                    else
+                    {
+                        DBG("  ⚠️  Modulation " << (i + 1) << " ignorée : section destination vide");
+                        continue;
+                    }
+                }
+                
+                // Vérifier que les indices sont dans les bornes
+                if (fromChordIndex < 0 || fromChordIndex >= fromSectionSize ||
+                    toChordIndex < 0 || toChordIndex >= toSectionSize)
+                {
+                    DBG("  ⚠️  Modulation " << (i + 1) << " ignorée : indices d'accords hors limites");
+                    DBG("    fromChordIndex=" << fromChordIndex << " (max=" << (fromSectionSize-1) << ")");
+                    DBG("    toChordIndex=" << toChordIndex << " (max=" << (toSectionSize-1) << ")");
+                    continue;
+                }
+                
+                // Calculer les indices globaux cumulatifs
+                int globalFromChordIndex = 0;
+                for (int j = 0; j < fromSectionIndex; ++j)
+                {
+                    globalFromChordIndex += static_cast<int>(piece.getSection(j).getProgression().size());
+                }
+                globalFromChordIndex += fromChordIndex;
+                
+                int globalToChordIndex = 0;
+                for (int j = 0; j < toSectionIndex; ++j)
+                {
+                    globalToChordIndex += static_cast<int>(piece.getSection(j).getProgression().size());
+                }
+                globalToChordIndex += toChordIndex;
+                
+                DBG("  Modulation " << (i + 1) << " :");
+                DBG("    - Type : " << modulationModel.toString());
+                DBG("    - De Section " << (fromSectionIndex + 1) << " (" << fromSection.getName() << ")");
+                DBG("    - Vers Section " << (toSectionIndex + 1) << " (" << toSection.getName() << ")");
+                DBG("    - Indices locaux : [accord " << (fromChordIndex + 1) << " de S" << (fromSectionIndex + 1) 
+                    << " → accord " << (toChordIndex + 1) << " de S" << (toSectionIndex + 1) << "]");
+                DBG("    - Indices globaux : [" << globalFromChordIndex << " → " << globalToChordIndex << "]");
+                
+                // Créer la modulation Diatony avec le type depuis le modèle
+                auto modulation = new ModulationParameters(
+                    static_cast<int>(modulationModel.getModulationType()),  // Utiliser le type du modèle
+                    globalFromChordIndex,                                     // start (index global)
+                    globalToChordIndex,                                       // end (index global)
+                    sectionParamsList[fromSectionIndex],                     // from section
+                    sectionParamsList[toSectionIndex]                        // to section
+                );
+                
+                modulations.push_back(modulation);
+                DBG("");
+            }
+            
+            DBG("✅ " << modulations.size() << " modulation(s) chargée(s) depuis le modèle");
+            DBG("");
+        }
+        else
+        {
+            DBG("ℹ️  Aucune modulation dans le modèle");
+            DBG("");
+        }
+        
+        // ========================================
+        // 6. CRÉER LES PARAMÈTRES GLOBAUX
+        // ========================================
         
         auto pieceParams = new FourVoiceTextureParameters(
             totalChords,                                  // totalNumberOfChords
             static_cast<int>(piece.getSectionCount()),   // numberOfSections
             sectionParamsList,                            // sectionParameters
-            modulations                                   // modulationParameters (vide)
+            modulations                                   // modulationParameters
         );
         
         DBG("✅ FourVoiceTextureParameters créé");
         DBG("  - " << piece.getSectionCount() << " section(s)");
+        DBG("  - " << modulations.size() << " modulation(s)");
         DBG("  - " << totalChords << " accord(s) total");
         DBG("");
         
         // ========================================
-        // 6. LOGGER LES PARAMÈTRES GLOBAUX
+        // 7. LOGGER LES PARAMÈTRES GLOBAUX
         // ========================================
         DBG("📄 PARAMÈTRES GLOBAUX DE LA PIÈCE :");
         DBG("=================================================================");
@@ -199,7 +333,7 @@ bool GenerationService::generateMidiFromPiece(const Piece& piece, const juce::St
         DBG("");
         
         // ========================================
-        // 7. PRÉPARER LE CHEMIN DE SAUVEGARDE
+        // 8. PRÉPARER LE CHEMIN DE SAUVEGARDE
         // ========================================
         
         // Créer le dossier dans Application Support
@@ -225,8 +359,13 @@ bool GenerationService::generateMidiFromPiece(const Piece& piece, const juce::St
         DBG("");
         
         // ========================================
-        // 8. RÉSOLUTION AVEC DIATONY
+        // 9. RÉSOLUTION AVEC DIATONY [TEMPORAIREMENT DÉSACTIVÉ]
         // ========================================
+        DBG("⏸️  ÉTAPE 9 & 10 : Résolution et génération MIDI temporairement désactivées");
+        DBG("   pour validation des logs et configuration des modulations");
+        DBG("");
+        
+        /* ===== TEMPORAIREMENT COMMENTÉ =====
         DBG("🔍 Résolution du problème avec Diatony...");
         DBG("  - Utilisation des options par défaut (timeout: 60s)");
         DBG("");
@@ -244,6 +383,9 @@ bool GenerationService::generateMidiFromPiece(const Piece& piece, const juce::St
             for (auto* sectionParams : sectionParamsList) {
                 delete sectionParams;
             }
+            for (auto* modulation : modulations) {
+                delete modulation;
+            }
             return false;
         }
         
@@ -251,7 +393,7 @@ bool GenerationService::generateMidiFromPiece(const Piece& piece, const juce::St
         DBG("");
         
         // ========================================
-        // 9. GÉNÉRATION DU FICHIER MIDI
+        // 10. GÉNÉRATION DU FICHIER MIDI
         // ========================================
         DBG("🎼 Génération du fichier MIDI...");
         
@@ -275,11 +417,15 @@ bool GenerationService::generateMidiFromPiece(const Piece& piece, const juce::St
             for (auto* sectionParams : sectionParamsList) {
                 delete sectionParams;
             }
+            for (auto* modulation : modulations) {
+                delete modulation;
+            }
             return false;
         }
+        ===== FIN SECTION COMMENTÉE ===== */
         
         // ========================================
-        // 10. CLEANUP
+        // 11. CLEANUP
         // ========================================
         // Note: On ne delete pas la tonalité car Tonality n'a pas de destructeur virtuel
         // et on ne sait pas qui possède le pointeur (TonalProgressionParameters ou nous)
@@ -288,6 +434,11 @@ bool GenerationService::generateMidiFromPiece(const Piece& piece, const juce::St
         // Nettoyer tous les paramètres de sections
         for (auto* sectionParams : sectionParamsList) {
             delete sectionParams;
+        }
+        
+        // Nettoyer toutes les modulations
+        for (auto* modulation : modulations) {
+            delete modulation;
         }
         
         lastError.clear();
