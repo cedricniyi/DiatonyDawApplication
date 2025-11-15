@@ -22,6 +22,9 @@ public:
     /** Initialise le ValueTree et commence l'écoute des changements */
     void setAppState(juce::ValueTree& state);
     
+    /** Initialise l'écoute du selectionState pour les notifications de génération */
+    void setSelectionState(juce::ValueTree& state);
+    
     void paint(juce::Graphics& g) override;
     void resized() override;
     
@@ -52,6 +55,7 @@ public:
     
 private:
     juce::ValueTree appState;
+    juce::ValueTree selectionState;  // Pour écouter les changements de génération
 
     // 3 Panels principaux
     HeaderPanel headerPanel;
