@@ -200,16 +200,19 @@ void AppController::startGeneration()
 {
     DBG("AppController::startGeneration() - Début de la génération");
     
+    // ✅ TOUJOURS réinitialiser le statut au début pour forcer la notification
+    // Cela garantit que le ValueTree notifie les listeners même si on termine en "error" à nouveau
+    selectionState.setProperty("generationStatus", "generating", nullptr);
+    
     // Vérifier que la pièce n'est pas vide
     if (piece.isEmpty())
     {
         DBG("  ❌ Erreur : La pièce est vide, impossible de générer");
+        // ⚠️ Notifier l'UI via le selectionState (architecture réactive)
+        selectionState.setProperty("generationStatus", "error", nullptr);
+        selectionState.setProperty("generationError", juce::String::fromUTF8("La pièce est vide. Veuillez ajouter au moins une section."), nullptr);
         return;
     }
-    
-    // TODO: Dans le futur, on pourra mettre un statut "generating" dans le ValueTree
-    // pour que l'UI affiche un loader
-    // Ex: getState().setProperty("generationStatus", "generating", nullptr);
     
     DBG("  ✓ Pièce valide, appel du service de génération...");
     
@@ -220,10 +223,19 @@ void AppController::startGeneration()
     if (success)
     {
         DBG("  ✅ Génération réussie !");
+        
+        // ✅ Mettre à jour l'état : succès
+        selectionState.setProperty("generationStatus", "completed", nullptr);
+        selectionState.setProperty("midiFilePath", juce::String::fromUTF8("Fichier MIDI généré avec succès"), nullptr);
     }
     else
     {
         DBG("  ❌ Erreur lors de la génération : " << generationService.getLastError());
+        
+        // ❌ Mettre à jour l'état : erreur
+        // La Vue (MainContentComponent) réagira à ce changement et affichera le pop-up
+        selectionState.setProperty("generationStatus", "error", nullptr);
+        selectionState.setProperty("generationError", generationService.getLastError(), nullptr);
     }
     
     DBG("AppController::startGeneration() - Fin");
