@@ -56,14 +56,6 @@ void DiatonyAlertWindow::paint(juce::Graphics& g)
     auto bounds = getLocalBounds().toFloat();
     auto accentColour = getAccentColour();
     
-    // ===== OMBRE PORTÉE (DROP SHADOW) - OPTIMISÉE =====
-    // Utiliser un DropShadowEffect serait plus performant, mais pour la simplicité
-    // on garde le drawForPath avec un rayon réduit pour moins de calculs
-    juce::DropShadow shadow(juce::Colours::black.withAlpha(0.15f), 10, {0, 2});
-    juce::Path shadowPath;
-    shadowPath.addRoundedRectangle(bounds, 12.0f);
-    shadow.drawForPath(g, shadowPath);
-    
     // ===== FOND ET BORDURE (MODE CLAIR) =====
     // Fond principal clair avec gradient subtil (blanc → gris très clair)
     g.setGradientFill(juce::ColourGradient(
