@@ -424,7 +424,7 @@ bool GenerationService::generateMidiFromPiece(const Piece& piece, const juce::St
         DBG("");
         
         // Appel de solve_diatony avec options par défaut (nullptr)
-        auto solution = solve_diatony(pieceParams, nullptr, true);
+        auto solution = solve_diatony(pieceParams, nullptr, false);
         
         if (solution == nullptr) {
             lastError = "No solution found by Diatony solver";
@@ -446,9 +446,8 @@ bool GenerationService::generateMidiFromPiece(const Piece& piece, const juce::St
         DBG("");
         
         // ========================================
-        // 10. GÉNÉRATION DU FICHIER MIDI [TEMPORAIREMENT DÉSACTIVÉ]
+        // 10. GÉNÉRATION DU FICHIER MIDI
         // ========================================
-        /* ===== TEMPORAIREMENT COMMENTÉ =====
         DBG("🎼 Génération du fichier MIDI...");
         
         try {
@@ -476,7 +475,6 @@ bool GenerationService::generateMidiFromPiece(const Piece& piece, const juce::St
             }
             return false;
         }
-        ===== FIN SECTION COMMENTÉE ===== */
         
         // ========================================
         // 11. CLEANUP
