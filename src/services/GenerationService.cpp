@@ -417,13 +417,8 @@ bool GenerationService::generateMidiFromPiece(const Piece& piece, const juce::St
         DBG("");
         
         // ========================================
-        // 9. RÉSOLUTION AVEC DIATONY [TEMPORAIREMENT DÉSACTIVÉ]
+        // 9. RÉSOLUTION AVEC DIATONY
         // ========================================
-        DBG("⏸️  ÉTAPE 9 & 10 : Résolution et génération MIDI temporairement désactivées");
-        DBG("   pour validation des logs et configuration des modulations");
-        DBG("");
-        
-        /* ===== TEMPORAIREMENT COMMENTÉ =====
         DBG("🔍 Résolution du problème avec Diatony...");
         DBG("  - Utilisation des options par défaut (timeout: 60s)");
         DBG("");
@@ -451,8 +446,9 @@ bool GenerationService::generateMidiFromPiece(const Piece& piece, const juce::St
         DBG("");
         
         // ========================================
-        // 10. GÉNÉRATION DU FICHIER MIDI
+        // 10. GÉNÉRATION DU FICHIER MIDI [TEMPORAIREMENT DÉSACTIVÉ]
         // ========================================
+        /* ===== TEMPORAIREMENT COMMENTÉ =====
         DBG("🎼 Génération du fichier MIDI...");
         
         try {
