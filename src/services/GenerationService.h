@@ -101,8 +101,9 @@ private:
     /**
      * Extrait les vectors d'accords depuis une Progression
      * Convertit nos enums vers les int attendus par Diatony
+     * Si une qualité est en mode Auto, utilise tonality->get_chord_quality(degree)
      */
-    ChordVectors extractChordVectors(const Progression& progression);
+    ChordVectors extractChordVectors(const Progression& progression, class Tonality* tonality);
     
     /**
      * Crée un TonalProgressionParameters* depuis une Section

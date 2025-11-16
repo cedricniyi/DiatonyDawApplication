@@ -541,18 +541,31 @@ Tonality* GenerationService::createTonalityFromSection(const Section& section)
 /**
  * Extrait les vectors d'accords depuis une Progression
  * Convertit nos enums vers les int attendus par Diatony
+ * Si une qualité est en mode Auto, utilise tonality->get_chord_quality(degree)
  */
-GenerationService::ChordVectors GenerationService::extractChordVectors(const Progression& progression)
+GenerationService::ChordVectors GenerationService::extractChordVectors(const Progression& progression, Tonality* tonality)
 {
     ChordVectors result;
     
     for (size_t i = 0; i < progression.size(); ++i) {
         auto chord = progression.getChord(i);
         
-        // Conversion enum → int (cast direct car nos enums matchent Diatony)
-        result.degrees.push_back(static_cast<int>(chord.getDegree()));
-        result.qualities.push_back(static_cast<int>(chord.getQuality()));
-        result.states.push_back(static_cast<int>(chord.getChordState()));  // Corrigé: getChordState() au lieu de getState()
+        // Degré et état : conversion directe
+        int degree = static_cast<int>(chord.getDegree());
+        result.degrees.push_back(degree);
+        result.states.push_back(static_cast<int>(chord.getChordState()));
+        
+        // Qualité : si Auto, utiliser tonality->get_chord_quality(degree)
+        auto quality = chord.getQuality();
+        if (quality == Diatony::ChordQuality::Auto) {
+            // Mode automatique : demander à la tonalité la qualité appropriée pour ce degré
+            int autoQuality = tonality->get_chord_quality(degree);
+            result.qualities.push_back(autoQuality);
+            DBG("  🤖 Qualité Auto pour degré " << degree << " → " << autoQuality);
+        } else {
+            // Mode manuel : utiliser la qualité spécifiée par l'utilisateur
+            result.qualities.push_back(static_cast<int>(quality));
+        }
     }
     
     return result;
@@ -573,9 +586,9 @@ TonalProgressionParameters* GenerationService::createSectionParams(
     // 1. Créer la tonalité
     Tonality* tonality = createTonalityFromSection(section);
     
-    // 2. Extraire les accords
+    // 2. Extraire les accords (en passant la tonalité pour le mode Auto)
     auto progression = section.getProgression();
-    auto chordVectors = extractChordVectors(progression);
+    auto chordVectors = extractChordVectors(progression, tonality);
     
     // 3. Créer les paramètres
     int numberOfChords = static_cast<int>(progression.size());
