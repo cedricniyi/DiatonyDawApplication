@@ -39,7 +39,8 @@ Diatony::ChordDegree Chord::getDegree() const
 
 Diatony::ChordQuality Chord::getQuality() const
 {
-    return intToQuality(state.getProperty(ModelIdentifiers::quality, 0));
+    // Valeur par défaut : Auto (-1) pour détection automatique
+    return intToQuality(state.getProperty(ModelIdentifiers::quality, -1));
 }
 
 Diatony::ChordState Chord::getChordState() const
