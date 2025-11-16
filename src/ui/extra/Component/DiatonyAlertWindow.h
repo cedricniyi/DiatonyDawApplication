@@ -33,12 +33,30 @@ public:
 
     /**
      * @brief Affiche le pop-up de manière asynchrone (non-bloquant)
+     * 
+     * @param parentComponent Composant parent (recommandé pour les plugins) - utilise getTopLevelComponent()
      */
     static void show(AlertType type,
                     const juce::String& title,
                     const juce::String& message,
                     const juce::String& buttonText = "OK",
-                    std::function<void()> onCloseCallback = nullptr);
+                    std::function<void()> onCloseCallback = nullptr,
+                    juce::Component* parentComponent = nullptr);
+    
+    /**
+     * @brief Affiche le pop-up et retourne la DialogWindow* pour contrôle manuel
+     * 
+     * Utilisé pour les popups qu'on veut fermer programmatiquement (ex: chargement)
+     * 
+     * @param parentComponent Composant parent (CRITIQUE pour plugins AU/VST) - garantit l'affichage dans la bonne fenêtre
+     * @return Pointeur vers la DialogWindow créée (l'appelant peut la fermer avec exitModalState)
+     */
+    static juce::DialogWindow* showWithHandle(AlertType type,
+                                              const juce::String& title,
+                                              const juce::String& message,
+                                              const juce::String& buttonText = "OK",
+                                              std::function<void()> onCloseCallback = nullptr,
+                                              juce::Component* parentComponent = nullptr);
 
 private:
     void drawIcon(juce::Graphics& g, juce::Rectangle<float> iconArea);
@@ -117,8 +135,8 @@ public:
     DiatonyAlertWindowWithOverlay(std::unique_ptr<DiatonyAlertWindow> alertWindow)
         : alert(std::move(alertWindow))
     {
-        // Optimisation : dire à JUCE que ce composant est opaque pour éviter les repaints inutiles du parent
-        setOpaque(true);
+        // ⚠️ IMPORTANT : Ne PAS être opaque pour laisser voir l'app en dessous de l'overlay
+        setOpaque(false);
         addAndMakeVisible(alert.get());
     }
     

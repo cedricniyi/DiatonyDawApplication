@@ -42,7 +42,15 @@ DiatonyAlertWindow::DiatonyAlertWindow(AlertType type,
             parent->exitModalState(0);
     };
     
-    addAndMakeVisible(okButton.get());
+    // Cacher le bouton si le texte est vide (popup de chargement non-fermable)
+    if (buttonText.isEmpty())
+    {
+        okButton->setVisible(false);
+    }
+    else
+    {
+        addAndMakeVisible(okButton.get());
+    }
 
     // Taille fixe pour un pop-up harmonieux
     setSize(450, 340);
@@ -107,11 +115,12 @@ void DiatonyAlertWindow::resized()
     fb.performLayout(bounds);
 }
 
-void DiatonyAlertWindow::show(AlertType type,
-                            const juce::String& title,
-                            const juce::String& message,
-                            const juce::String& buttonText,
-                            std::function<void()> onCloseCallback)
+juce::DialogWindow* DiatonyAlertWindow::showWithHandle(AlertType type,
+                                                      const juce::String& title,
+                                                      const juce::String& message,
+                                                      const juce::String& buttonText,
+                                                      std::function<void()> onCloseCallback,
+                                                      juce::Component* parentComponent)
 {
     // Créer le pop-up
     auto alertWindow = std::make_unique<DiatonyAlertWindow>(type, title, message, buttonText, onCloseCallback);
@@ -135,28 +144,81 @@ void DiatonyAlertWindow::show(AlertType type,
     // ✅ Rendre le fond de la DialogWindow complètement transparent
     dialogWindow->setOpaque(false);
     
-    // La fenêtre prend tout l'écran pour l'overlay
-    if (auto* mainWindow = juce::TopLevelWindow::getActiveTopLevelWindow())
+    // === PARENTAGE CORRECT POUR PLUGINS ===
+    // Trouver le vrai composant top-level (pas juste la fenêtre active du système)
+    juce::Component* topLevelComp = nullptr;
+    
+    // 1. Priorité : utiliser le parentComponent fourni (recommandé pour plugins)
+    if (parentComponent != nullptr)
     {
-        dialogWindow->setBounds(mainWindow->getBounds());
+        topLevelComp = parentComponent->getTopLevelComponent();
+        DBG("DiatonyAlertWindow: Parent fourni, utilisation de getTopLevelComponent()");
+    }
+    
+    // 2. Fallback : chercher la fenêtre active (pour standalone sans parent)
+    if (topLevelComp == nullptr)
+    {
+        if (auto* activeWindow = juce::TopLevelWindow::getActiveTopLevelWindow())
+        {
+            topLevelComp = activeWindow;
+            DBG("DiatonyAlertWindow: Fallback sur getActiveTopLevelWindow()");
+        }
+    }
+    
+    // 3. Positionner et centrer la fenêtre dans le parent
+    if (topLevelComp != nullptr)
+    {
+        // Centrer le popup dans le parent (et non pas prendre toute sa taille !)
+        dialogWindow->centreAroundComponent(topLevelComp, dialogWindow->getWidth(), dialogWindow->getHeight());
+        DBG("DiatonyAlertWindow: Popup centré dans le parent avec succès");
     }
     else
     {
-        // Fallback : utiliser le display principal
-        auto display = juce::Desktop::getInstance().getDisplays().getPrimaryDisplay();
-        if (display != nullptr)
-        {
-            dialogWindow->setBounds(display->userArea);
-        }
+        // Fallback final : centrer à l'écran
+        dialogWindow->centreWithSize(dialogWindow->getWidth(), dialogWindow->getHeight());
+        DBG("DiatonyAlertWindow: Fallback sur centrage écran");
     }
     
     dialogWindow->setDropShadowEnabled(false);  // Pas besoin, on a déjà une ombre dans le composant
     
-    // Lancer la fenêtre de manière asynchrone (non-bloquant)
-    dialogWindow->enterModalState(true,
-        juce::ModalCallbackFunction::create([dialogWindow](int) {
-            delete dialogWindow;
-        }), true);
+    // ⚠️ CRITIQUE : Rendre visible et forcer le repaint AVANT enterModalState
+    dialogWindow->setVisible(true);
+    dialogWindow->toFront(true);
+    dialogWindow->setAlwaysOnTop(true);
+    
+    // Forcer un repaint complet pour éviter l'affichage partiel
+    dialogWindow->repaint();
+    if (auto* content = dialogWindow->getContentComponent())
+        content->repaint();
+    
+    // Différer légèrement l'entrée en mode modal pour laisser le temps au rendu
+    juce::MessageManager::callAsync([dialogWindow, onCloseCallback]() {
+        // Lancer la fenêtre de manière asynchrone (non-bloquant)
+        // ⚠️ IMPORTANT : Appeler le callback AVANT de delete pour nettoyer les références
+        dialogWindow->enterModalState(true,
+            juce::ModalCallbackFunction::create([dialogWindow, onCloseCallback](int) {
+                // Appeler le callback de fermeture (pour nettoyer loadingPopup)
+                if (onCloseCallback)
+                    onCloseCallback();
+                
+                // Puis supprimer la fenêtre
+                delete dialogWindow;
+            }), true);
+    });
+    
+    // Retourner le pointeur pour que l'appelant puisse fermer la fenêtre
+    return dialogWindow;
+}
+
+void DiatonyAlertWindow::show(AlertType type,
+                            const juce::String& title,
+                            const juce::String& message,
+                            const juce::String& buttonText,
+                            std::function<void()> onCloseCallback,
+                            juce::Component* parentComponent)
+{
+    // Utilise showWithHandle mais ignore le retour
+    showWithHandle(type, title, message, buttonText, onCloseCallback, parentComponent);
 }
 
 //==============================================================================

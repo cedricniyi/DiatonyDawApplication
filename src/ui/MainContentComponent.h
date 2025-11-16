@@ -4,6 +4,7 @@
 #include "header/HeaderPanel.h"
 #include "section/SectionPanel.h"
 #include "footer/FooterPanel.h"
+#include "extra/Component/DiatonyAlertWindow.h"
 
 //==============================================================================
 /**
@@ -66,6 +67,16 @@ private:
     float headerFlex;
     float sectionFlex;
     float footerFlex;
+    
+    // Overlay pour afficher les popups directement dans MainContentComponent
+    std::unique_ptr<DiatonyAlertWindowWithOverlay> activePopup;
+    
+    // Méthodes helper pour gérer les popups
+    void showPopup(DiatonyAlertWindow::AlertType type,
+                   const juce::String& title,
+                   const juce::String& message,
+                   const juce::String& buttonText = "OK");
+    void closePopup();
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainContentComponent)
 }; 
