@@ -89,6 +89,7 @@ namespace DiatonyText {
     
     inline juce::String getChordQualityName(Diatony::ChordQuality quality) {
         switch (quality) {
+            case Diatony::ChordQuality::Auto: return "Auto";
             case Diatony::ChordQuality::Major: return "Majeur";
             case Diatony::ChordQuality::Minor: return "Mineur";
             case Diatony::ChordQuality::Diminished: return juce::String::fromUTF8("Diminué");
@@ -109,6 +110,7 @@ namespace DiatonyText {
     // Symboles compacts pour affichage dans les listes d'accords
     inline juce::String getChordQualitySymbol(Diatony::ChordQuality quality) {
         switch (quality) {
+            case Diatony::ChordQuality::Auto: return "?";
             case Diatony::ChordQuality::Major: return "M";
             case Diatony::ChordQuality::Minor: return "m";
             case Diatony::ChordQuality::Diminished: return juce::String::fromUTF8("°");
