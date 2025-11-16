@@ -1,4 +1,5 @@
 #include "GenerationService.h"
+#include "../controller/AppController.h"  // Pour appeler triggerAsyncUpdate()
 #include "../model/DiatonyTypes.h"
 #include "../model/Section.h"
 #include "../model/Progression.h"
@@ -85,14 +86,144 @@ namespace { // Namespace anonyme pour confiner nos outils de vérification
 
 // Constructeur
 GenerationService::GenerationService() 
-    : pImpl(std::make_unique<Impl>()), ready(false) {
+    : juce::Thread("Diatony Solver Thread"),  // Initialiser la classe de base Thread
+      pImpl(std::make_unique<Impl>()), 
+      ready(false),
+      generationSuccess(false)
+{
     pImpl->initialized = true;
     ready = true;
     lastError.clear();
+    DBG("GenerationService créé en mode asynchrone (Thread)");
 }
 
 // Destructeur
-GenerationService::~GenerationService() = default;
+GenerationService::~GenerationService()
+{
+    // ⚠️ CRITIQUE : Toujours arrêter le thread avant destruction
+    // Doc JUCE : "You must never attempt to delete a Thread object while it's still running"
+    DBG("GenerationService::~GenerationService() - Arrêt du thread...");
+    
+    // Attendre indéfiniment que le thread se termine proprement
+    stopThread(-1);
+    
+    DBG("GenerationService détruit");
+}
+
+// ========================================
+// NOUVELLE API ASYNCHRONE
+// ========================================
+
+bool GenerationService::startGeneration(const Piece& piece, const juce::String& outputPath, AppController* controller)
+{
+    // Vérifier qu'une génération n'est pas déjà en cours
+    if (isThreadRunning())
+    {
+        lastError = "Une génération est déjà en cours";
+        DBG("⚠️  GenerationService::startGeneration() - Génération déjà en cours, refus");
+        return false;
+    }
+    
+    if (!ready)
+    {
+        lastError = "Service not ready";
+        DBG("⚠️  GenerationService::startGeneration() - Service non prêt");
+        return false;
+    }
+    
+    DBG("GenerationService::startGeneration() - Préparation du thread...");
+    
+    // Stocker les références pour le thread
+    // ⚠️ IMPORTANT : La Piece doit rester valide pendant toute la durée de la génération
+    // C'est garanti car la Piece est possédée par l'AppController qui vit plus longtemps
+    pieceToGenerate = &piece;
+    outputPathToGenerate = outputPath;
+    
+    // Stocker le callback (protégé par CriticalSection)
+    {
+        juce::ScopedLock lock(callbackLock);
+        appController = controller;
+    }
+    
+    // Réinitialiser les résultats
+    generationSuccess.store(false);
+    lastError.clear();
+    
+    // Lancer le thread (non-bloquant)
+    DBG("GenerationService::startGeneration() - Lancement du thread...");
+    startThread();
+    
+    return true;
+}
+
+void GenerationService::run()
+{
+    DBG("=================================================================");
+    DBG("🎹 THREAD DE GÉNÉRATION DÉMARRÉ");
+    DBG("=================================================================");
+    
+    // Vérifier que le pointeur est valide
+    if (pieceToGenerate == nullptr)
+    {
+        DBG("❌ ERREUR : pieceToGenerate est nullptr !");
+        generationSuccess.store(false);
+        lastError = "Piece invalide (nullptr)";
+        return;
+    }
+    
+    // Exécuter la génération synchrone (sur ce thread)
+    // Déréférencer le pointeur pour obtenir la Piece
+    bool success = generateMidiFromPiece(*pieceToGenerate, outputPathToGenerate);
+    
+    // Stocker le résultat (atomic, thread-safe)
+    generationSuccess.store(success);
+    
+    DBG("=================================================================");
+    if (success)
+    {
+        DBG("✅ THREAD DE GÉNÉRATION TERMINÉ AVEC SUCCÈS");
+    }
+    else
+    {
+        DBG("❌ THREAD DE GÉNÉRATION TERMINÉ AVEC ERREUR");
+    }
+    DBG("=================================================================");
+    
+    // Notifier l'AppController via AsyncUpdater (thread-safe)
+    // triggerAsyncUpdate() est thread-safe et provoquera l'appel de handleAsyncUpdate() 
+    // sur le message thread
+    AppController* controllerToNotify = nullptr;
+    {
+        juce::ScopedLock lock(callbackLock);
+        controllerToNotify = appController;
+    }
+    
+    if (controllerToNotify != nullptr)
+    {
+        DBG("🔔 Notification du contrôleur via triggerAsyncUpdate()");
+        // triggerAsyncUpdate() est thread-safe (doc JUCE)
+        // Il déclenchera handleAsyncUpdate() sur le message thread
+        controllerToNotify->triggerAsyncUpdate();
+    }
+    else
+    {
+        DBG("⚠️  Pas de contrôleur à notifier (nullptr)");
+    }
+}
+
+bool GenerationService::isGenerating() const
+{
+    return isThreadRunning();
+}
+
+bool GenerationService::getLastGenerationSuccess() const
+{
+    return generationSuccess.load();
+}
+
+// ========================================
+// LOGIQUE DE GÉNÉRATION (maintenant privée)
+// ========================================
 
 bool GenerationService::generateMidiFromPiece(const Piece& piece, const juce::String& outputPath) {
     // ========================================

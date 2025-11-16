@@ -2,22 +2,27 @@
 
 #include <juce_core/juce_core.h>
 #include <memory>
+#include <atomic>
 #include "../model/Piece.h"
+
+// Forward declaration pour éviter l'include circulaire
+class AppController;
 
 /**
  * @file GenerationService.h
- * @brief Service de génération MIDI à partir du modèle Diatony
+ * @brief Service de génération MIDI à partir du modèle Diatony (Thread Worker)
  * 
  * Cette classe agit comme un "Adapter" (pont) entre notre modèle fortement typé
  * et la librairie Diatony sous-jacente. Elle maintient un couplage faible en 
  * n'exposant aucune dépendance vers les headers externes dans son interface publique.
  * 
- * Design Pattern: Adapter Pattern
+ * Design Pattern: Adapter Pattern + Background Thread
  * - Le service traduit les appels de notre API vers la librairie Diatony
  * - Seul le fichier .cpp connaît les détails de la librairie externe
  * - L'interface publique reste propre et indépendante
+ * - Hérite de juce::Thread pour exécuter la génération en arrière-plan
  */
-class GenerationService {
+class GenerationService : public juce::Thread {
 public:
     /**
      * @brief Constructeur par défaut
@@ -30,17 +35,24 @@ public:
     ~GenerationService();
     
     /**
-     * @brief Génère un fichier MIDI à partir d'une pièce musicale
+     * @brief Démarre la génération MIDI de manière asynchrone (nouveau point d'entrée)
      * 
-     * Cette méthode est le point d'entrée principal du service. Elle prend
-     * un objet Piece (notre modèle propre) et génère un fichier MIDI en
-     * utilisant la librairie Diatony en arrière-plan.
+     * Cette méthode lance la génération sur un thread séparé et retourne immédiatement.
+     * Le callback vers l'AppController sera déclenché via AsyncUpdater quand c'est terminé.
      * 
      * @param piece La pièce musicale à convertir en MIDI
      * @param outputPath Le chemin de sortie pour le fichier MIDI
-     * @return true si la génération a réussie, false sinon
+     * @param controller Pointeur vers l'AppController pour le callback
+     * @return true si le thread a été lancé, false si une génération est déjà en cours
      */
-    bool generateMidiFromPiece(const Piece& piece, const juce::String& outputPath);
+    bool startGeneration(const Piece& piece, const juce::String& outputPath, AppController* controller);
+    
+    /**
+     * @brief Vérifie si une génération est en cours
+     * 
+     * @return true si le thread de génération est actif
+     */
+    bool isGenerating() const;
     
     /**
      * @brief Vérifie si le service est prêt pour la génération
@@ -71,6 +83,24 @@ public:
      * @param piece La pièce musicale à analyser et afficher
      */
     void logGenerationInfo(const Piece& piece);
+    
+    // === ACCESSEURS POUR LES RÉSULTATS (thread-safe) ===
+    
+    /**
+     * @brief Obtient le résultat de la dernière génération
+     * 
+     * @return true si la dernière génération a réussi, false sinon
+     */
+    bool getLastGenerationSuccess() const;
+
+protected:
+    /**
+     * @brief Implémentation du thread (appelée automatiquement par startThread)
+     * 
+     * Cette méthode contient toute la logique de génération MIDI.
+     * Elle s'exécute sur un thread séparé et notifie l'AppController à la fin.
+     */
+    void run() override;
 
 private:
     // Implémentation cachée pour éviter les fuites de dépendances 
@@ -116,7 +146,35 @@ private:
         int endChordIndex
     );
     
-    // État interne
+    /**
+     * @brief Génère un fichier MIDI de manière synchrone (logique interne)
+     * 
+     * Cette méthode contient toute la logique de génération.
+     * Elle est appelée depuis run() sur le thread worker.
+     * 
+     * @param piece La pièce musicale à convertir en MIDI
+     * @param outputPath Le chemin de sortie pour le fichier MIDI
+     * @return true si la génération a réussie, false sinon
+     */
+    bool generateMidiFromPiece(const Piece& piece, const juce::String& outputPath);
+    
+    // === ÉTAT INTERNE (original) ===
     mutable juce::String lastError;
     bool ready;
+    
+    // === DONNÉES POUR LE THREADING ===
+    
+    // Callback vers l'AppController (pour AsyncUpdater)
+    AppController* appController = nullptr;
+    
+    // Données à générer (on garde une RÉFÉRENCE CONSTANTE - la Piece doit rester valide!)
+    // Note: La Piece est possédée par l'AppController qui vit plus longtemps que ce thread
+    const Piece* pieceToGenerate = nullptr;
+    juce::String outputPathToGenerate;
+    
+    // Résultats de la génération (thread-safe avec std::atomic)
+    std::atomic<bool> generationSuccess { false };
+    
+    // Synchronisation
+    juce::CriticalSection callbackLock;  // Protection pour l'accès au callback
 }; 
