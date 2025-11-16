@@ -195,14 +195,10 @@ void AppController::setPieceTitle(const juce::String& title)
     piece.setTitle(title);
 }
 
-// Génération
+// Génération (asynchrone)
 void AppController::startGeneration()
 {
-    DBG("AppController::startGeneration() - Début de la génération");
-    
-    // ✅ TOUJOURS réinitialiser le statut au début pour forcer la notification
-    // Cela garantit que le ValueTree notifie les listeners même si on termine en "error" à nouveau
-    selectionState.setProperty("generationStatus", "generating", nullptr);
+    DBG("AppController::startGeneration() - Début de la génération ASYNCHRONE");
     
     // Vérifier que la pièce n'est pas vide
     if (piece.isEmpty())
@@ -214,15 +210,41 @@ void AppController::startGeneration()
         return;
     }
     
-    DBG("  ✓ Pièce valide, appel du service de génération...");
+    DBG("  ✓ Pièce valide, lancement du thread de génération...");
     
-    // Appeler le service de génération (le chemin est généré automatiquement)
+    // Mettre à jour le status IMMÉDIATEMENT (l'UI va réagir et afficher le spinner)
+    selectionState.setProperty("generationStatus", "generating", nullptr);
+    
+    // Lancer la génération sur un thread séparé (NON-BLOQUANT)
     juce::String dummyPath = "";  // Non utilisé, le service génère son propre chemin
-    bool success = generationService.generateMidiFromPiece(piece, dummyPath);
+    bool launched = generationService.startGeneration(piece, dummyPath, this);
+    
+    if (!launched)
+    {
+        // Le thread n'a pas pu être lancé (déjà en cours ou service non prêt)
+        DBG("  ❌ Impossible de lancer la génération : " << generationService.getLastError());
+        selectionState.setProperty("generationStatus", "error", nullptr);
+        selectionState.setProperty("generationError", generationService.getLastError(), nullptr);
+        return;
+    }
+    
+    DBG("  ✅ Thread de génération lancé ! (retour immédiat)");
+    // NOTE : handleAsyncUpdate() sera appelé automatiquement quand le thread terminera
+}
+
+// Callback AsyncUpdater : appelé sur le message thread quand la génération est terminée
+void AppController::handleAsyncUpdate()
+{
+    DBG("=================================================================");
+    DBG("📬 AppController::handleAsyncUpdate() - Notification reçue du thread");
+    DBG("=================================================================");
+    
+    // Lire le résultat de la génération (thread-safe)
+    bool success = generationService.getLastGenerationSuccess();
     
     if (success)
     {
-        DBG("  ✅ Génération réussie !");
+        DBG("  ✅ Génération réussie ! Mise à jour de l'état...");
         
         // ✅ Mettre à jour l'état : succès
         selectionState.setProperty("generationStatus", "completed", nullptr);
@@ -230,15 +252,17 @@ void AppController::startGeneration()
     }
     else
     {
-        DBG("  ❌ Erreur lors de la génération : " << generationService.getLastError());
+        DBG("  ❌ Génération échouée : " << generationService.getLastError());
         
         // ❌ Mettre à jour l'état : erreur
-        // La Vue (MainContentComponent) réagira à ce changement et affichera le pop-up
+        // La Vue (MainContentComponent) réagira à ce changement et affichera le pop-up d'erreur
         selectionState.setProperty("generationStatus", "error", nullptr);
         selectionState.setProperty("generationError", generationService.getLastError(), nullptr);
     }
     
-    DBG("AppController::startGeneration() - Fin");
+    DBG("=================================================================");
+    DBG("📬 handleAsyncUpdate() terminé - L'UI va réagir au changement");
+    DBG("=================================================================");
 }
 
 // Undo/Redo

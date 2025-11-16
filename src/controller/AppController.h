@@ -15,10 +15,14 @@
  * - Gérer l'état de l'application (sélection, mode d'édition, etc.)
  * - Exposer une API claire pour les actions utilisateur
  * - Être totalement découplé de l'interface graphique
+ * - Recevoir les callbacks asynchrones du GenerationService via AsyncUpdater
  * 
  * Architecture MVC : C'est le Controller qui fait le lien entre Model (Piece) et View (UI)
+ * 
+ * Hérite de juce::AsyncUpdater pour recevoir les notifications du thread de génération
+ * de manière thread-safe (handleAsyncUpdate sera appelé sur le message thread)
  */
-class AppController
+class AppController : public juce::AsyncUpdater
 {
 public:
     // === CONSTRUCTEURS ===
@@ -103,4 +107,15 @@ private:
     bool isValidSectionIndex(int index) const;
     bool isValidModulationIndex(int index) const;
     bool isValidChordIndex(int sectionIndex, int chordIndex) const;
+    
+    // === ASYNCUPDATER CALLBACK ===
+    
+    /**
+     * @brief Callback appelé sur le message thread quand la génération est terminée
+     * 
+     * Cette méthode est appelée automatiquement par JUCE sur le message thread
+     * quand triggerAsyncUpdate() est invoqué depuis le thread worker.
+     * C'est ici qu'on met à jour le ValueTree avec les résultats.
+     */
+    void handleAsyncUpdate() override;
 };
