@@ -38,6 +38,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     // Création et configuration du composant de contenu principal.
     mainContent = std::make_unique<MainContentComponent>();
     mainContent->setAppState(appState); // Lie l'état de l'UI au contenu.
+    mainContent->setSelectionState(appController->getSelectionState()); // Pour les notifications de génération
     // TODO: Connecter au Model State (données métier).
     // mainContent->setModelState(appController->getPiece().getState());
     addAndMakeVisible(*mainContent);

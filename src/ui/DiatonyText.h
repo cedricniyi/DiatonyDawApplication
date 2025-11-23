@@ -1,5 +1,6 @@
 #pragma once
 #include "model/DiatonyTypes.h"
+#include "model/NoteConverter.h"
 #include <juce_core/juce_core.h>
 
 namespace DiatonyText {
@@ -29,10 +30,26 @@ namespace DiatonyText {
         return getBaseNoteName(base) + getAlterationSymbol(alt);
     }
     
+    // Version avec Note chromatique (convertit en BaseNote d'abord)
+    inline juce::String getNoteName(Diatony::Note note, Diatony::Alteration alt) {
+        Diatony::BaseNote base = Diatony::toBaseNote(note, alt);
+        return getBaseNoteName(base) + getAlterationSymbol(alt);
+    }
+    
     inline juce::String getModeName(Diatony::Mode mode) {
         switch (mode) {
             case Diatony::Mode::Major: return "Major";
             case Diatony::Mode::Minor: return "Minor";
+        }
+        return {}; // Ne devrait jamais arriver
+    }
+    
+    inline juce::String getModulationTypeName(Diatony::ModulationType type) {
+        switch (type) {
+            case Diatony::ModulationType::PerfectCadence: return juce::String::fromUTF8("Cadence Parfaite");
+            case Diatony::ModulationType::PivotChord: return "Accord Pivot";
+            case Diatony::ModulationType::Alteration: return juce::String::fromUTF8("Altération");
+            case Diatony::ModulationType::Chromatic: return "Chromatique";
         }
         return {}; // Ne devrait jamais arriver
     }
@@ -72,6 +89,7 @@ namespace DiatonyText {
     
     inline juce::String getChordQualityName(Diatony::ChordQuality quality) {
         switch (quality) {
+            case Diatony::ChordQuality::Auto: return "Auto";
             case Diatony::ChordQuality::Major: return "Majeur";
             case Diatony::ChordQuality::Minor: return "Mineur";
             case Diatony::ChordQuality::Diminished: return juce::String::fromUTF8("Diminué");
@@ -85,6 +103,27 @@ namespace DiatonyText {
             case Diatony::ChordQuality::MinorMajorSeventh: return juce::String::fromUTF8("7e Min-Maj");
             case Diatony::ChordQuality::MajorNinthDominant: return juce::String::fromUTF8("9e Maj Dom");
             case Diatony::ChordQuality::MinorNinthDominant: return juce::String::fromUTF8("9e Min Dom");
+        }
+        return {}; // Ne devrait jamais arriver
+    }
+    
+    // Symboles compacts pour affichage dans les listes d'accords
+    inline juce::String getChordQualitySymbol(Diatony::ChordQuality quality) {
+        switch (quality) {
+            case Diatony::ChordQuality::Auto: return "?";
+            case Diatony::ChordQuality::Major: return "M";
+            case Diatony::ChordQuality::Minor: return "m";
+            case Diatony::ChordQuality::Diminished: return juce::String::fromUTF8("°");
+            case Diatony::ChordQuality::Augmented: return "+";
+            case Diatony::ChordQuality::AugmentedSixth: return "⁺⁶";
+            case Diatony::ChordQuality::DominantSeventh: return "⁷";
+            case Diatony::ChordQuality::MajorSeventh: return "M⁷";
+            case Diatony::ChordQuality::MinorSeventh: return "m⁷";
+            case Diatony::ChordQuality::DiminishedSeventh: return "°⁷";
+            case Diatony::ChordQuality::HalfDiminished: return "ø⁷";
+            case Diatony::ChordQuality::MinorMajorSeventh: return "mM⁷";
+            case Diatony::ChordQuality::MajorNinthDominant: return "⁹";
+            case Diatony::ChordQuality::MinorNinthDominant: return "m⁹";
         }
         return {}; // Ne devrait jamais arriver
     }

@@ -86,8 +86,9 @@ private:
         Diatony::ChordState::FourthInversion
     };
     
-    // Les 13 qualités d'accords disponibles
-    static constexpr std::array<Diatony::ChordQuality, 13> chordQualities = {
+    // Les 14 qualités d'accords disponibles (incluant Auto)
+    static constexpr std::array<Diatony::ChordQuality, 14> chordQualities = {
+        Diatony::ChordQuality::Auto,
         Diatony::ChordQuality::Major,
         Diatony::ChordQuality::Minor,
         Diatony::ChordQuality::Diminished,

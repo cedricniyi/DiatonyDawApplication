@@ -24,10 +24,10 @@ Zone4::Zone4()
         // (même pattern que Zone1/2/3)
         if (onChordAdded)
         {
-            // Ajouter un accord avec des valeurs par défaut : Degré I, Majeur, Fondamental
+            // Ajouter un accord avec des valeurs par défaut : Degré I, Auto, Fondamental
             onChordAdded(
                 Diatony::ChordDegree::First,
-                Diatony::ChordQuality::Major,
+                Diatony::ChordQuality::Auto,
                 Diatony::ChordState::Fundamental
             );
         }

@@ -72,13 +72,15 @@ void Zone4ContentArea::addRectangle(juce::ValueTree chordState)
     {
         // Lire les valeurs actuelles du chord
         int degree = chordState.getProperty(ModelIdentifiers::degree, 0);
-        int quality = chordState.getProperty(ModelIdentifiers::quality, 0);
+        int quality = chordState.getProperty(ModelIdentifiers::quality, -1); // Auto par défaut
         int state = chordState.getProperty(ModelIdentifiers::state, 0);
         
         // Initialiser les comboboxes avec ces valeurs
+        // Note : pour quality, on doit convertir entre enum value (-1, 0, 1...) et combobox index (0, 1, 2...)
+        // Formule : comboboxIndex = enumValue + 1 (car Auto=-1 est à l'index 0)
         newRectangle->getDegreeCombo().setSelectedItemIndex(degree, juce::dontSendNotification);
         newRectangle->getStateCombo().setSelectedItemIndex(state, juce::dontSendNotification);
-        newRectangle->getQualityCombo().setSelectedItemIndex(quality, juce::dontSendNotification);
+        newRectangle->getQualityCombo().setSelectedItemIndex(quality + 1, juce::dontSendNotification);
         
         // Connecter les onChange des comboboxes au ValueTree
         // On capture le ValueTree par valeur (c'est léger, juste un pointeur interne)
@@ -98,9 +100,19 @@ void Zone4ContentArea::addRectangle(juce::ValueTree chordState)
         };
         
         qualityCombo->onChange = [chordState, qualityCombo]() mutable {
-            int newQuality = qualityCombo->getSelectedItemIndex();
+            int comboboxIndex = qualityCombo->getSelectedItemIndex();
+            // Conversion inverse : enumValue = comboboxIndex - 1 (car Auto=-1 est à l'index 0)
+            int newQuality = comboboxIndex - 1;
             chordState.setProperty(ModelIdentifiers::quality, newQuality, nullptr);
         };
+    }
+    else
+    {
+        // Si pas de ValueTree, définir les valeurs par défaut visuelles
+        // Degré : I (index 0), État : Fondamental (index 0), Qualité : Auto (index 0)
+        newRectangle->getDegreeCombo().setSelectedItemIndex(0, juce::dontSendNotification);
+        newRectangle->getStateCombo().setSelectedItemIndex(0, juce::dontSendNotification);
+        newRectangle->getQualityCombo().setSelectedItemIndex(0, juce::dontSendNotification); // Auto
     }
     
     // Ajout au contenu scrollable

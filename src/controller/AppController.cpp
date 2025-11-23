@@ -25,8 +25,41 @@ void AppController::addNewSection(const juce::String& sectionName)
 {
     piece.addSection(sectionName);
     
-    // Sélectionner automatiquement la nouvelle section
+    // === LOGS DE VALIDATION DU NOUVEAU SYSTÈME D'IDs ===
     int newSectionIndex = getSectionCount() - 1;
+    auto newSection = piece.getSection(newSectionIndex);
+    int newSectionId = newSection.getState().getProperty(ModelIdentifiers::id, -1);
+    
+    DBG("========================================");
+    DBG("✅ Section créée : " << sectionName);
+    DBG("   - Index : " << newSectionIndex);
+    DBG("   - ID : " << newSectionId);
+    
+    // Si une modulation a été créée, afficher ses infos
+    if (piece.getModulationCount() > 0)
+    {
+        auto lastModulation = piece.getModulation(piece.getModulationCount() - 1);
+        int modulationId = static_cast<int>(lastModulation.getState().getProperty(ModelIdentifiers::id, -1));
+        
+        DBG("✅ Modulation créée automatiquement :");
+        DBG("   - ID Modulation : " << modulationId);
+        DBG("   - From Section ID : " << lastModulation.getFromSectionId());
+        DBG("   - To Section ID : " << lastModulation.getToSectionId());
+        DBG("   - From Chord Index : " << lastModulation.getFromChordIndex());
+        DBG("   - To Chord Index : " << lastModulation.getToChordIndex());
+        
+        // Test du helper getAdjacentSections()
+        auto [fromSection, toSection] = piece.getAdjacentSections(lastModulation);
+        int fromSectionId = static_cast<int>(fromSection.getState().getProperty(ModelIdentifiers::id, -1));
+        int toSectionId = static_cast<int>(toSection.getState().getProperty(ModelIdentifiers::id, -1));
+        
+        DBG("🔗 Test getAdjacentSections() :");
+        DBG("   - Section source : " << fromSection.getName() << " (ID=" << fromSectionId << ")");
+        DBG("   - Section destination : " << toSection.getName() << " (ID=" << toSectionId << ")");
+    }
+    DBG("========================================");
+    
+    // Sélectionner automatiquement la nouvelle section
     selectSection(newSectionIndex);
     
 }
@@ -162,38 +195,74 @@ void AppController::setPieceTitle(const juce::String& title)
     piece.setTitle(title);
 }
 
-// Génération
+// Génération (asynchrone)
 void AppController::startGeneration()
 {
-    DBG("AppController::startGeneration() - Début de la génération");
+    DBG("AppController::startGeneration() - Début de la génération ASYNCHRONE");
     
     // Vérifier que la pièce n'est pas vide
     if (piece.isEmpty())
     {
         DBG("  ❌ Erreur : La pièce est vide, impossible de générer");
+        // ⚠️ Notifier l'UI via le selectionState (architecture réactive)
+        selectionState.setProperty("generationStatus", "error", nullptr);
+        selectionState.setProperty("generationError", juce::String::fromUTF8("La pièce est vide. Veuillez ajouter au moins une section."), nullptr);
         return;
     }
     
-    // TODO: Dans le futur, on pourra mettre un statut "generating" dans le ValueTree
-    // pour que l'UI affiche un loader
-    // Ex: getState().setProperty("generationStatus", "generating", nullptr);
+    DBG("  ✓ Pièce valide, lancement du thread de génération...");
     
-    DBG("  ✓ Pièce valide, appel du service de génération...");
+    // Mettre à jour le status IMMÉDIATEMENT (l'UI va réagir et afficher le spinner)
+    selectionState.setProperty("generationStatus", "generating", nullptr);
     
-    // Appeler le service de génération (le chemin est généré automatiquement)
+    // Lancer la génération sur un thread séparé (NON-BLOQUANT)
     juce::String dummyPath = "";  // Non utilisé, le service génère son propre chemin
-    bool success = generationService.generateMidiFromPiece(piece, dummyPath);
+    bool launched = generationService.startGeneration(piece, dummyPath, this);
+    
+    if (!launched)
+    {
+        // Le thread n'a pas pu être lancé (déjà en cours ou service non prêt)
+        DBG("  ❌ Impossible de lancer la génération : " << generationService.getLastError());
+        selectionState.setProperty("generationStatus", "error", nullptr);
+        selectionState.setProperty("generationError", generationService.getLastError(), nullptr);
+        return;
+    }
+    
+    DBG("  ✅ Thread de génération lancé ! (retour immédiat)");
+    // NOTE : handleAsyncUpdate() sera appelé automatiquement quand le thread terminera
+}
+
+// Callback AsyncUpdater : appelé sur le message thread quand la génération est terminée
+void AppController::handleAsyncUpdate()
+{
+    DBG("=================================================================");
+    DBG("📬 AppController::handleAsyncUpdate() - Notification reçue du thread");
+    DBG("=================================================================");
+    
+    // Lire le résultat de la génération (thread-safe)
+    bool success = generationService.getLastGenerationSuccess();
     
     if (success)
     {
-        DBG("  ✅ Génération réussie !");
+        DBG("  ✅ Génération réussie ! Mise à jour de l'état...");
+        
+        // ✅ Mettre à jour l'état : succès
+        selectionState.setProperty("generationStatus", "completed", nullptr);
+        selectionState.setProperty("midiFilePath", juce::String::fromUTF8("Fichier MIDI généré avec succès"), nullptr);
     }
     else
     {
-        DBG("  ❌ Erreur lors de la génération : " << generationService.getLastError());
+        DBG("  ❌ Génération échouée : " << generationService.getLastError());
+        
+        // ❌ Mettre à jour l'état : erreur
+        // La Vue (MainContentComponent) réagira à ce changement et affichera le pop-up d'erreur
+        selectionState.setProperty("generationStatus", "error", nullptr);
+        selectionState.setProperty("generationError", generationService.getLastError(), nullptr);
     }
     
-    DBG("AppController::startGeneration() - Fin");
+    DBG("=================================================================");
+    DBG("📬 handleAsyncUpdate() terminé - L'UI va réagir au changement");
+    DBG("=================================================================");
 }
 
 // Undo/Redo

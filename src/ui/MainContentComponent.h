@@ -4,6 +4,7 @@
 #include "header/HeaderPanel.h"
 #include "section/SectionPanel.h"
 #include "footer/FooterPanel.h"
+#include "extra/Component/DiatonyAlertWindow.h"
 
 //==============================================================================
 /**
@@ -21,6 +22,9 @@ public:
 
     /** Initialise le ValueTree et commence l'écoute des changements */
     void setAppState(juce::ValueTree& state);
+    
+    /** Initialise l'écoute du selectionState pour les notifications de génération */
+    void setSelectionState(juce::ValueTree& state);
     
     void paint(juce::Graphics& g) override;
     void resized() override;
@@ -52,6 +56,7 @@ public:
     
 private:
     juce::ValueTree appState;
+    juce::ValueTree selectionState;  // Pour écouter les changements de génération
 
     // 3 Panels principaux
     HeaderPanel headerPanel;
@@ -62,6 +67,16 @@ private:
     float headerFlex;
     float sectionFlex;
     float footerFlex;
+    
+    // Overlay pour afficher les popups directement dans MainContentComponent
+    std::unique_ptr<DiatonyAlertWindowWithOverlay> activePopup;
+    
+    // Méthodes helper pour gérer les popups
+    void showPopup(DiatonyAlertWindow::AlertType type,
+                   const juce::String& title,
+                   const juce::String& message,
+                   const juce::String& buttonText = "OK");
+    void closePopup();
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainContentComponent)
 }; 

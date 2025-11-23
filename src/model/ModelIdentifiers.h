@@ -26,4 +26,8 @@ namespace ModelIdentifiers
     
     // Propriétés de Modulation
     const juce::Identifier modulationType { "modulationType" };
+    const juce::Identifier fromSectionId  { "fromSectionId" };   // ID de la section source (conceptuel : connecte S1→S2)
+    const juce::Identifier toSectionId    { "toSectionId" };     // ID de la section destination (conceptuel : connecte S1→S2)
+    const juce::Identifier fromChordIndex { "fromChordIndex" };  // Index RELATIF de l'accord de début (relatif à sa section)
+    const juce::Identifier toChordIndex   { "toChordIndex" };    // Index RELATIF de l'accord de fin (relatif à sa section)
 } 

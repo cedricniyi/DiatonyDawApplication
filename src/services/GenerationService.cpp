@@ -1,4 +1,5 @@
 #include "GenerationService.h"
+#include "../controller/AppController.h"  // Pour appeler triggerAsyncUpdate()
 #include "../model/DiatonyTypes.h"
 #include "../model/Section.h"
 #include "../model/Progression.h"
@@ -85,14 +86,144 @@ namespace { // Namespace anonyme pour confiner nos outils de vérification
 
 // Constructeur
 GenerationService::GenerationService() 
-    : pImpl(std::make_unique<Impl>()), ready(false) {
+    : juce::Thread("Diatony Solver Thread"),  // Initialiser la classe de base Thread
+      pImpl(std::make_unique<Impl>()), 
+      ready(false),
+      generationSuccess(false)
+{
     pImpl->initialized = true;
     ready = true;
     lastError.clear();
+    DBG("GenerationService créé en mode asynchrone (Thread)");
 }
 
 // Destructeur
-GenerationService::~GenerationService() = default;
+GenerationService::~GenerationService()
+{
+    // ⚠️ CRITIQUE : Toujours arrêter le thread avant destruction
+    // Doc JUCE : "You must never attempt to delete a Thread object while it's still running"
+    DBG("GenerationService::~GenerationService() - Arrêt du thread...");
+    
+    // Attendre indéfiniment que le thread se termine proprement
+    stopThread(-1);
+    
+    DBG("GenerationService détruit");
+}
+
+// ========================================
+// NOUVELLE API ASYNCHRONE
+// ========================================
+
+bool GenerationService::startGeneration(const Piece& piece, const juce::String& outputPath, AppController* controller)
+{
+    // Vérifier qu'une génération n'est pas déjà en cours
+    if (isThreadRunning())
+    {
+        lastError = "Une génération est déjà en cours";
+        DBG("⚠️  GenerationService::startGeneration() - Génération déjà en cours, refus");
+        return false;
+    }
+    
+    if (!ready)
+    {
+        lastError = "Service not ready";
+        DBG("⚠️  GenerationService::startGeneration() - Service non prêt");
+        return false;
+    }
+    
+    DBG("GenerationService::startGeneration() - Préparation du thread...");
+    
+    // Stocker les références pour le thread
+    // ⚠️ IMPORTANT : La Piece doit rester valide pendant toute la durée de la génération
+    // C'est garanti car la Piece est possédée par l'AppController qui vit plus longtemps
+    pieceToGenerate = &piece;
+    outputPathToGenerate = outputPath;
+    
+    // Stocker le callback (protégé par CriticalSection)
+    {
+        juce::ScopedLock lock(callbackLock);
+        appController = controller;
+    }
+    
+    // Réinitialiser les résultats
+    generationSuccess.store(false);
+    lastError.clear();
+    
+    // Lancer le thread (non-bloquant)
+    DBG("GenerationService::startGeneration() - Lancement du thread...");
+    startThread();
+    
+    return true;
+}
+
+void GenerationService::run()
+{
+    DBG("=================================================================");
+    DBG("🎹 THREAD DE GÉNÉRATION DÉMARRÉ");
+    DBG("=================================================================");
+    
+    // Vérifier que le pointeur est valide
+    if (pieceToGenerate == nullptr)
+    {
+        DBG("❌ ERREUR : pieceToGenerate est nullptr !");
+        generationSuccess.store(false);
+        lastError = "Piece invalide (nullptr)";
+        return;
+    }
+    
+    // Exécuter la génération synchrone (sur ce thread)
+    // Déréférencer le pointeur pour obtenir la Piece
+    bool success = generateMidiFromPiece(*pieceToGenerate, outputPathToGenerate);
+    
+    // Stocker le résultat (atomic, thread-safe)
+    generationSuccess.store(success);
+    
+    DBG("=================================================================");
+    if (success)
+    {
+        DBG("✅ THREAD DE GÉNÉRATION TERMINÉ AVEC SUCCÈS");
+    }
+    else
+    {
+        DBG("❌ THREAD DE GÉNÉRATION TERMINÉ AVEC ERREUR");
+    }
+    DBG("=================================================================");
+    
+    // Notifier l'AppController via AsyncUpdater (thread-safe)
+    // triggerAsyncUpdate() est thread-safe et provoquera l'appel de handleAsyncUpdate() 
+    // sur le message thread
+    AppController* controllerToNotify = nullptr;
+    {
+        juce::ScopedLock lock(callbackLock);
+        controllerToNotify = appController;
+    }
+    
+    if (controllerToNotify != nullptr)
+    {
+        DBG("🔔 Notification du contrôleur via triggerAsyncUpdate()");
+        // triggerAsyncUpdate() est thread-safe (doc JUCE)
+        // Il déclenchera handleAsyncUpdate() sur le message thread
+        controllerToNotify->triggerAsyncUpdate();
+    }
+    else
+    {
+        DBG("⚠️  Pas de contrôleur à notifier (nullptr)");
+    }
+}
+
+bool GenerationService::isGenerating() const
+{
+    return isThreadRunning();
+}
+
+bool GenerationService::getLastGenerationSuccess() const
+{
+    return generationSuccess.load();
+}
+
+// ========================================
+// LOGIQUE DE GÉNÉRATION (maintenant privée)
+// ========================================
 
 bool GenerationService::generateMidiFromPiece(const Piece& piece, const juce::String& outputPath) {
     // ========================================
@@ -108,9 +239,8 @@ bool GenerationService::generateMidiFromPiece(const Piece& piece, const juce::St
         return false;
     }
     
-    if (piece.getSectionCount() != 1) {
-        lastError = "Only 1 section supported for now (got " + 
-                    juce::String(static_cast<int>(piece.getSectionCount())) + ")";
+    if (piece.getSectionCount() == 0) {
+        lastError = "Piece has no sections";
         DBG("❌ ERREUR : " << lastError);
         return false;
     }
@@ -118,63 +248,272 @@ bool GenerationService::generateMidiFromPiece(const Piece& piece, const juce::St
     DBG("=================================================================");
     DBG("🎹 GÉNÉRATION MIDI - CONVERSION VERS DIATONY");
     DBG("=================================================================");
+    DBG("📊 Pièce contient " << piece.getSectionCount() << " section(s)");
+    DBG("");
     
     try {
         // ========================================
-        // 2. RÉCUPÉRER LA SECTION
+        // 2. TRAITER TOUTES LES SECTIONS
         // ========================================
-        auto section = piece.getSection(0);
-        int totalChords = static_cast<int>(section.getProgression().size());
+        vector<TonalProgressionParameters*> sectionParamsList;
+        int cumulativeChordIndex = 0;  // Index global cumulatif des accords
+        int totalChords = static_cast<int>(piece.getTotalChordCount());
         
-        DBG("📊 Section récupérée :");
-        DBG("  - Nombre d'accords : " << totalChords);
-        DBG("  - Tonalité : " << section.toString());
-        DBG("");
-        
-        // ========================================
-        // 3. CRÉER LES PARAMÈTRES DE SECTION
-        // ========================================
-        auto sectionParams = createSectionParams(
-            section,
-            0,              // sectionIndex = 0 (première section)
-            0,              // startChordIndex = 0 (commence au début)
-            totalChords - 1 // endChordIndex = totalChords - 1
-        );
-        
-        DBG("✅ TonalProgressionParameters créé");
-        DBG("");
-        
-        // ========================================
-        // 4. LOGGER LES PARAMÈTRES (version pretty)
-        // ========================================
-        DBG("📄 PARAMÈTRES DE LA SECTION (format lisible) :");
+        DBG("📋 Traitement des sections :");
         DBG("-----------------------------------------------------------------");
-        std::cout << *sectionParams << std::endl;  // Utilise operator<<
-        DBG("");
         
-        DBG("📄 PARAMÈTRES DE LA SECTION (format complet) :");
-        DBG("-----------------------------------------------------------------");
-        std::cout << sectionParams->to_string() << std::endl;
+        for (size_t i = 0; i < piece.getSectionCount(); ++i)
+        {
+            auto section = piece.getSection(static_cast<int>(i));
+            int sectionChordCount = static_cast<int>(section.getProgression().size());
+            
+            // Calcul des indices globaux pour cette section
+            int startChordIndex = cumulativeChordIndex;
+            int endChordIndex = cumulativeChordIndex + sectionChordCount - 1;
+            
+            DBG("  Section " << (i + 1) << " :");
+            DBG("    - Tonalité : " << section.toString());
+            DBG("    - Nombre d'accords : " << sectionChordCount);
+            DBG("    - Indices globaux : [" << startChordIndex << ", " << endChordIndex << "]");
+            
+            // ========================================
+            // 3. CRÉER LES PARAMÈTRES POUR CETTE SECTION
+            // ========================================
+            auto sectionParams = createSectionParams(
+                section,
+                static_cast<int>(i),  // sectionIndex
+                startChordIndex,       // startChordIndex (global)
+                endChordIndex          // endChordIndex (global)
+            );
+            
+            sectionParamsList.push_back(sectionParams);
+            
+            // ========================================
+            // 4. LOGGER LES PARAMÈTRES DE CETTE SECTION
+            // ========================================
+            DBG("    📄 Paramètres (format lisible) :");
+            std::cout << *sectionParams << std::endl;
+            DBG("");
+            
+            // Avancer l'index cumulatif pour la prochaine section
+            cumulativeChordIndex += sectionChordCount;
+        }
+        
+        DBG("✅ Toutes les sections traitées");
+        DBG("📊 Total des accords : " << totalChords);
         DBG("");
         
         // ========================================
-        // 5. CRÉER LES PARAMÈTRES GLOBAUX
+        // 5. LIRE LES MODULATIONS DEPUIS LE MODÈLE
         // ========================================
-        vector<TonalProgressionParameters*> sections = { sectionParams };
-        vector<ModulationParameters*> modulations = {};  // Pas de modulation
+        vector<ModulationParameters*> modulations;
+        
+        if (piece.getModulationCount() > 0)
+        {
+            DBG("🔄 Lecture des modulations depuis le modèle :");
+            DBG("-----------------------------------------------------------------");
+            
+            for (size_t i = 0; i < piece.getModulationCount(); ++i)
+            {
+                auto modulationModel = piece.getModulation(static_cast<int>(i));
+                
+                // Récupérer les sections adjacentes via les IDs stockés
+                auto [fromSection, toSection] = piece.getAdjacentSections(modulationModel);
+                
+                if (!fromSection.isValid() || !toSection.isValid())
+                {
+                    DBG("  ⚠️  Modulation " << (i + 1) << " ignorée : sections invalides");
+                    continue;
+                }
+                
+                // Trouver les indices des sections dans sectionParamsList
+                int fromSectionId = modulationModel.getFromSectionId();
+                int toSectionId = modulationModel.getToSectionId();
+                
+                int fromSectionIndex = piece.getSectionIndexById(fromSectionId);
+                int toSectionIndex = piece.getSectionIndexById(toSectionId);
+                
+                if (fromSectionIndex < 0 || toSectionIndex < 0)
+                {
+                    DBG("  ⚠️  Modulation " << (i + 1) << " ignorée : impossible de trouver les indices des sections");
+                    continue;
+                }
+                
+                // Récupérer le type de modulation
+                auto modulationType = modulationModel.getModulationType();
+                
+                // Récupérer les indices d'accords depuis le modèle
+                int fromChordIndex = modulationModel.getFromChordIndex();
+                int toChordIndex = modulationModel.getToChordIndex();
+                
+                // Tailles des sections
+                int fromSectionSize = static_cast<int>(fromSection.getProgression().size());
+                int toSectionSize = static_cast<int>(toSection.getProgression().size());
+                
+                // Validation des tailles
+                if (fromSectionSize == 0)
+                {
+                    DBG("  ⚠️  Modulation " << (i + 1) << " ignorée : section source vide");
+                    continue;
+                }
+                if (toSectionSize == 0)
+                {
+                    DBG("  ⚠️  Modulation " << (i + 1) << " ignorée : section destination vide");
+                    continue;
+                }
+                
+                // ====================================================================
+                // CALCUL AUTOMATIQUE DES INDICES SELON LE TYPE DE MODULATION
+                // ====================================================================
+                
+                // CAS 1 : Pivot Chord - Mode MANUEL (l'utilisateur a défini les indices)
+                if (modulationType == Diatony::ModulationType::PivotChord)
+                {
+                    // Si l'utilisateur n'a pas défini les indices, utiliser des valeurs par défaut
+                    if (fromChordIndex == -1)
+                    {
+                        fromChordIndex = fromSectionSize - 1;  // Dernier accord de la section source
+                        DBG("  📝 PivotChord: fromChordIndex non défini, défaut = " << fromChordIndex);
+                    }
+                    if (toChordIndex == -1)
+                    {
+                        toChordIndex = (toSectionSize >= 2) ? 1 : 0;  // 2ème accord si possible, sinon 1er
+                        DBG("  📝 PivotChord: toChordIndex non défini, défaut = " << toChordIndex);
+                    }
+                }
+                
+                // CAS 2 : Perfect Cadence - Mode AUTOMATIQUE
+                // Intervalle : [avant-dernier accord de section i] → [dernier accord de section i]
+                // Les DEUX accords sont dans la section SOURCE
+                else if (modulationType == Diatony::ModulationType::PerfectCadence)
+                {
+                    if (fromSectionSize < 2)
+                    {
+                        DBG("  ⚠️  Modulation " << (i + 1) << " (Perfect Cadence) ignorée : section source < 2 accords");
+                        continue;
+                    }
+                    fromChordIndex = fromSectionSize - 2;  // Avant-dernier accord de fromSection
+                    toChordIndex = fromSectionSize - 1;    // Dernier accord de fromSection
+                    
+                    // IMPORTANT : Les deux indices sont relatifs à fromSection, donc on force toSectionIndex = fromSectionIndex
+                    toSectionIndex = fromSectionIndex;
+                    toSectionSize = fromSectionSize;
+                    
+                    DBG("  🤖 Perfect Cadence (auto): [" << fromChordIndex << " → " << toChordIndex << "] (V-I de section " << (fromSectionIndex + 1) << ")");
+                }
+                
+                // CAS 3 : Alteration - Mode AUTOMATIQUE
+                // Intervalle : [1er accord de section i+1] → [2ème accord de section i+1]
+                // Les DEUX accords sont dans la section DESTINATION
+                else if (modulationType == Diatony::ModulationType::Alteration)
+                {
+                    if (toSectionSize < 2)
+                    {
+                        DBG("  ⚠️  Modulation " << (i + 1) << " (Alteration) ignorée : section destination < 2 accords");
+                        continue;
+                    }
+                    fromChordIndex = 0;  // 1er accord de toSection
+                    toChordIndex = 1;    // 2ème accord de toSection
+                    
+                    // IMPORTANT : Les deux indices sont relatifs à toSection, donc on force fromSectionIndex = toSectionIndex
+                    fromSectionIndex = toSectionIndex;
+                    fromSectionSize = toSectionSize;
+                    
+                    DBG("  🤖 Alteration (auto): [" << fromChordIndex << " → " << toChordIndex << "] (début section " << (toSectionIndex + 1) << ")");
+                }
+                
+                // CAS 4 : Chromatic - Mode AUTOMATIQUE
+                // Intervalle : [dernier accord de section i] → [1er accord de section i+1]
+                // Les accords sont dans DEUX SECTIONS DIFFÉRENTES (contrairement aux autres types auto)
+                else if (modulationType == Diatony::ModulationType::Chromatic)
+                {
+                    fromChordIndex = fromSectionSize - 1;  // Dernier accord de fromSection (préparation)
+                    toChordIndex = 0;                       // Premier accord de toSection (résolution sur V)
+                    
+                    // IMPORTANT : On GARDE les deux sections différentes (pas de "force")
+                    // fromSectionIndex et toSectionIndex restent différents
+                    
+                    DBG("  🤖 Chromatic (auto): [" << fromChordIndex << " → " << toChordIndex << "] (dernier de section " << (fromSectionIndex + 1) << " → 1er de section " << (toSectionIndex + 1) << ")");
+                }
+                
+                // Vérifier que les indices sont dans les bornes
+                if (fromChordIndex < 0 || fromChordIndex >= fromSectionSize ||
+                    toChordIndex < 0 || toChordIndex >= toSectionSize)
+                {
+                    DBG("  ⚠️  Modulation " << (i + 1) << " ignorée : indices d'accords hors limites");
+                    DBG("    fromChordIndex=" << fromChordIndex << " (max=" << (fromSectionSize-1) << ")");
+                    DBG("    toChordIndex=" << toChordIndex << " (max=" << (toSectionSize-1) << ")");
+                    continue;
+                }
+                
+                // Calculer les indices globaux cumulatifs
+                int globalFromChordIndex = 0;
+                for (int j = 0; j < fromSectionIndex; ++j)
+                {
+                    globalFromChordIndex += static_cast<int>(piece.getSection(j).getProgression().size());
+                }
+                globalFromChordIndex += fromChordIndex;
+                
+                int globalToChordIndex = 0;
+                for (int j = 0; j < toSectionIndex; ++j)
+                {
+                    globalToChordIndex += static_cast<int>(piece.getSection(j).getProgression().size());
+                }
+                globalToChordIndex += toChordIndex;
+                
+                // Afficher les sections conceptuelles (du modèle)
+                int originalFromSectionIndex = piece.getSectionIndexById(modulationModel.getFromSectionId());
+                int originalToSectionIndex = piece.getSectionIndexById(modulationModel.getToSectionId());
+                
+                DBG("  Modulation " << (i + 1) << " :");
+                DBG("    - Type : " << modulationModel.toString());
+                DBG("    - Connecte Section " << (originalFromSectionIndex + 1) << " → Section " << (originalToSectionIndex + 1) << " (conceptuel)");
+                DBG("    - Intervalle réel : Section " << (fromSectionIndex + 1) << " → Section " << (toSectionIndex + 1) << " (solveur)");
+                DBG("    - Indices locaux : [accord " << (fromChordIndex + 1) << " de S" << (fromSectionIndex + 1) 
+                    << " → accord " << (toChordIndex + 1) << " de S" << (toSectionIndex + 1) << "]");
+                DBG("    - Indices globaux : [" << globalFromChordIndex << " → " << globalToChordIndex << "]");
+                
+                // Créer la modulation Diatony avec le type depuis le modèle
+                auto modulation = new ModulationParameters(
+                    static_cast<int>(modulationModel.getModulationType()),  // Utiliser le type du modèle
+                    globalFromChordIndex,                                     // start (index global)
+                    globalToChordIndex,                                       // end (index global)
+                    sectionParamsList[fromSectionIndex],                     // from section
+                    sectionParamsList[toSectionIndex]                        // to section
+                );
+                
+                modulations.push_back(modulation);
+                DBG("");
+            }
+            
+            DBG("✅ " << modulations.size() << " modulation(s) chargée(s) depuis le modèle");
+            DBG("");
+        }
+        else
+        {
+            DBG("ℹ️  Aucune modulation dans le modèle");
+            DBG("");
+        }
+        
+        // ========================================
+        // 6. CRÉER LES PARAMÈTRES GLOBAUX
+        // ========================================
         
         auto pieceParams = new FourVoiceTextureParameters(
-            totalChords,    // totalNumberOfChords
-            1,              // numberOfSections
-            sections,       // sectionParameters
-            modulations     // modulationParameters (vide)
+            totalChords,                                  // totalNumberOfChords
+            static_cast<int>(piece.getSectionCount()),   // numberOfSections
+            sectionParamsList,                            // sectionParameters
+            modulations                                   // modulationParameters
         );
         
         DBG("✅ FourVoiceTextureParameters créé");
+        DBG("  - " << piece.getSectionCount() << " section(s)");
+        DBG("  - " << modulations.size() << " modulation(s)");
+        DBG("  - " << totalChords << " accord(s) total");
         DBG("");
         
         // ========================================
-        // 6. LOGGER LES PARAMÈTRES GLOBAUX
+        // 7. LOGGER LES PARAMÈTRES GLOBAUX
         // ========================================
         DBG("📄 PARAMÈTRES GLOBAUX DE LA PIÈCE :");
         DBG("=================================================================");
@@ -183,7 +522,7 @@ bool GenerationService::generateMidiFromPiece(const Piece& piece, const juce::St
         DBG("");
         
         // ========================================
-        // 7. PRÉPARER LE CHEMIN DE SAUVEGARDE
+        // 8. PRÉPARER LE CHEMIN DE SAUVEGARDE
         // ========================================
         
         // Créer le dossier dans Application Support
@@ -209,14 +548,14 @@ bool GenerationService::generateMidiFromPiece(const Piece& piece, const juce::St
         DBG("");
         
         // ========================================
-        // 8. RÉSOLUTION AVEC DIATONY
+        // 9. RÉSOLUTION AVEC DIATONY
         // ========================================
         DBG("🔍 Résolution du problème avec Diatony...");
         DBG("  - Utilisation des options par défaut (timeout: 60s)");
         DBG("");
         
         // Appel de solve_diatony avec options par défaut (nullptr)
-        auto solution = solve_diatony(pieceParams, nullptr, true);
+        auto solution = solve_diatony(pieceParams, nullptr, false);
         
         if (solution == nullptr) {
             lastError = "No solution found by Diatony solver";
@@ -225,7 +564,12 @@ bool GenerationService::generateMidiFromPiece(const Piece& piece, const juce::St
             
             // Cleanup avant de retourner
             delete pieceParams;
-            delete sectionParams;
+            for (auto* sectionParams : sectionParamsList) {
+                delete sectionParams;
+            }
+            for (auto* modulation : modulations) {
+                delete modulation;
+            }
             return false;
         }
         
@@ -233,7 +577,7 @@ bool GenerationService::generateMidiFromPiece(const Piece& piece, const juce::St
         DBG("");
         
         // ========================================
-        // 9. GÉNÉRATION DU FICHIER MIDI
+        // 10. GÉNÉRATION DU FICHIER MIDI
         // ========================================
         DBG("🎼 Génération du fichier MIDI...");
         
@@ -254,17 +598,31 @@ bool GenerationService::generateMidiFromPiece(const Piece& piece, const juce::St
             
             // Cleanup
             delete pieceParams;
-            delete sectionParams;
+            for (auto* sectionParams : sectionParamsList) {
+                delete sectionParams;
+            }
+            for (auto* modulation : modulations) {
+                delete modulation;
+            }
             return false;
         }
         
         // ========================================
-        // 10. CLEANUP
+        // 11. CLEANUP
         // ========================================
         // Note: On ne delete pas la tonalité car Tonality n'a pas de destructeur virtuel
         // et on ne sait pas qui possède le pointeur (TonalProgressionParameters ou nous)
         delete pieceParams;
-        delete sectionParams;
+        
+        // Nettoyer tous les paramètres de sections
+        for (auto* sectionParams : sectionParamsList) {
+            delete sectionParams;
+        }
+        
+        // Nettoyer toutes les modulations
+        for (auto* modulation : modulations) {
+            delete modulation;
+        }
         
         lastError.clear();
         return true;
@@ -314,18 +672,31 @@ Tonality* GenerationService::createTonalityFromSection(const Section& section)
 /**
  * Extrait les vectors d'accords depuis une Progression
  * Convertit nos enums vers les int attendus par Diatony
+ * Si une qualité est en mode Auto, utilise tonality->get_chord_quality(degree)
  */
-GenerationService::ChordVectors GenerationService::extractChordVectors(const Progression& progression)
+GenerationService::ChordVectors GenerationService::extractChordVectors(const Progression& progression, Tonality* tonality)
 {
     ChordVectors result;
     
     for (size_t i = 0; i < progression.size(); ++i) {
         auto chord = progression.getChord(i);
         
-        // Conversion enum → int (cast direct car nos enums matchent Diatony)
-        result.degrees.push_back(static_cast<int>(chord.getDegree()));
-        result.qualities.push_back(static_cast<int>(chord.getQuality()));
-        result.states.push_back(static_cast<int>(chord.getChordState()));  // Corrigé: getChordState() au lieu de getState()
+        // Degré et état : conversion directe
+        int degree = static_cast<int>(chord.getDegree());
+        result.degrees.push_back(degree);
+        result.states.push_back(static_cast<int>(chord.getChordState()));
+        
+        // Qualité : si Auto, utiliser tonality->get_chord_quality(degree)
+        auto quality = chord.getQuality();
+        if (quality == Diatony::ChordQuality::Auto) {
+            // Mode automatique : demander à la tonalité la qualité appropriée pour ce degré
+            int autoQuality = tonality->get_chord_quality(degree);
+            result.qualities.push_back(autoQuality);
+            DBG("  🤖 Qualité Auto pour degré " << degree << " → " << autoQuality);
+        } else {
+            // Mode manuel : utiliser la qualité spécifiée par l'utilisateur
+            result.qualities.push_back(static_cast<int>(quality));
+        }
     }
     
     return result;
@@ -346,9 +717,9 @@ TonalProgressionParameters* GenerationService::createSectionParams(
     // 1. Créer la tonalité
     Tonality* tonality = createTonalityFromSection(section);
     
-    // 2. Extraire les accords
+    // 2. Extraire les accords (en passant la tonalité pour le mode Auto)
     auto progression = section.getProgression();
-    auto chordVectors = extractChordVectors(progression);
+    auto chordVectors = extractChordVectors(progression, tonality);
     
     // 3. Créer les paramètres
     int numberOfChords = static_cast<int>(progression.size());
