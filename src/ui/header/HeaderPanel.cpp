@@ -3,6 +3,7 @@
 #include "ui/extra/Button/StyledButton.h"
 #include "ui/UIStateIdentifiers.h"
 #include "utils/FontManager.h"
+#include "utils/FileUtils.h"
 
 //==============================================================================
 HeaderPanel::HeaderPanel()
@@ -23,12 +24,10 @@ HeaderPanel::HeaderPanel()
    
     addAndMakeVisible (mainLabel);
 
-    // Configuration du bouton D - toggle de visibilité du dock
-    dButton.onClick = [this]() {
-        if (!appState.isValid()) return;
-        
-        bool currentState = static_cast<bool>(appState.getProperty(UIStateIdentifiers::dockVisible, false));
-        appState.setProperty(UIStateIdentifiers::dockVisible, !currentState, nullptr);
+    // Configuration du bouton D - ouvre le dossier des solutions MIDI
+    dButton.setTooltip("Ouvrir le dossier des solutions MIDI");
+    dButton.onClick = []() {
+        FileUtils::openMidiSolutionsFolder();
     };
     addAndMakeVisible (dButton);
 }
@@ -97,9 +96,6 @@ void HeaderPanel::valueTreeParentChanged(juce::ValueTree&) {}
 
 void HeaderPanel::updateDockState()
 {
-    if (!appState.isValid()) return;
-    
-    bool dockVisible = static_cast<bool>(appState.getProperty(UIStateIdentifiers::dockVisible, false));
-    
-    // TODO: Mise à jour visuelle du bouton D selon l'état du dock
+    // Note: Cette méthode est conservée pour une éventuelle utilisation future
+    // avec d'autres états UI via le ValueTree
 } 
