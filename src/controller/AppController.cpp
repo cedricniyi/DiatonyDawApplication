@@ -68,38 +68,41 @@ void AppController::removeSection(int sectionIndex)
 {
     if (!isValidSectionIndex(sectionIndex))
         return;
+    
+    // Récupérer l'ID de la section à supprimer
+    auto section = piece.getSection(sectionIndex);
+    int sectionId = section.getState().getProperty(ModelIdentifiers::id, -1);
         
     // Si on supprime la section sélectionnée, clear la sélection
     juce::String currentSelectionType = selectionState.getProperty(ContextIdentifiers::selectionType, "None");
     juce::String currentElementId = selectionState.getProperty(ContextIdentifiers::selectedElementId, "");
-    juce::String sectionElementId = generateElementId(ModelIdentifiers::SECTION, sectionIndex);
+    juce::String sectionElementId = "Section_" + juce::String(sectionId);  // Utilise l'ID, pas l'index
     
     if (currentSelectionType == "Section" && currentElementId == sectionElementId)
     {
         clearSelection();
     }
     
-    // Note: Pour l'instant, on ne peut que supprimer la dernière section
-    // Pour une implémentation complète, il faudrait ajouter removeSection(index) à Piece
-    if (sectionIndex == getSectionCount() - 1)
-    {
-        piece.removeLastSection();
-    }
+    // Suppression de la section avec gestion automatique des modulations
+    piece.removeSection(sectionIndex);
 }
 
 void AppController::selectSection(int sectionIndex)
 {
     if (!isValidSectionIndex(sectionIndex))
         return;
+    
+    // Récupérer l'ID de la section (stable, ne change pas après suppression d'autres sections)
+    auto section = piece.getSection(sectionIndex);
+    int sectionId = section.getState().getProperty(ModelIdentifiers::id, -1);
         
-    // Mettre à jour l'état de sélection via ValueTree
+    // Mettre à jour l'état de sélection via ValueTree avec l'ID (pas l'index)
     selectionState.setProperty(ContextIdentifiers::selectionType, "Section", &piece.getUndoManager());
     selectionState.setProperty(ContextIdentifiers::selectedElementId, 
-                              generateElementId(ModelIdentifiers::SECTION, sectionIndex), 
+                              "Section_" + juce::String(sectionId), 
                               &piece.getUndoManager());
     
     setEditMode(EditMode::SectionEdit);
-    // Plus besoin de notifySelectionChanged() - l'UI s'abonne directement au ValueTree
 }
 
 // Actions sur les modulations
@@ -107,15 +110,18 @@ void AppController::selectModulation(int modulationIndex)
 {
     if (!isValidModulationIndex(modulationIndex))
         return;
+    
+    // Récupérer l'ID de la modulation (stable)
+    auto modulation = piece.getModulation(modulationIndex);
+    int modulationId = modulation.getState().getProperty(ModelIdentifiers::id, -1);
         
-    // Mettre à jour l'état de sélection via ValueTree
+    // Mettre à jour l'état de sélection via ValueTree avec l'ID (pas l'index)
     selectionState.setProperty(ContextIdentifiers::selectionType, "Modulation", &piece.getUndoManager());
     selectionState.setProperty(ContextIdentifiers::selectedElementId, 
-                              generateElementId(ModelIdentifiers::MODULATION, modulationIndex), 
+                              "Modulation_" + juce::String(modulationId), 
                               &piece.getUndoManager());
     
-    setEditMode(EditMode::Overview);  // Les modulations restent en mode overview
-    // Plus besoin de notifySelectionChanged() - l'UI s'abonne directement au ValueTree
+    setEditMode(EditMode::Overview);
 }
 
 // Actions sur les accords

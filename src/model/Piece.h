@@ -22,6 +22,7 @@ public:
     void addSection(const juce::String& sectionName);  // Ajoute automatiquement une modulation si nécessaire
     Section createSection(const juce::String& sectionName);
     void removeLastSection();  // Supprime section et modulation associée
+    void removeSection(int sectionIndex);  // Supprime une section à n'importe quel index avec ses modulations
     void clearAllElements();   // Vide toute la pièce
     void clear();             // Alias pour compatibilité
     

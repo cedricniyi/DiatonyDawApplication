@@ -13,6 +13,22 @@ ButtonColoredPanel::ButtonColoredPanel(juce::Colour color)
     setButtonText("");
 }
 
+void ButtonColoredPanel::mouseDown(const juce::MouseEvent& e)
+{
+    // Clic droit : appeler le callback de suppression s'il existe
+    if (e.mods.isRightButtonDown())
+    {
+        if (onRightClick)
+        {
+            onRightClick();
+        }
+        return;  // Ne pas propager le clic droit au comportement par défaut du bouton
+    }
+    
+    // Clic gauche : comportement normal du bouton
+    juce::Button::mouseDown(e);
+}
+
 void ButtonColoredPanel::paintButton(juce::Graphics& g, bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown)
 {
     auto bounds = getLocalBounds().toFloat();

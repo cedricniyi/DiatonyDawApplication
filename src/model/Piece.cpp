@@ -89,6 +89,111 @@ void Piece::removeLastSection()
     }
 }
 
+void Piece::removeSection(int sectionIndex)
+{
+    auto sectionCount = static_cast<int>(getSectionCount());
+    
+    // Validation de l'index
+    if (sectionIndex < 0 || sectionIndex >= sectionCount)
+    {
+        DBG("[Piece::removeSection] Index invalide: " << sectionIndex);
+        return;
+    }
+    
+    // Récupérer l'ID de la section à supprimer
+    auto sectionToRemove = getSection(static_cast<size_t>(sectionIndex));
+    int sectionId = sectionToRemove.getState().getProperty(ModelIdentifiers::id, -1);
+    
+    DBG("[Piece::removeSection] Suppression section index=" << sectionIndex << " id=" << sectionId);
+    
+    // Cas 1 : Section unique - supprimer juste la section
+    if (sectionCount == 1)
+    {
+        // Trouver et supprimer la section dans le ValueTree
+        for (int i = 0; i < state.getNumChildren(); ++i)
+        {
+            auto child = state.getChild(i);
+            if (child.hasType(ModelIdentifiers::SECTION))
+            {
+                int childId = child.getProperty(ModelIdentifiers::id, -1);
+                if (childId == sectionId)
+                {
+                    state.removeChild(i, &undoManager);
+                    break;
+                }
+            }
+        }
+        return;
+    }
+    
+    // Cas 2, 3, 4 : Plusieurs sections - gérer les modulations
+    
+    // Collecter les modulations à supprimer (celles qui référencent cette section)
+    std::vector<juce::ValueTree> modulationsToRemove;
+    
+    // Récupérer les IDs des sections adjacentes pour potentielle nouvelle modulation
+    int prevSectionId = -1;
+    int nextSectionId = -1;
+    
+    if (sectionIndex > 0)
+    {
+        auto prevSection = getSection(static_cast<size_t>(sectionIndex - 1));
+        prevSectionId = prevSection.getState().getProperty(ModelIdentifiers::id, -1);
+    }
+    
+    if (sectionIndex < sectionCount - 1)
+    {
+        auto nextSection = getSection(static_cast<size_t>(sectionIndex + 1));
+        nextSectionId = nextSection.getState().getProperty(ModelIdentifiers::id, -1);
+    }
+    
+    // Trouver toutes les modulations qui référencent la section supprimée
+    for (int i = 0; i < state.getNumChildren(); ++i)
+    {
+        auto child = state.getChild(i);
+        if (child.hasType(ModelIdentifiers::MODULATION))
+        {
+            int fromId = child.getProperty(ModelIdentifiers::fromSectionId, -1);
+            int toId = child.getProperty(ModelIdentifiers::toSectionId, -1);
+            
+            if (fromId == sectionId || toId == sectionId)
+            {
+                modulationsToRemove.push_back(child);
+            }
+        }
+    }
+    
+    // Supprimer les modulations orphelines
+    for (auto& modNode : modulationsToRemove)
+    {
+        state.removeChild(modNode, &undoManager);
+    }
+    
+    // Si c'était une section du milieu, créer une nouvelle modulation entre les sections adjacentes
+    if (prevSectionId >= 0 && nextSectionId >= 0)
+    {
+        DBG("[Piece::removeSection] Création modulation de liaison: " << prevSectionId << " -> " << nextSectionId);
+        addModulation(Diatony::ModulationType::PivotChord, prevSectionId, nextSectionId, -1, -1);
+    }
+    
+    // Finalement, supprimer la section elle-même
+    for (int i = 0; i < state.getNumChildren(); ++i)
+    {
+        auto child = state.getChild(i);
+        if (child.hasType(ModelIdentifiers::SECTION))
+        {
+            int childId = child.getProperty(ModelIdentifiers::id, -1);
+            if (childId == sectionId)
+            {
+                state.removeChild(i, &undoManager);
+                break;
+            }
+        }
+    }
+    
+    DBG("[Piece::removeSection] Structure après suppression: " << getSectionCount() << " sections, " << getModulationCount() << " modulations");
+}
+
 void Piece::clearAllElements()
 {
     state.removeAllChildren(&undoManager);
