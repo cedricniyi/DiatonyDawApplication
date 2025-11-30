@@ -24,6 +24,9 @@ ProgressionArea::~ProgressionArea()
     // Nettoyer les listeners du ValueTree
     if (selectionState.isValid())
         selectionState.removeListener(this);
+    
+    if (modelState.isValid())
+        modelState.removeListener(this);
 }
 
 void ProgressionArea::paint(juce::Graphics& g)
@@ -71,6 +74,13 @@ void ProgressionArea::findAppController()
             // Mettre à jour immédiatement le contenu selon l'état actuel
             updateContentBasedOnSelection();
         }
+        
+        // S'abonner au modèle pour détecter les suppressions de sections
+        modelState = appController->getState();
+        if (modelState.isValid())
+        {
+            modelState.addListener(this);
+        }
     }
     else
     {
@@ -81,6 +91,12 @@ void ProgressionArea::findAppController()
         {
             selectionState.removeListener(this);
             selectionState = juce::ValueTree();
+        }
+        
+        if (modelState.isValid())
+        {
+            modelState.removeListener(this);
+            modelState = juce::ValueTree();
         }
     }
 }
@@ -94,6 +110,26 @@ void ProgressionArea::valueTreePropertyChanged(juce::ValueTree& treeWhosePropert
     if (property == ContextIdentifiers::selectedElementId && treeWhosePropertyHasChanged == selectionState)
     {
         updateContentBasedOnSelection();
+    }
+}
+
+void ProgressionArea::valueTreeChildRemoved(juce::ValueTree& parentTree, 
+                                           juce::ValueTree& childWhichHasBeenRemoved, 
+                                           int indexFromWhichChildWasRemoved)
+{
+    // Quand une section ou modulation est supprimée du modèle, rafraîchir l'affichage
+    // Cela permet de mettre à jour le titre (ex: "Section 3" → "Section 2" si l'index change)
+    if (parentTree == modelState)
+    {
+        // Rafraîchir l'affichage pour recalculer les titres avec les nouveaux indices
+        updateContentBasedOnSelection();
+        
+        // Forcer le rafraîchissement du titre même si la sélection n'a pas changé
+        // (l'index de la section peut avoir changé sans que son ID change)
+        if (sectionEditor && sectionEditor->isVisible())
+        {
+            sectionEditor->refreshTitle();
+        }
     }
 }
 
@@ -113,12 +149,22 @@ void ProgressionArea::updateContentBasedOnSelection()
         modulationEditor->setVisible(false);
         sectionEditor->setSectionToEdit(selectedElementId);
 
-        // Passer le ValueTree réel de la section à éditer
-        int index = selectedElementId.getTrailingIntValue();
-        if (appController != nullptr && index >= 0 && index < static_cast<int>(appController->getSectionCount()))
+        // ✅ CORRIGÉ: Extraire l'ID et utiliser getSectionById() au lieu de getSection(index)
+        int sectionId = selectedElementId.getTrailingIntValue();
+        if (appController != nullptr && sectionId >= 0)
         {
-            auto section = appController->getPiece().getSection(static_cast<size_t>(index));
-            sectionEditor->setSectionState(section.getState());
+            auto& piece = appController->getPiece();
+            // Vérifier que la section existe avant de la récupérer
+            int sectionIndex = piece.getSectionIndexById(sectionId);
+            if (sectionIndex >= 0)
+            {
+                auto section = piece.getSectionById(sectionId);
+                sectionEditor->setSectionState(section.getState());
+            }
+            else
+            {
+                sectionEditor->setSectionState(juce::ValueTree());
+            }
         }
         else
         {
@@ -134,14 +180,23 @@ void ProgressionArea::updateContentBasedOnSelection()
         sectionEditor->setSectionToEdit(""); // Clear l'éditeur de section
         sectionEditor->setSectionState(juce::ValueTree());
         
-        // Passer le ValueTree réel de la modulation à éditer
+        // ✅ CORRIGÉ: Extraire l'ID et utiliser getModulationById() au lieu de getModulation(index)
         modulationEditor->setModulationToEdit(selectedElementId);
-        int index = selectedElementId.getTrailingIntValue();
-        if (appController != nullptr && index >= 0 && index < static_cast<int>(appController->getModulationCount()))
+        int modulationId = selectedElementId.getTrailingIntValue();
+        if (appController != nullptr && modulationId >= 0)
         {
             auto& piece = appController->getPiece();
-            auto modulation = piece.getModulation(index);
-            modulationEditor->setModulationState(modulation.getState());
+            // Vérifier que la modulation existe avant de la récupérer
+            int modulationIndex = piece.getModulationIndexById(modulationId);
+            if (modulationIndex >= 0)
+            {
+                auto modulation = piece.getModulationById(modulationId);
+                modulationEditor->setModulationState(modulation.getState());
+            }
+            else
+            {
+                modulationEditor->setModulationState(juce::ValueTree());
+            }
         }
         else
         {
