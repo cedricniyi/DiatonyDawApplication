@@ -113,6 +113,9 @@ void OverviewContentArea::refreshFromModel()
     }
     
     updateVisibility();
+    
+    // ✅ IMPORTANT : Rétablir la surbrillance de sélection après reconstruction
+    updateSelectionHighlight();
 }
 
 // =================================================================================
@@ -177,19 +180,9 @@ void OverviewContentArea::valueTreeParentChanged(juce::ValueTree& treeWhoseParen
 
 void OverviewContentArea::handleSectionAdded(const juce::ValueTree& sectionNode)
 {
-    // ✅ REBUILD COMPLET pour maintenir l'ordre correct (Section-Modulation-Section-...)
-    // L'ajout incrémental cassait l'ordre chronologique
+    // REBUILD COMPLET pour maintenir l'ordre correct (Section-Modulation-Section-...)
+    // La sélection automatique est déjà gérée par AppController::addNewSection()
     refreshFromModel();
-    
-    // Sélectionner automatiquement la nouvelle section (c'est la dernière)
-    if (appController)
-    {
-        int newSectionIndex = appController->getSectionCount() - 1;
-        if (newSectionIndex >= 0)
-        {
-            appController->selectSection(newSectionIndex);
-        }
-    }
 }
 
 void OverviewContentArea::handleSectionRemoved()
