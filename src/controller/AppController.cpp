@@ -37,13 +37,27 @@ void AppController::removeSection(int sectionIndex)
     auto section = piece.getSection(sectionIndex);
     int sectionId = section.getState().getProperty(ModelIdentifiers::id, -1);
         
-    // Si on supprime la section sélectionnée, clear la sélection
+    // === SOLUTION "GOOD ENOUGH" ===
+    // Si on supprime une section, les modulations adjacentes sont aussi supprimées.
+    // Plutôt que de vérifier précisément quelle modulation meurt, on nettoie
+    // la sélection si c'est la section OU une modulation qui est sélectionnée.
+    // L'utilisateur revient à la WelcomeView, ce qui est acceptable.
+    
     juce::String currentSelectionType = selectionState.getProperty(ContextIdentifiers::selectionType, "None");
     juce::String currentElementId = selectionState.getProperty(ContextIdentifiers::selectedElementId, "");
-    juce::String sectionElementId = "Section_" + juce::String(sectionId);  // Utilise l'ID, pas l'index
+    juce::String sectionElementId = "Section_" + juce::String(sectionId);
     
+    // Clear si c'est la section sélectionnée qui est supprimée
     if (currentSelectionType == "Section" && currentElementId == sectionElementId)
     {
+        clearSelection();
+    }
+    // Clear aussi si une modulation est sélectionnée (elle pourrait être supprimée)
+    else if (currentSelectionType == "Modulation")
+    {
+        // Les modulations adjacentes à la section supprimée vont mourir.
+        // Pour simplifier : on clear toute sélection de modulation lors d'une suppression.
+        // TODO: Implémenter une logique plus fine (voir TODO.md - Sélection intelligente)
         clearSelection();
     }
     
