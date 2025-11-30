@@ -1,4 +1,5 @@
 #include "SectionEditor.h"
+#include "ui/PluginEditor.h"
 
 SectionEditor::SectionEditor()
     : ColoredPanel(juce::Colours::lightblue.withAlpha(0.25f)) // Bleu clair plus visible
@@ -96,12 +97,20 @@ void SectionEditor::setSectionState(juce::ValueTree sectionState)
         
         // Synchroniser les zones seulement si on a un ValueTree valide
         syncZonesFromModel();
+        
+        // Mettre à jour le titre maintenant que currentSectionState est valide
+        updateContent();
     }
     else
     {
         // Invalide : clear
         currentProgressionState = juce::ValueTree();
     }
+}
+
+void SectionEditor::refreshTitle()
+{
+    updateContent();
 }
 
 void SectionEditor::setupSectionNameLabel()
@@ -117,6 +126,18 @@ void SectionEditor::setupSectionNameLabel()
     addAndMakeVisible(sectionNameLabel);
 }
 
+void SectionEditor::parentHierarchyChanged()
+{
+    ColoredPanel::parentHierarchyChanged();
+    findAppController();
+}
+
+void SectionEditor::findAppController()
+{
+    auto* pluginEditor = findParentComponentOfClass<AudioPluginAudioProcessorEditor>();
+    appController = (pluginEditor != nullptr) ? &pluginEditor->getAppController() : nullptr;
+}
+
 void SectionEditor::updateContent()
 {
     if (currentSectionId.isEmpty())
@@ -125,12 +146,30 @@ void SectionEditor::updateContent()
     }
     else
     {
-        // Extraire l'index de la section depuis l'ID (ex: "Section_0" -> "Section 1")
-        juce::String displayName = "Section";
-        if (currentSectionId.startsWith("Section_"))
+        // ✅ S'assurer qu'on a accès à appController (peut être null au premier appel)
+        if (appController == nullptr)
         {
-            int index = currentSectionId.getTrailingIntValue();
-            displayName = "Section " + juce::String(index + 1);
+            findAppController();
+        }
+        
+        juce::String displayName = "Section";
+        
+        if (currentSectionState.isValid() && appController)
+        {
+            int sectionId = currentSectionState.getProperty(ModelIdentifiers::id, -1);
+            auto& piece = appController->getPiece();
+            int sectionIndex = piece.getSectionIndexById(sectionId);
+            
+            if (sectionIndex >= 0)
+            {
+                displayName = "Section " + juce::String(sectionIndex + 1);
+            }
+        }
+        else if (currentSectionId.startsWith("Section_"))
+        {
+            // Fallback si pas d'appController ou de state valide (ne devrait plus arriver)
+            int id = currentSectionId.getTrailingIntValue();
+            displayName = "Section (ID=" + juce::String(id) + ")";
         }
         
         sectionNameLabel.setText(displayName, juce::dontSendNotification);
@@ -292,7 +331,7 @@ void SectionEditor::syncZonesFromModel()
     std::vector<juce::ValueTree> chords;
     for (size_t i = 0; i < progression.size(); ++i)
     {
-        chords.push_back(progression.getChordState(i));
+        chords.push_back(progression.getChord(i).getState());
     }
     zone4Component.syncWithProgression(chords);
     
@@ -327,7 +366,7 @@ void SectionEditor::valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyH
             std::vector<juce::ValueTree> chords;
             for (size_t i = 0; i < progression.size(); ++i)
             {
-                chords.push_back(progression.getChordState(i));
+                chords.push_back(progression.getChord(i).getState());
             }
             zone4Component.syncWithProgression(chords);
             return;
@@ -348,7 +387,7 @@ void SectionEditor::valueTreeChildAdded(juce::ValueTree& parentTree, juce::Value
         std::vector<juce::ValueTree> chords;
         for (size_t i = 0; i < progression.size(); ++i)
         {
-            chords.push_back(progression.getChordState(i));
+            chords.push_back(progression.getChord(i).getState());
         }
         zone4Component.syncWithProgression(chords);
     }
@@ -367,7 +406,7 @@ void SectionEditor::valueTreeChildRemoved(juce::ValueTree& parentTree, juce::Val
         std::vector<juce::ValueTree> chords;
         for (size_t i = 0; i < progression.size(); ++i)
         {
-            chords.push_back(progression.getChordState(i));
+            chords.push_back(progression.getChord(i).getState());
         }
         zone4Component.syncWithProgression(chords);
     }
