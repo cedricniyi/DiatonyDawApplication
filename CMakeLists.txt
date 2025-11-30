@@ -502,6 +502,53 @@ endif()
 # Message supplémentaire pour debug
 message("CMAKE_SOURCE_DIR: ${CMAKE_SOURCE_DIR}")
 
+# ═══════════════════════════════════════════════════════════════════════════════
+# CIBLE DE TESTS UNITAIRES
+# ═══════════════════════════════════════════════════════════════════════════════
+# Crée une application console pour exécuter les tests du modèle
+# Usage: cmake --build build --target DiatonyTests && ./build/DiatonyTests_artefacts/DiatonyTests
+
+juce_add_console_app(DiatonyTests
+    PRODUCT_NAME "DiatonyTests"
+    COMPANY_NAME "64492300_CN_UCL"
+)
+
+juce_generate_juce_header(DiatonyTests)
+
+target_sources(DiatonyTests PRIVATE
+    src/tests/TestRunner.cpp
+    src/tests/PieceTest.cpp
+    src/tests/SectionTest.cpp
+    src/tests/ModulationTest.cpp
+    src/tests/ProgressionTest.cpp
+    src/tests/ChordTest.cpp
+    
+    # Fichiers du modèle à tester
+    src/model/Piece.cpp
+    src/model/Section.cpp
+    src/model/Modulation.cpp
+    src/model/Progression.cpp
+    src/model/Chord.cpp
+)
+
+target_include_directories(DiatonyTests PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+)
+
+target_compile_definitions(DiatonyTests PRIVATE
+    JUCE_USE_CURL=0
+    JUCE_WEB_BROWSER=0
+)
+
+target_link_libraries(DiatonyTests PRIVATE
+    juce::juce_core
+    juce::juce_data_structures
+    juce::juce_events
+    juce::juce_gui_basics
+)
+
+message(STATUS "Test target 'DiatonyTests' configured")
+
 # Ajout du nouveau bloc ici
 # Création d'un lien symbolique entre le dossier Solutions de l'application 
 # (dans ~/Library/Application Support) et un dossier Solutions à la racine du projet
