@@ -523,6 +523,7 @@ target_sources(DiatonyTests PRIVATE
     src/tests/ProgressionTest.cpp
     src/tests/ChordTest.cpp
     src/tests/AppControllerTest.cpp
+    src/tests/GenerationServiceTest.cpp
     
     # Fichiers du modèle à tester
     src/model/Piece.cpp
