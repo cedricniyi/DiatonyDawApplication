@@ -522,6 +522,7 @@ target_sources(DiatonyTests PRIVATE
     src/tests/ModulationTest.cpp
     src/tests/ProgressionTest.cpp
     src/tests/ChordTest.cpp
+    src/tests/AppControllerTest.cpp
     
     # Fichiers du modèle à tester
     src/model/Piece.cpp
@@ -529,10 +530,15 @@ target_sources(DiatonyTests PRIVATE
     src/model/Modulation.cpp
     src/model/Progression.cpp
     src/model/Chord.cpp
+    
+    # Fichiers du contrôleur à tester
+    src/controller/AppController.cpp
+    src/services/GenerationService.cpp
 )
 
 target_include_directories(DiatonyTests PRIVATE
     ${CMAKE_SOURCE_DIR}/src
+    ${GECODE_INCLUDE_DIR}
 )
 
 target_compile_definitions(DiatonyTests PRIVATE
@@ -545,6 +551,16 @@ target_link_libraries(DiatonyTests PRIVATE
     juce::juce_data_structures
     juce::juce_events
     juce::juce_gui_basics
+    ${GECODE_KERNEL_LIB}
+    ${GECODE_DRIVER_LIB}
+    ${GECODE_FLATZINC_LIB}
+    ${GECODE_FLOAT_LIB}
+    ${GECODE_INT_LIB}
+    ${GECODE_MINIMODEL_LIB}
+    ${GECODE_SEARCH_LIB}
+    ${GECODE_SET_LIB}
+    ${GECODE_SUPPORT_LIB}
+    ${CMAKE_SOURCE_DIR}/Diatony/out/diatony.dylib
 )
 
 message(STATUS "Test target 'DiatonyTests' configured")
