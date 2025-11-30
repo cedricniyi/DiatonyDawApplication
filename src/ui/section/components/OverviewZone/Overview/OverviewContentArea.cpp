@@ -88,39 +88,34 @@ void OverviewContentArea::refreshFromModel()
     if (!modelState.isValid())
         return;
         
-    // Comptage des sections et modulations dans le modèle
-    int sectionCount = 0;
-    int modulationCount = 0;
+    // ✅ TERRE BRÛLÉE : Toujours effacer d'abord, puis reconstruire
+    if (scrollableContent)
+    {
+        scrollableContent->clearAllPanels();
+    }
+    
+    // Compteur d'index pour les sections (position visuelle, pas ID)
+    int sectionIndex = 0;
+    
+    // Création d'un panel pour chaque enfant du modèle
     for (int i = 0; i < modelState.getNumChildren(); ++i)
     {
         auto child = modelState.getChild(i);
         if (child.hasType(ModelIdentifiers::SECTION))
-            sectionCount++;
-        else if (child.hasType(ModelIdentifiers::MODULATION))
-            modulationCount++;
-    }
-    
-    // Création des panels si on a du contenu (sections ou modulations)
-    if (scrollableContent && (sectionCount > 0 || modulationCount > 0))
-    {
-        scrollableContent->clearAllPanels();
-        
-        // Création d'un panel pour chaque enfant du modèle
-        for (int i = 0; i < modelState.getNumChildren(); ++i)
         {
-            auto child = modelState.getChild(i);
-            if (child.hasType(ModelIdentifiers::SECTION))
-            {
-                createPanelForSection(child, false);
-            }
-            else if (child.hasType(ModelIdentifiers::MODULATION))
-            {
-                createPanelForModulation(child);
-            }
+            createPanelForSection(child, sectionIndex, false);
+            sectionIndex++;  // Incrémenter l'index seulement pour les sections
+        }
+        else if (child.hasType(ModelIdentifiers::MODULATION))
+        {
+            createPanelForModulation(child);
         }
     }
     
     updateVisibility();
+    
+    // ✅ IMPORTANT : Rétablir la surbrillance de sélection après reconstruction
+    updateSelectionHighlight();
 }
 
 // =================================================================================
@@ -185,8 +180,9 @@ void OverviewContentArea::valueTreeParentChanged(juce::ValueTree& treeWhoseParen
 
 void OverviewContentArea::handleSectionAdded(const juce::ValueTree& sectionNode)
 {
-    // Création et sélection automatique du panel pour la nouvelle section
-    createPanelForSection(sectionNode, true);
+    // REBUILD COMPLET pour maintenir l'ordre correct (Section-Modulation-Section-...)
+    // La sélection automatique est déjà gérée par AppController::addNewSection()
+    refreshFromModel();
 }
 
 void OverviewContentArea::handleSectionRemoved()
@@ -195,12 +191,12 @@ void OverviewContentArea::handleSectionRemoved()
     refreshFromModel();
 }
 
-void OverviewContentArea::createPanelForSection(const juce::ValueTree& sectionNode, bool autoSelect)
+void OverviewContentArea::createPanelForSection(const juce::ValueTree& sectionNode, int sectionIndex, bool autoSelect)
 {
     if (!scrollableContent)
         return;
     
-    // ✅ SIMPLE : Récupérer directement l'ID de la section (efficace O(1))
+    // Récupérer l'ID de la section (identifiant unique permanent)
     int sectionId = sectionNode.getProperty(ModelIdentifiers::id, -1);
     
     // Création du panel avec couleur bleue
@@ -209,41 +205,54 @@ void OverviewContentArea::createPanelForSection(const juce::ValueTree& sectionNo
     // Définir le type de contenu
     newPanel->setContentType(PanelContentType::Section);
     
-    // ✅ SIMPLE : Stocker l'ID (qui correspond maintenant à l'index grâce à notre correction)
+    // Stocker l'ID pour l'identification (utilisé par onPanelClicked pour la conversion ID→Index)
     newPanel->setUserData(sectionId);
     
-    // ✅ CONFIGURABLE : Affichage du numéro de section
-    newPanel->setDisplayText(juce::String(sectionId + 1));  // Affiche "1", "2", "3"...
-    newPanel->setShowText(true);  // Activé par défaut pour les sections
-    
-    // Pour désactiver l'affichage des numéros : newPanel->setShowText(false);
+    // ✅ AFFICHAGE : Utiliser l'INDEX (position visuelle 1, 2, 3...) PAS l'ID
+    newPanel->setDisplayText(juce::String(sectionIndex + 1));
+    newPanel->setShowText(true);
     
     // Référence au panel avant transfert de propriété
     ButtonColoredPanel* newPanelPtr = newPanel.get();
     
-    // Configuration du callback de clic
+    // Configuration du callback de clic gauche (sélection)
     newPanel->onClick = [this, newPanelPtr]() {
         this->onPanelClicked(newPanelPtr);
     };
     
-    // ✅ DÉCOUPLÉ : OverviewContentArea décide des dimensions selon la logique métier
+    // Configuration du callback clic droit (suppression)
+    // ✅ IMPORTANT : On utilise l'ID pour convertir en index au moment du clic
+    // car l'index peut changer si d'autres sections sont supprimées avant celle-ci
+    newPanel->onRightClick = [this, sectionId]() {
+        if (appController)
+        {
+            auto& piece = appController->getPiece();
+            int currentIndex = piece.getSectionIndexById(sectionId);
+            
+            if (currentIndex >= 0)
+            {
+                DBG("[OverviewContentArea] Clic droit - Suppression section ID=" << sectionId << " Index=" << currentIndex);
+                appController->removeSection(currentIndex);
+            }
+            else
+            {
+                DBG("[OverviewContentArea] Section ID=" << sectionId << " déjà supprimée");
+            }
+        }
+    };
+    
+    // Dimensions du panel
     constexpr int SECTION_WIDTH = 40;
     constexpr int SECTION_HEIGHT = 25;
     
-    // Ajout au contenu scrollable avec dimensions explicites
+    // Ajout au contenu scrollable
     std::unique_ptr<juce::Component> component(newPanel.release());
     scrollableContent->addSmallPanel(std::move(component), SECTION_WIDTH, SECTION_HEIGHT);
     
-    // Sélection automatique : convertir l'ID en index
-    if (autoSelect && appController && sectionId >= 0)
+    // Sélection automatique si demandée
+    if (autoSelect && appController && sectionIndex >= 0)
     {
-        auto& piece = appController->getPiece();
-        int sectionIndex = piece.getSectionIndexById(sectionId);
-        
-        if (sectionIndex >= 0)
-        {
-            appController->selectSection(sectionIndex);
-        }
+        appController->selectSection(sectionIndex);
     }
     
     updateVisibility();

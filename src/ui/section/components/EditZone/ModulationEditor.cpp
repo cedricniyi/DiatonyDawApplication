@@ -125,6 +125,9 @@ void ModulationEditor::setModulationState(juce::ValueTree modulationState)
         
         // Synchroniser l'affichage depuis le modèle
         syncFromModel();
+        
+        // Mettre à jour le titre maintenant que currentModulationState est valide
+        updateContent();
     }
 }
 
@@ -405,14 +408,25 @@ void ModulationEditor::updateContent()
     }
     else
     {
-        // Extraire l'index de la modulation depuis l'ID
+        // ✅ CORRIGÉ: Utiliser les IDs de sections réelles, pas l'ID de modulation
         juce::String displayName = "Modulation";
-        if (currentModulationId.startsWith("Modulation_"))
+        
+        if (currentModulationState.isValid() && appController)
         {
-            int index = currentModulationId.getTrailingIntValue();
-            int fromSection = index + 1;
-            int toSection = index + 2;
-            displayName = "Modulation " + juce::String(fromSection) + " → " + juce::String(toSection);
+            Modulation modulation(currentModulationState);
+            auto& piece = appController->getPiece();
+            
+            // Récupérer les numéros de section (index + 1 pour affichage humain)
+            int fromSectionId = modulation.getFromSectionId();
+            int toSectionId = modulation.getToSectionId();
+            
+            int fromSectionIndex = piece.getSectionIndexById(fromSectionId);
+            int toSectionIndex = piece.getSectionIndexById(toSectionId);
+            
+            if (fromSectionIndex >= 0 && toSectionIndex >= 0)
+            {
+                displayName = "Modulation " + juce::String(fromSectionIndex + 1) + " → " + juce::String(toSectionIndex + 1);
+            }
         }
         
         modulationNameLabel.setText(displayName, juce::dontSendNotification);

@@ -1,54 +1,64 @@
 #include "Modulation.h"
 
-// Constructeur avec ValueTree existant
+// ═══════════════════════════════════════════════════════════════════════════════
+// CONSTRUCTEUR
+// ═══════════════════════════════════════════════════════════════════════════════
+
 Modulation::Modulation(juce::ValueTree state) : state(state)
 {
-    jassert(state.hasType(ModelIdentifiers::MODULATION));
+    // En mode debug, vérifier que le ValueTree est du bon type
+    jassert(!state.isValid() || state.hasType(ModelIdentifiers::MODULATION));
 }
 
-// Méthode statique pour créer une nouvelle Modulation dans un parent
-Modulation Modulation::createIn(juce::ValueTree parentTree, Diatony::ModulationType type, 
-                                int fromSectionId, int toSectionId,
-                                int fromChordIndex, int toChordIndex)
-{
-    auto modulationNode = createModulationNode(type, fromSectionId, toSectionId, fromChordIndex, toChordIndex);
-    parentTree.appendChild(modulationNode, nullptr);
-    return Modulation(modulationNode);
-}
+// ═══════════════════════════════════════════════════════════════════════════════
+// SETTERS
+// ═══════════════════════════════════════════════════════════════════════════════
 
-// Setters
 void Modulation::setModulationType(Diatony::ModulationType newType)
 {
-    state.setProperty(ModelIdentifiers::modulationType, modulationTypeToInt(newType), nullptr);
-    updateName();
+    if (state.isValid())
+        state.setProperty(ModelIdentifiers::modulationType, modulationTypeToInt(newType), nullptr);
 }
 
 void Modulation::setFromSectionId(int newFromSectionId)
 {
-    state.setProperty(ModelIdentifiers::fromSectionId, newFromSectionId, nullptr);
+    if (state.isValid())
+        state.setProperty(ModelIdentifiers::fromSectionId, newFromSectionId, nullptr);
 }
 
 void Modulation::setToSectionId(int newToSectionId)
 {
-    state.setProperty(ModelIdentifiers::toSectionId, newToSectionId, nullptr);
+    if (state.isValid())
+        state.setProperty(ModelIdentifiers::toSectionId, newToSectionId, nullptr);
 }
 
 void Modulation::setFromChordIndex(int newFromChordIndex)
 {
-    state.setProperty(ModelIdentifiers::fromChordIndex, newFromChordIndex, nullptr);
+    if (state.isValid())
+        state.setProperty(ModelIdentifiers::fromChordIndex, newFromChordIndex, nullptr);
 }
 
 void Modulation::setToChordIndex(int newToChordIndex)
 {
-    state.setProperty(ModelIdentifiers::toChordIndex, newToChordIndex, nullptr);
+    if (state.isValid())
+        state.setProperty(ModelIdentifiers::toChordIndex, newToChordIndex, nullptr);
 }
 
 void Modulation::setName(const juce::String& newName)
 {
-    state.setProperty(ModelIdentifiers::name, newName, nullptr);
+    if (state.isValid())
+        state.setProperty(ModelIdentifiers::name, newName, nullptr);
 }
 
-// Getters
+// ═══════════════════════════════════════════════════════════════════════════════
+// GETTERS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+int Modulation::getId() const
+{
+    return state.getProperty(ModelIdentifiers::id, -1);
+}
+
 Diatony::ModulationType Modulation::getModulationType() const
 {
     return intToModulationType(state.getProperty(ModelIdentifiers::modulationType, 0));
@@ -74,50 +84,42 @@ int Modulation::getToChordIndex() const
     return state.getProperty(ModelIdentifiers::toChordIndex, -1);
 }
 
-const juce::String Modulation::getName() const
+juce::String Modulation::getName() const
 {
     return state.getProperty(ModelIdentifiers::name, "Unknown Modulation").toString();
 }
 
-// Méthodes utilitaires
+// ═══════════════════════════════════════════════════════════════════════════════
+// MÉTHODES UTILITAIRES
+// ═══════════════════════════════════════════════════════════════════════════════
+
+bool Modulation::hasValidSectionReferences() const
+{
+    return getFromSectionId() >= 0 && getToSectionId() >= 0;
+}
+
+bool Modulation::hasChordIndices() const
+{
+    return getFromChordIndex() >= 0 && getToChordIndex() >= 0;
+}
+
 juce::String Modulation::toString() const
 {
     if (!isValid())
         return "Invalid Modulation";
-        
-    return juce::String("Modulation: ") + getName() + 
-           " (from: " + juce::String(getFromChordIndex()) + 
-           ", to: " + juce::String(getToChordIndex()) + ")";
+    
+    juce::String result = getName();
+    result += " (ID=" + juce::String(getId());
+    result += ", Section " + juce::String(getFromSectionId());
+    result += " -> Section " + juce::String(getToSectionId()) + ")";
+    
+    return result;
 }
 
-// Création d'un nouveau nœud Modulation
-juce::ValueTree Modulation::createModulationNode(Diatony::ModulationType type,
-                                                int fromSectionId,
-                                                int toSectionId,
-                                                int fromChordIndex,
-                                                int toChordIndex)
-{
-    juce::ValueTree modulationNode(ModelIdentifiers::MODULATION);
-    
-    // Générer un ID unique pour cette modulation (commence à 0 pour correspondre aux index)
-    static int nextId = 0;
-    modulationNode.setProperty(ModelIdentifiers::id, nextId++, nullptr);
-    
-    // Définir les propriétés
-    modulationNode.setProperty(ModelIdentifiers::modulationType, modulationTypeToInt(type), nullptr);
-    modulationNode.setProperty(ModelIdentifiers::fromSectionId, fromSectionId, nullptr);
-    modulationNode.setProperty(ModelIdentifiers::toSectionId, toSectionId, nullptr);
-    modulationNode.setProperty(ModelIdentifiers::fromChordIndex, fromChordIndex, nullptr);
-    modulationNode.setProperty(ModelIdentifiers::toChordIndex, toChordIndex, nullptr);
-    
-    // Générer le nom automatiquement
-    juce::String name = "Modulation " + juce::String(static_cast<int>(type));
-    modulationNode.setProperty(ModelIdentifiers::name, name, nullptr);
-    
-    return modulationNode;
-}
+// ═══════════════════════════════════════════════════════════════════════════════
+// HELPERS DE CONVERSION
+// ═══════════════════════════════════════════════════════════════════════════════
 
-// Helpers pour la conversion des types
 int Modulation::modulationTypeToInt(Diatony::ModulationType type)
 {
     return static_cast<int>(type);
@@ -127,10 +129,3 @@ Diatony::ModulationType Modulation::intToModulationType(int value)
 {
     return static_cast<Diatony::ModulationType>(value);
 }
-
-// Met à jour le nom basé sur les paramètres actuels
-void Modulation::updateName()
-{
-    juce::String newName = "Modulation " + juce::String(static_cast<int>(getModulationType()));
-    state.setProperty(ModelIdentifiers::name, newName, nullptr);
-} 

@@ -44,13 +44,23 @@ public:
      * @return true si une section est en cours d'édition
      */
     bool isEditingSection() const { return !currentSectionId.isEmpty(); }
+    
+    /**
+     * Force le rafraîchissement du titre (utile quand l'index change sans que l'ID change)
+     */
+    void refreshTitle();
 
+    // Accès à la hiérarchie pour trouver AppController
+    void parentHierarchyChanged() override;
+    void findAppController();
+    
 private:
     juce::String currentSectionId;
     juce::ValueTree currentSectionState; // ValueTree de la section éditée
     juce::ValueTree currentProgressionState; // ValueTree de la progression (pour écouter les ajouts/suppressions d'accords)
     juce::Label sectionNameLabel;  // Label pour le nom de la section
     
+    AppController* appController = nullptr; // Pointeur vers AppController (non-owning)
     juce::SharedResourcePointer<FontManager> fontManager;
     
     // Composants des 4 zones de paramètres

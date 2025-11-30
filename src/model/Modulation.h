@@ -6,21 +6,39 @@
 #include "ModelIdentifiers.h"
 
 /**
- * Représente une modulation entre deux sections ou accords
- * Wrapper léger autour d'un ValueTree qui ne stocke pas de données lui-même
- * mais agit comme interface de haut niveau pour lire/écrire dans le ValueTree
+ * Wrapper léger autour d'un ValueTree représentant une modulation.
+ * 
+ * RESPONSABILITÉS:
+ * - Fournir une interface de haut niveau pour lire/écrire les propriétés
+ * - Donner accès aux références des sections liées
+ * 
+ * ARCHITECTURE:
+ * - Ne stocke AUCUNE donnée en dehors du ValueTree
+ * - Ne génère AUCUN ID (c'est Piece qui gère ça)
+ * - Ne crée PAS de nouveaux nœuds (c'est Piece qui gère ça)
+ * - Est un simple "wrapper" / "vue" sur le ValueTree
+ * 
+ * PROPRIÉTÉS GÉRÉES:
+ * - id: Identifiant unique (géré par Piece)
+ * - name: Nom de la modulation
+ * - modulationType: Type de modulation (PivotChord, DirectModulation, etc.)
+ * - fromSectionId: ID de la section source
+ * - toSectionId: ID de la section destination
+ * - fromChordIndex: Index de l'accord de départ dans la section source
+ * - toChordIndex: Index de l'accord d'arrivée dans la section destination
  */
 class Modulation {
 public:
-    // Constructeur avec ValueTree existant (mode wrapper)
+    /**
+     * Constructeur wrapper - prend un ValueTree existant.
+     * @param state ValueTree de type MODULATION
+     */
     explicit Modulation(juce::ValueTree state);
     
-    // Méthode statique pour créer une nouvelle Modulation dans un parent
-    static Modulation createIn(juce::ValueTree parentTree, Diatony::ModulationType type, 
-                              int fromSectionId, int toSectionId,
-                              int fromChordIndex, int toChordIndex);
+    // ═══════════════════════════════════════════════════════════════════════════
+    // SETTERS (modifient directement le ValueTree)
+    // ═══════════════════════════════════════════════════════════════════════════
     
-    // Setters (modifient directement le ValueTree)
     void setModulationType(Diatony::ModulationType newType);
     void setFromSectionId(int newFromSectionId);
     void setToSectionId(int newToSectionId);
@@ -28,35 +46,45 @@ public:
     void setToChordIndex(int newToChordIndex);
     void setName(const juce::String& newName);
     
-    // Getters (lisent directement du ValueTree)
+    // ═══════════════════════════════════════════════════════════════════════════
+    // GETTERS (lisent directement du ValueTree)
+    // ═══════════════════════════════════════════════════════════════════════════
+    
+    int getId() const;
     Diatony::ModulationType getModulationType() const;
     int getFromSectionId() const;
     int getToSectionId() const;
     int getFromChordIndex() const;
     int getToChordIndex() const;
-    const juce::String getName() const;
+    juce::String getName() const;
     
-    // Accès au ValueTree sous-jacent
+    // ═══════════════════════════════════════════════════════════════════════════
+    // ACCÈS AU VALUETREE
+    // ═══════════════════════════════════════════════════════════════════════════
+    
     juce::ValueTree getState() const { return state; }
-    bool isValid() const { return state.isValid(); }
+    bool isValid() const { return state.isValid() && state.hasType(ModelIdentifiers::MODULATION); }
     
-    // Méthodes utilitaires
+    // ═══════════════════════════════════════════════════════════════════════════
+    // MÉTHODES UTILITAIRES
+    // ═══════════════════════════════════════════════════════════════════════════
+    
+    /**
+     * Vérifie si les références de sections sont définies
+     */
+    bool hasValidSectionReferences() const;
+    
+    /**
+     * Vérifie si les indices d'accords sont définis
+     */
+    bool hasChordIndices() const;
+    
     juce::String toString() const;
-    
-    // Création d'un nouveau nœud Modulation dans un ValueTree
-    static juce::ValueTree createModulationNode(Diatony::ModulationType type,
-                                               int fromSectionId,
-                                               int toSectionId,
-                                               int fromChordIndex,
-                                               int toChordIndex);
     
 private:
     juce::ValueTree state;
     
-    // Helpers pour la conversion des types
+    // Helpers pour la conversion des types enum ↔ int
     static int modulationTypeToInt(Diatony::ModulationType type);
     static Diatony::ModulationType intToModulationType(int value);
-    
-    // Met à jour le nom basé sur les paramètres actuels
-    void updateName();
-}; 
+};

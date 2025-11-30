@@ -101,7 +101,6 @@ private:
     
     void setEditMode(EditMode newMode);
     void updateSelectionFromIndices(int sectionIndex, int chordIndex = -1);
-    juce::String generateElementId(const juce::Identifier& type, int index) const;
     
     // Validation
     bool isValidSectionIndex(int index) const;

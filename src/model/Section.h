@@ -7,56 +7,85 @@
 #include "ModelIdentifiers.h"
 
 /**
- * Représente une section tonale complète avec sa tonalité, son mode et sa progression
- * Wrapper léger autour d'un ValueTree qui ne stocke pas de données lui-même
- * mais agit comme interface de haut niveau pour lire/écrire dans le ValueTree
+ * Wrapper léger autour d'un ValueTree représentant une section tonale.
+ * 
+ * RESPONSABILITÉS:
+ * - Fournir une interface de haut niveau pour lire/écrire les propriétés
+ * - Donner accès à la Progression contenue
+ * 
+ * ARCHITECTURE:
+ * - Ne stocke AUCUNE donnée en dehors du ValueTree
+ * - Ne génère AUCUN ID (c'est Piece qui gère ça)
+ * - Ne crée PAS de nouveaux nœuds (c'est Piece qui gère ça)
+ * - Est un simple "wrapper" / "vue" sur le ValueTree
+ * 
+ * PROPRIÉTÉS GÉRÉES:
+ * - id: Identifiant unique (géré par Piece)
+ * - name: Nom de la section
+ * - tonalityNote: Note de la tonalité (C, D, E, etc.)
+ * - tonalityAlteration: Altération (Natural, Sharp, Flat)
+ * - isMajor: Mode majeur ou mineur
+ * - Progression (enfant): Contient les accords
  */
 class Section {
 public:
-    // Constructeur avec ValueTree existant (mode wrapper)
+    /**
+     * Constructeur wrapper - prend un ValueTree existant.
+     * @param state ValueTree de type SECTION
+     */
     explicit Section(juce::ValueTree state);
     
-    // Méthode statique pour créer une nouvelle Section dans un parent
-    static Section createIn(juce::ValueTree parentTree, const juce::String& sectionName);
+    // ═══════════════════════════════════════════════════════════════════════════
+    // SETTERS (modifient directement le ValueTree)
+    // ═══════════════════════════════════════════════════════════════════════════
     
-    // Setters (modifient directement le ValueTree)
     void setNote(Diatony::Note newNote);
     void setAlteration(Diatony::Alteration newAlteration);
     void setIsMajor(bool newIsMajor);
     void setName(const juce::String& newName);
-    void setProgression(const Progression& newProgression);
     
-    // Getters (lisent directement du ValueTree)
+    // ═══════════════════════════════════════════════════════════════════════════
+    // GETTERS (lisent directement du ValueTree)
+    // ═══════════════════════════════════════════════════════════════════════════
+    
+    int getId() const;
     Diatony::Note getNote() const;
     Diatony::Alteration getAlteration() const;
     bool getIsMajor() const;
-    const juce::String getName() const;
+    juce::String getName() const;
     
-    // Accès à la progression (wrapper créé à la demande)
+    // ═══════════════════════════════════════════════════════════════════════════
+    // ACCÈS À LA PROGRESSION
+    // ═══════════════════════════════════════════════════════════════════════════
+    
+    /**
+     * Retourne la Progression contenue dans cette Section.
+     * @return Wrapper Progression sur le ValueTree enfant
+     */
     Progression getProgression() const;
     Progression getProgression();
     
-    // Accès au ValueTree sous-jacent
+    // ═══════════════════════════════════════════════════════════════════════════
+    // ACCÈS AU VALUETREE
+    // ═══════════════════════════════════════════════════════════════════════════
+    
     juce::ValueTree getState() const { return state; }
-    bool isValid() const { return state.isValid(); }
+    bool isValid() const { return state.isValid() && state.hasType(ModelIdentifiers::SECTION); }
     
-    // Méthodes utilitaires simples
+    // ═══════════════════════════════════════════════════════════════════════════
+    // MÉTHODES UTILITAIRES
+    // ═══════════════════════════════════════════════════════════════════════════
+    
     bool isEmpty() const;
-    bool isValidSection() const;  // Vérifie si la section est valide
+    bool hasProgression() const;
     juce::String toString() const;
-    
-    // Création d'un nouveau nœud Section dans un ValueTree  
-    static juce::ValueTree createSectionNode(const juce::String& sectionName);
     
 private:
     juce::ValueTree state;
     
-    // Helpers pour la conversion des types
+    // Helpers pour la conversion des types enum ↔ int
     static int noteToInt(Diatony::Note note);
     static Diatony::Note intToNote(int value);
     static int alterationToInt(Diatony::Alteration alteration);
     static Diatony::Alteration intToAlteration(int value);
-    
-    // Assure qu'un nœud progression existe
-    void ensureProgressionExists();
-}; 
+};

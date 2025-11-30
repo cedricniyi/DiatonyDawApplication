@@ -1,58 +1,52 @@
 #include "Section.h"
 
-// Constructeur avec ValueTree existant
+// ═══════════════════════════════════════════════════════════════════════════════
+// CONSTRUCTEUR
+// ═══════════════════════════════════════════════════════════════════════════════
+
 Section::Section(juce::ValueTree state) : state(state)
 {
-    jassert(state.hasType(ModelIdentifiers::SECTION));
-    ensureProgressionExists();
+    // En mode debug, vérifier que le ValueTree est du bon type
+    jassert(!state.isValid() || state.hasType(ModelIdentifiers::SECTION));
 }
 
-// Méthode statique pour créer une nouvelle Section dans un parent
-Section Section::createIn(juce::ValueTree parentTree, const juce::String& sectionName)
-{
-    auto sectionNode = createSectionNode(sectionName);
-    parentTree.appendChild(sectionNode, nullptr);
-    return Section(sectionNode);
-}
+// ═══════════════════════════════════════════════════════════════════════════════
+// SETTERS
+// ═══════════════════════════════════════════════════════════════════════════════
 
-// Setters
 void Section::setNote(Diatony::Note newNote)
 {
-    state.setProperty(ModelIdentifiers::tonalityNote, noteToInt(newNote), nullptr);
+    if (state.isValid())
+        state.setProperty(ModelIdentifiers::tonalityNote, noteToInt(newNote), nullptr);
 }
 
 void Section::setAlteration(Diatony::Alteration newAlteration)
 {
-    state.setProperty(ModelIdentifiers::tonalityAlteration, alterationToInt(newAlteration), nullptr);
+    if (state.isValid())
+        state.setProperty(ModelIdentifiers::tonalityAlteration, alterationToInt(newAlteration), nullptr);
 }
 
 void Section::setIsMajor(bool newIsMajor)
 {
-    state.setProperty(ModelIdentifiers::isMajor, newIsMajor, nullptr);
+    if (state.isValid())
+        state.setProperty(ModelIdentifiers::isMajor, newIsMajor, nullptr);
 }
 
 void Section::setName(const juce::String& newName)
 {
-    state.setProperty(ModelIdentifiers::name, newName, nullptr);
+    if (state.isValid())
+        state.setProperty(ModelIdentifiers::name, newName, nullptr);
 }
 
-void Section::setProgression(const Progression& newProgression)
+// ═══════════════════════════════════════════════════════════════════════════════
+// GETTERS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+int Section::getId() const
 {
-    // Remplace le nœud progression existant
-    for (int i = 0; i < state.getNumChildren(); ++i)
-    {
-        if (state.getChild(i).hasType(ModelIdentifiers::PROGRESSION))
-        {
-            state.removeChild(i, nullptr);
-            break;
-        }
-    }
-    
-    // Ajoute la nouvelle progression
-    state.appendChild(newProgression.getState().createCopy(), nullptr);
+    return state.getProperty(ModelIdentifiers::id, -1);
 }
 
-// Getters
 Diatony::Note Section::getNote() const
 {
     return intToNote(state.getProperty(ModelIdentifiers::tonalityNote, 0));
@@ -68,15 +62,18 @@ bool Section::getIsMajor() const
     return state.getProperty(ModelIdentifiers::isMajor, true);
 }
 
-const juce::String Section::getName() const
+juce::String Section::getName() const
 {
     return state.getProperty(ModelIdentifiers::name, "Unnamed Section").toString();
 }
 
-// Accès à la progression
+// ═══════════════════════════════════════════════════════════════════════════════
+// ACCÈS À LA PROGRESSION
+// ═══════════════════════════════════════════════════════════════════════════════
+
 Progression Section::getProgression() const
 {
-    // Trouve le child progression
+    // Chercher le premier enfant de type PROGRESSION
     for (int i = 0; i < state.getNumChildren(); ++i)
     {
         auto child = state.getChild(i);
@@ -86,9 +83,8 @@ Progression Section::getProgression() const
         }
     }
     
-    // Si pas trouvé, retourne une progression vide (cela ne devrait pas arriver si ensureProgressionExists() fonctionne)
-    jassert(false);
-    return Progression(juce::ValueTree(ModelIdentifiers::PROGRESSION));
+    // Si pas trouvé, retourner un wrapper invalide
+    return Progression(juce::ValueTree());
 }
 
 Progression Section::getProgression()
@@ -103,60 +99,54 @@ Progression Section::getProgression()
         }
     }
     
-    jassert(false);
-    return Progression(juce::ValueTree(ModelIdentifiers::PROGRESSION));
+    return Progression(juce::ValueTree());
 }
 
-// Méthodes utilitaires
+// ═══════════════════════════════════════════════════════════════════════════════
+// MÉTHODES UTILITAIRES
+// ═══════════════════════════════════════════════════════════════════════════════
+
 bool Section::isEmpty() const
 {
-    return !isValid() || getProgression().isEmpty();
+    if (!isValid()) return true;
+    
+    auto progression = getProgression();
+    return !progression.isValid() || progression.isEmpty();
 }
 
-bool Section::isValidSection() const
+bool Section::hasProgression() const
 {
-    return isValid() && 
-           !getName().isEmpty() &&
-           getProgression().isValid();
+    for (int i = 0; i < state.getNumChildren(); ++i)
+    {
+        if (state.getChild(i).hasType(ModelIdentifiers::PROGRESSION))
+            return true;
+    }
+    return false;
 }
 
 juce::String Section::toString() const
 {
     if (!isValid())
         return "Invalid Section";
-        
-    juce::String result = getName() + " (";
-    result += juce::String(static_cast<int>(getNote()));
-    result += juce::String(static_cast<int>(getAlteration()));
-    result += getIsMajor() ? " Major" : " Minor";
-    result += ") - " + getProgression().toString();
+    
+    juce::String result = getName();
+    result += " (ID=" + juce::String(getId()) + ", ";
+    result += getIsMajor() ? "Major" : "Minor";
+    result += ")";
+    
+    auto progression = getProgression();
+    if (progression.isValid())
+    {
+        result += " - " + juce::String(progression.size()) + " chords";
+    }
     
     return result;
 }
 
-// Création d'un nouveau nœud Section
-juce::ValueTree Section::createSectionNode(const juce::String& sectionName)
-{
-    juce::ValueTree sectionNode(ModelIdentifiers::SECTION);
-    
-    // Générer un ID unique pour cette section (commence à 0 pour correspondre aux index)
-    static int nextId = 0;
-    sectionNode.setProperty(ModelIdentifiers::id, nextId++, nullptr);
-    
-    // Définir les propriétés par défaut
-    sectionNode.setProperty(ModelIdentifiers::name, sectionName, nullptr);
-    sectionNode.setProperty(ModelIdentifiers::tonalityNote, noteToInt(Diatony::Note::C), nullptr);
-    sectionNode.setProperty(ModelIdentifiers::tonalityAlteration, alterationToInt(Diatony::Alteration::Natural), nullptr);
-    sectionNode.setProperty(ModelIdentifiers::isMajor, true, nullptr);
-    
-    // Ajouter une progression vide
-    auto progressionNode = Progression::createProgressionNode();
-    sectionNode.appendChild(progressionNode, nullptr);
-    
-    return sectionNode;
-}
+// ═══════════════════════════════════════════════════════════════════════════════
+// HELPERS DE CONVERSION
+// ═══════════════════════════════════════════════════════════════════════════════
 
-// Helpers pour la conversion des types
 int Section::noteToInt(Diatony::Note note)
 {
     return static_cast<int>(note);
@@ -176,20 +166,3 @@ Diatony::Alteration Section::intToAlteration(int value)
 {
     return static_cast<Diatony::Alteration>(value);
 }
-
-// Assure qu'un nœud progression existe
-void Section::ensureProgressionExists()
-{
-    // Vérifie si une progression existe déjà
-    for (int i = 0; i < state.getNumChildren(); ++i)
-    {
-        if (state.getChild(i).hasType(ModelIdentifiers::PROGRESSION))
-        {
-            return; // Progression trouvée, rien à faire
-        }
-    }
-    
-    // Aucune progression trouvée, en créer une
-    auto progressionNode = Progression::createProgressionNode();
-    state.appendChild(progressionNode, nullptr);
-} 

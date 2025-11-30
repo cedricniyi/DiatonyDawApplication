@@ -1,37 +1,46 @@
 #include "Chord.h"
 
-// Constructeur avec ValueTree existant
+// ═══════════════════════════════════════════════════════════════════════════════
+// CONSTRUCTEUR
+// ═══════════════════════════════════════════════════════════════════════════════
+
 Chord::Chord(juce::ValueTree state) : state(state)
 {
-    jassert(state.hasType(ModelIdentifiers::CHORD));
+    // En mode debug, vérifier que le ValueTree est du bon type
+    jassert(!state.isValid() || state.hasType(ModelIdentifiers::CHORD));
 }
 
-// Méthode statique pour créer un nouveau Chord dans un parent
-Chord Chord::createIn(juce::ValueTree parentTree, Diatony::ChordDegree degree, 
-                     Diatony::ChordQuality quality, Diatony::ChordState state)
-{
-    auto chordNode = createChordNode(degree, quality, state);
-    parentTree.appendChild(chordNode, nullptr);
-    return Chord(chordNode);
-}
+// ═══════════════════════════════════════════════════════════════════════════════
+// SETTERS
+// ═══════════════════════════════════════════════════════════════════════════════
 
-// Setters
 void Chord::setDegree(Diatony::ChordDegree newDegree)
 {
-    state.setProperty(ModelIdentifiers::degree, degreeToInt(newDegree), nullptr);
+    if (state.isValid())
+        state.setProperty(ModelIdentifiers::degree, degreeToInt(newDegree), nullptr);
 }
 
 void Chord::setQuality(Diatony::ChordQuality newQuality)
 {
-    state.setProperty(ModelIdentifiers::quality, qualityToInt(newQuality), nullptr);
+    if (state.isValid())
+        state.setProperty(ModelIdentifiers::quality, qualityToInt(newQuality), nullptr);
 }
 
 void Chord::setChordState(Diatony::ChordState newState)
 {
-    state.setProperty(ModelIdentifiers::state, stateToInt(newState), nullptr);
+    if (state.isValid())
+        state.setProperty(ModelIdentifiers::state, stateToInt(newState), nullptr);
 }
 
-// Getters
+// ═══════════════════════════════════════════════════════════════════════════════
+// GETTERS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+int Chord::getId() const
+{
+    return state.getProperty(ModelIdentifiers::id, -1);
+}
+
 Diatony::ChordDegree Chord::getDegree() const
 {
     return intToDegree(state.getProperty(ModelIdentifiers::degree, 0));
@@ -48,39 +57,25 @@ Diatony::ChordState Chord::getChordState() const
     return intToState(state.getProperty(ModelIdentifiers::state, 0));
 }
 
-// Méthodes utilitaires
+// ═══════════════════════════════════════════════════════════════════════════════
+// MÉTHODES UTILITAIRES
+// ═══════════════════════════════════════════════════════════════════════════════
+
 juce::String Chord::toString() const
 {
     if (!isValid())
         return "Invalid Chord";
-        
-    // Réutilise la logique existante de toString avec les nouvelles données
-    return juce::String("Chord: ") + 
-           juce::String(static_cast<int>(getDegree())) + " " +
-           juce::String(static_cast<int>(getQuality())) + " " +
-           juce::String(static_cast<int>(getChordState()));
+    
+    return "Chord (ID=" + juce::String(getId()) + 
+           ", Degree=" + juce::String(static_cast<int>(getDegree())) + 
+           ", Quality=" + juce::String(static_cast<int>(getQuality())) + 
+           ", State=" + juce::String(static_cast<int>(getChordState())) + ")";
 }
 
-// Création d'un nouveau nœud Chord
-juce::ValueTree Chord::createChordNode(Diatony::ChordDegree degree,
-                                      Diatony::ChordQuality quality,
-                                      Diatony::ChordState state)
-{
-    juce::ValueTree chordNode(ModelIdentifiers::CHORD);
-    
-    // Générer un ID unique pour cet accord (commence à 0 pour correspondre aux index)
-    static int nextId = 0;
-    chordNode.setProperty(ModelIdentifiers::id, nextId++, nullptr);
-    
-    // Définir les propriétés
-    chordNode.setProperty(ModelIdentifiers::degree, degreeToInt(degree), nullptr);
-    chordNode.setProperty(ModelIdentifiers::quality, qualityToInt(quality), nullptr);
-    chordNode.setProperty(ModelIdentifiers::state, stateToInt(state), nullptr);
-    
-    return chordNode;
-}
+// ═══════════════════════════════════════════════════════════════════════════════
+// HELPERS DE CONVERSION
+// ═══════════════════════════════════════════════════════════════════════════════
 
-// Helpers pour la conversion des types
 int Chord::degreeToInt(Diatony::ChordDegree degree)
 {
     return static_cast<int>(degree);
@@ -109,4 +104,4 @@ int Chord::stateToInt(Diatony::ChordState state)
 Diatony::ChordState Chord::intToState(int value)
 {
     return static_cast<Diatony::ChordState>(value);
-} 
+}

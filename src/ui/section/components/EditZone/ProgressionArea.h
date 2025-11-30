@@ -29,7 +29,7 @@ public:
                                   const juce::Identifier& property) override;
     void valueTreeChildAdded(juce::ValueTree& parentTree, juce::ValueTree& childWhichHasBeenAdded) override {}
     void valueTreeChildRemoved(juce::ValueTree& parentTree, juce::ValueTree& childWhichHasBeenRemoved, 
-                               int indexFromWhichChildWasRemoved) override {}
+                               int indexFromWhichChildWasRemoved) override;
     void valueTreeChildOrderChanged(juce::ValueTree& parentTreeWhoseChildrenHaveMoved, 
                                     int oldIndex, int newIndex) override {}
     void valueTreeParentChanged(juce::ValueTree& treeWhoseParentHasChanged) override {}
@@ -43,6 +43,7 @@ private:
     // === DÉCOUVERTE DE SERVICE ===
     AppController* appController = nullptr;  // Trouvé via parentHierarchyChanged()
     juce::ValueTree selectionState; // État de sélection centralisé
+    juce::ValueTree modelState;     // État du modèle pour détecter les suppressions
     
     // Méthodes privées
     void findAppController();

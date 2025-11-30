@@ -96,7 +96,7 @@ private:
     void refreshFromModel();   // Met à jour l'UI depuis le modèle
     void handleSectionAdded(const juce::ValueTree& sectionNode);
     void handleSectionRemoved();
-    void createPanelForSection(const juce::ValueTree& sectionNode, bool autoSelect);  // Crée un panel visuel pour une section
+    void createPanelForSection(const juce::ValueTree& sectionNode, int sectionIndex, bool autoSelect);  // Crée un panel visuel pour une section
     void createPanelForModulation(const juce::ValueTree& modulationNode);  // Crée un panel visuel pour une modulation
     void updateSelectionHighlight(); // Met à jour l'aspect visuel des panels selon la sélection centrale
     

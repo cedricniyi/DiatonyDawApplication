@@ -23,6 +23,10 @@ public:
     ButtonColoredPanel(juce::Colour color);
     
     void paintButton(juce::Graphics& g, bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown) override;
+    void mouseDown(const juce::MouseEvent& e) override;
+    
+    // Callback pour clic droit (suppression de section)
+    std::function<void()> onRightClick;
     
     // Gestion de la sélection
     void setSelected(bool selected);

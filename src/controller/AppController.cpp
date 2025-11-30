@@ -24,82 +24,63 @@ AppController::AppController(const juce::String& pieceTitle)
 void AppController::addNewSection(const juce::String& sectionName)
 {
     piece.addSection(sectionName);
-    
-    // === LOGS DE VALIDATION DU NOUVEAU SYSTÈME D'IDs ===
     int newSectionIndex = getSectionCount() - 1;
-    auto newSection = piece.getSection(newSectionIndex);
-    int newSectionId = newSection.getState().getProperty(ModelIdentifiers::id, -1);
-    
-    DBG("========================================");
-    DBG("✅ Section créée : " << sectionName);
-    DBG("   - Index : " << newSectionIndex);
-    DBG("   - ID : " << newSectionId);
-    
-    // Si une modulation a été créée, afficher ses infos
-    if (piece.getModulationCount() > 0)
-    {
-        auto lastModulation = piece.getModulation(piece.getModulationCount() - 1);
-        int modulationId = static_cast<int>(lastModulation.getState().getProperty(ModelIdentifiers::id, -1));
-        
-        DBG("✅ Modulation créée automatiquement :");
-        DBG("   - ID Modulation : " << modulationId);
-        DBG("   - From Section ID : " << lastModulation.getFromSectionId());
-        DBG("   - To Section ID : " << lastModulation.getToSectionId());
-        DBG("   - From Chord Index : " << lastModulation.getFromChordIndex());
-        DBG("   - To Chord Index : " << lastModulation.getToChordIndex());
-        
-        // Test du helper getAdjacentSections()
-        auto [fromSection, toSection] = piece.getAdjacentSections(lastModulation);
-        int fromSectionId = static_cast<int>(fromSection.getState().getProperty(ModelIdentifiers::id, -1));
-        int toSectionId = static_cast<int>(toSection.getState().getProperty(ModelIdentifiers::id, -1));
-        
-        DBG("🔗 Test getAdjacentSections() :");
-        DBG("   - Section source : " << fromSection.getName() << " (ID=" << fromSectionId << ")");
-        DBG("   - Section destination : " << toSection.getName() << " (ID=" << toSectionId << ")");
-    }
-    DBG("========================================");
-    
-    // Sélectionner automatiquement la nouvelle section
     selectSection(newSectionIndex);
-    
 }
 
 void AppController::removeSection(int sectionIndex)
 {
     if (!isValidSectionIndex(sectionIndex))
         return;
+    
+    // Récupérer l'ID de la section à supprimer
+    auto section = piece.getSection(sectionIndex);
+    int sectionId = section.getState().getProperty(ModelIdentifiers::id, -1);
         
-    // Si on supprime la section sélectionnée, clear la sélection
+    // === SOLUTION "GOOD ENOUGH" ===
+    // Si on supprime une section, les modulations adjacentes sont aussi supprimées.
+    // Plutôt que de vérifier précisément quelle modulation meurt, on nettoie
+    // la sélection si c'est la section OU une modulation qui est sélectionnée.
+    // L'utilisateur revient à la WelcomeView, ce qui est acceptable.
+    
     juce::String currentSelectionType = selectionState.getProperty(ContextIdentifiers::selectionType, "None");
     juce::String currentElementId = selectionState.getProperty(ContextIdentifiers::selectedElementId, "");
-    juce::String sectionElementId = generateElementId(ModelIdentifiers::SECTION, sectionIndex);
+    juce::String sectionElementId = "Section_" + juce::String(sectionId);
     
+    // Clear si c'est la section sélectionnée qui est supprimée
     if (currentSelectionType == "Section" && currentElementId == sectionElementId)
     {
         clearSelection();
     }
-    
-    // Note: Pour l'instant, on ne peut que supprimer la dernière section
-    // Pour une implémentation complète, il faudrait ajouter removeSection(index) à Piece
-    if (sectionIndex == getSectionCount() - 1)
+    // Clear aussi si une modulation est sélectionnée (elle pourrait être supprimée)
+    else if (currentSelectionType == "Modulation")
     {
-        piece.removeLastSection();
+        // Les modulations adjacentes à la section supprimée vont mourir.
+        // Pour simplifier : on clear toute sélection de modulation lors d'une suppression.
+        // TODO: Implémenter une logique plus fine (voir TODO.md - Sélection intelligente)
+        clearSelection();
     }
+    
+    // Suppression de la section avec gestion automatique des modulations
+    piece.removeSection(sectionIndex);
 }
 
 void AppController::selectSection(int sectionIndex)
 {
     if (!isValidSectionIndex(sectionIndex))
         return;
+    
+    // Récupérer l'ID de la section (stable, ne change pas après suppression d'autres sections)
+    auto section = piece.getSection(sectionIndex);
+    int sectionId = section.getState().getProperty(ModelIdentifiers::id, -1);
         
-    // Mettre à jour l'état de sélection via ValueTree
+    // Mettre à jour l'état de sélection via ValueTree avec l'ID (pas l'index)
     selectionState.setProperty(ContextIdentifiers::selectionType, "Section", &piece.getUndoManager());
     selectionState.setProperty(ContextIdentifiers::selectedElementId, 
-                              generateElementId(ModelIdentifiers::SECTION, sectionIndex), 
+                              "Section_" + juce::String(sectionId), 
                               &piece.getUndoManager());
     
     setEditMode(EditMode::SectionEdit);
-    // Plus besoin de notifySelectionChanged() - l'UI s'abonne directement au ValueTree
 }
 
 // Actions sur les modulations
@@ -107,15 +88,18 @@ void AppController::selectModulation(int modulationIndex)
 {
     if (!isValidModulationIndex(modulationIndex))
         return;
+    
+    // Récupérer l'ID de la modulation (stable)
+    auto modulation = piece.getModulation(modulationIndex);
+    int modulationId = modulation.getState().getProperty(ModelIdentifiers::id, -1);
         
-    // Mettre à jour l'état de sélection via ValueTree
+    // Mettre à jour l'état de sélection via ValueTree avec l'ID (pas l'index)
     selectionState.setProperty(ContextIdentifiers::selectionType, "Modulation", &piece.getUndoManager());
     selectionState.setProperty(ContextIdentifiers::selectedElementId, 
-                              generateElementId(ModelIdentifiers::MODULATION, modulationIndex), 
+                              "Modulation_" + juce::String(modulationId), 
                               &piece.getUndoManager());
     
-    setEditMode(EditMode::Overview);  // Les modulations restent en mode overview
-    // Plus besoin de notifySelectionChanged() - l'UI s'abonne directement au ValueTree
+    setEditMode(EditMode::Overview);
 }
 
 // Actions sur les accords
@@ -139,36 +123,43 @@ void AppController::removeChordFromSection(int sectionIndex, int chordIndex)
 {
     if (!isValidChordIndex(sectionIndex, chordIndex))
         return;
-        
-    // Si on supprime l'accord sélectionné, clear la sélection
+    
+    // Récupérer l'ID réel de l'accord
+    auto section = piece.getSection(sectionIndex);
+    auto progression = section.getProgression();
+    auto chord = progression.getChord(static_cast<size_t>(chordIndex));
+    int chordId = chord.getId();
+    
+    // Vérifier si cet accord est sélectionné (par ID, pas par index)
     juce::String currentSelectionType = selectionState.getProperty(ContextIdentifiers::selectionType, "None");
     juce::String currentElementId = selectionState.getProperty(ContextIdentifiers::selectedElementId, "");
-    juce::String chordElementId = generateElementId(ModelIdentifiers::CHORD, chordIndex);
+    juce::String chordElementId = "Chord_" + juce::String(chordId);
     
     if (currentSelectionType == "Chord" && currentElementId == chordElementId)
     {
         clearSelection();
     }
     
-    auto section = piece.getSection(sectionIndex);
-    auto progression = section.getProgression();
     progression.removeChord(static_cast<size_t>(chordIndex));
-    
 }
 
 void AppController::selectChord(int sectionIndex, int chordIndex)
 {
     if (!isValidChordIndex(sectionIndex, chordIndex))
         return;
-        
-    // Mettre à jour l'état de sélection via ValueTree
+    
+    // Récupérer l'ID réel de l'accord via les wrappers
+    auto section = piece.getSection(sectionIndex);
+    auto progression = section.getProgression();
+    auto chord = progression.getChord(static_cast<size_t>(chordIndex));
+    int chordId = chord.getId();
+    
     selectionState.setProperty(ContextIdentifiers::selectionType, "Chord", &piece.getUndoManager());
     selectionState.setProperty(ContextIdentifiers::selectedElementId, 
-                              generateElementId(ModelIdentifiers::CHORD, chordIndex), 
+                              "Chord_" + juce::String(chordId), 
                               &piece.getUndoManager());
     
     setEditMode(EditMode::ChordEdit);
-    // Plus besoin de notifySelectionChanged() - l'UI s'abonne directement au ValueTree
 }
 
 // Actions générales
@@ -326,11 +317,6 @@ void AppController::updateSelectionFromIndices(int sectionIndex, int chordIndex)
         // Pas de sélection
         clearSelection();
     }
-}
-
-juce::String AppController::generateElementId(const juce::Identifier& type, int index) const
-{
-    return type.toString() + "_" + juce::String(index);
 }
 
 // Validation
