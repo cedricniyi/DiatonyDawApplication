@@ -18,6 +18,10 @@ MainContentComponent::MainContentComponent()
     addAndMakeVisible(headerPanel);
     addAndMakeVisible(sectionPanel);
     addAndMakeVisible(footerPanel);
+    
+    // Drag & Drop overlay (invisible par défaut)
+    addChildComponent(dragOverlay);
+    dragOverlay.setAlwaysOnTop(true);
 }
 
 MainContentComponent::~MainContentComponent()
@@ -103,6 +107,9 @@ void MainContentComponent::resized()
     {
         activePopup->setBounds(getLocalBounds());
     }
+    
+    // Positionner l'overlay de drag & drop
+    dragOverlay.setBounds(getLocalBounds());
 }
 
 float& MainContentComponent::getHeaderFlexRef()
@@ -237,5 +244,93 @@ void MainContentComponent::closePopup()
     {
         removeChildComponent(activePopup.get());
         activePopup.reset();
+    }
+}
+
+//==============================================================================
+// Drag & Drop Overlay
+MainContentComponent::DragOverlay::DragOverlay()
+{
+    setOpaque(false);
+}
+
+void MainContentComponent::DragOverlay::paint(juce::Graphics& g)
+{
+    auto bounds = getLocalBounds().toFloat();
+    
+    // Fond semi-transparent
+    g.fillAll(juce::Colours::black.withAlpha(0.6f));
+    
+    // Rectangle central arrondi
+    auto centerRect = bounds.reduced(50.0f);
+    
+    // Fond blanc du rectangle central
+    g.setColour(juce::Colours::white);
+    g.fillRoundedRectangle(centerRect, 16.0f);
+    
+    // Bordure bleue
+    g.setColour(juce::Colour(0xFF2196F3));  // Bleu Material
+    g.drawRoundedRectangle(centerRect, 16.0f, 3.0f);
+    
+    // Bordure en pointillés (effet drop zone)
+    g.setColour(juce::Colour(0xFF2196F3).withAlpha(0.5f));
+    float dashLengths[] = { 10.0f, 5.0f };
+    g.drawDashedLine(juce::Line<float>(centerRect.getTopLeft().translated(20, 20), 
+                                        centerRect.getTopRight().translated(-20, 20)),
+                     dashLengths, 2, 2.0f);
+    
+    // Texte centré
+    g.setColour(juce::Colour(0xFF1A1A1A));
+    g.setFont(juce::Font(fontManager->getSFProDisplay(20.0f, FontManager::FontWeight::Semibold)));
+    g.drawText(juce::String::fromUTF8("📂 Déposer votre fichier .diatony ici"),
+               centerRect, juce::Justification::centred, true);
+}
+
+//==============================================================================
+// FileDragAndDropTarget callbacks
+bool MainContentComponent::isInterestedInFileDrag(const juce::StringArray& files)
+{
+    // Vérifie si au moins un fichier a l'extension .diatony
+    for (const auto& file : files)
+    {
+        if (file.endsWithIgnoreCase(".diatony"))
+            return true;
+    }
+    return false;
+}
+
+void MainContentComponent::fileDragEnter(const juce::StringArray& files, int x, int y)
+{
+    juce::ignoreUnused(files, x, y);
+    
+    DBG("📂 Drag Enter : fichier(s) .diatony détecté(s)");
+    dragOverlay.setVisible(true);
+    dragOverlay.toFront(false);
+}
+
+void MainContentComponent::fileDragExit(const juce::StringArray& files)
+{
+    juce::ignoreUnused(files);
+    
+    DBG("📂 Drag Exit");
+    dragOverlay.setVisible(false);
+}
+
+void MainContentComponent::filesDropped(const juce::StringArray& files, int x, int y)
+{
+    juce::ignoreUnused(x, y);
+    
+    // Cacher l'overlay
+    dragOverlay.setVisible(false);
+    
+    // Trouver le premier fichier .diatony
+    for (const auto& file : files)
+    {
+        if (file.endsWithIgnoreCase(".diatony"))
+        {
+            DBG("📂 Fichier lâché : " << file);
+            // TODO Phase 2 : Charger le fichier et mettre à jour le modèle
+            break;
+        }
     }
 } 

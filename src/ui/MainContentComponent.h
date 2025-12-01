@@ -13,8 +13,12 @@
  * MainContentComponent gère le layout des 3 panels principaux (Header, Section, Footer)
  * et utilise le même pattern de callback que FooterPanel pour notifier les changements
  * de layout nécessaires à son RootAnimator.
+ * 
+ * Supporte le Drag & Drop de fichiers .diatony pour charger des solutions sauvegardées.
  */
-class MainContentComponent : public juce::Component, public juce::ValueTree::Listener
+class MainContentComponent : public juce::Component,
+                             public juce::ValueTree::Listener,
+                             public juce::FileDragAndDropTarget
 {
 public:
     MainContentComponent();
@@ -54,6 +58,13 @@ public:
     void valueTreeChildOrderChanged(juce::ValueTree&, int, int) override;
     void valueTreeParentChanged(juce::ValueTree&) override;
     
+    // =================================================================================
+    // FileDragAndDropTarget interface
+    bool isInterestedInFileDrag(const juce::StringArray& files) override;
+    void fileDragEnter(const juce::StringArray& files, int x, int y) override;
+    void fileDragExit(const juce::StringArray& files) override;
+    void filesDropped(const juce::StringArray& files, int x, int y) override;
+    
 private:
     juce::ValueTree appState;
     juce::ValueTree selectionState;  // Pour écouter les changements de génération
@@ -77,6 +88,22 @@ private:
                    const juce::String& message,
                    const juce::String& buttonText = "OK");
     void closePopup();
+    
+    // =================================================================================
+    // Drag & Drop Overlay
+    /**
+     * @brief Overlay semi-transparent affiché lors du survol avec un fichier .diatony
+     */
+    class DragOverlay : public juce::Component
+    {
+    public:
+        DragOverlay();
+        void paint(juce::Graphics& g) override;
+    private:
+        juce::SharedResourcePointer<FontManager> fontManager;
+    };
+    
+    DragOverlay dragOverlay;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainContentComponent)
 }; 
