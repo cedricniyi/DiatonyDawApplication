@@ -2,12 +2,18 @@
 #include "ui/extra/Component/Panel/ColoredPanel.h"
 #include "ui/extra/Button/StyledButton.h"
 #include "ui/UIStateIdentifiers.h"
+#include "ui/PluginEditor.h"
+#include "controller/AppController.h"
 #include "utils/FontManager.h"
 #include "utils/FileUtils.h"
 
 //==============================================================================
 HeaderPanel::HeaderPanel()
     : ColoredPanel (juce::Colours::white),
+      generateButton (juce::String::fromUTF8("Generate"),
+                      juce::Colour::fromString ("#ff22c55e"), // Vert
+                      juce::Colour::fromString ("#ff16a34a"), // Vert plus foncé au survol
+                      14.0f, FontManager::FontWeight::Medium),
       dButton (juce::String::fromUTF8("D"),
                juce::Colour::fromString ("ff808080"), // Gris
                juce::Colour::fromString ("ff606060"), // Gris plus foncé au survol
@@ -23,6 +29,10 @@ HeaderPanel::HeaderPanel()
     mainLabel.setFont(juce::Font(fontOptions));
    
     addAndMakeVisible (mainLabel);
+
+    // Configuration du bouton Generate
+    generateButton.setTooltip(juce::String::fromUTF8("Générer une solution musicale"));
+    addAndMakeVisible (generateButton);
 
     // Configuration du bouton D - ouvre le dossier des solutions MIDI
     dButton.setTooltip("Ouvrir le dossier des solutions MIDI");
@@ -64,13 +74,24 @@ void HeaderPanel::resized()
     // Positionnement du label à gauche
     mainLabel.setBounds(area.removeFromLeft(labelWidth));
 
-    // Positionnement du bouton D à droite (bouton carré)
+    // Configuration du FlexBox pour les boutons à droite
     auto buttonSize = area.getHeight();
+    
     juce::FlexBox buttonFlex;
     buttonFlex.flexDirection = juce::FlexBox::Direction::row;
     buttonFlex.justifyContent = juce::FlexBox::JustifyContent::flexEnd;
     buttonFlex.alignItems = juce::FlexBox::AlignItems::center;
-    buttonFlex.items.add(juce::FlexItem(dButton).withMinWidth(buttonSize).withMinHeight(buttonSize));
+    
+    // Bouton Generate (rectangulaire, 80px de large)
+    buttonFlex.items.add(juce::FlexItem(generateButton)
+        .withMinWidth(80.0f)
+        .withMinHeight(static_cast<float>(buttonSize))
+        .withMargin(juce::FlexItem::Margin(0, 12, 0, 0)));
+    
+    // Bouton D (carré)
+    buttonFlex.items.add(juce::FlexItem(dButton)
+        .withMinWidth(static_cast<float>(buttonSize))
+        .withMinHeight(static_cast<float>(buttonSize)));
     
     buttonFlex.performLayout(area);
 }
@@ -78,6 +99,59 @@ void HeaderPanel::resized()
 void HeaderPanel::paint (juce::Graphics& g)
 {
     ColoredPanel::paint (g);
+}
+
+// === DÉCOUVERTE DE SERVICE ===
+
+void HeaderPanel::parentHierarchyChanged()
+{
+    ColoredPanel::parentHierarchyChanged();
+    findAppController();
+}
+
+void HeaderPanel::findAppController()
+{
+    // Recherche de l'AppController via la hiérarchie des composants
+    auto* pluginEditor = findParentComponentOfClass<AudioPluginAudioProcessorEditor>();
+    
+    if (pluginEditor != nullptr)
+    {
+        appController = &pluginEditor->getAppController();
+        DBG("HeaderPanel: AppController trouvé !");
+        
+        // Connecter le bouton de génération une fois AppController trouvé
+        connectGenerateButton();
+    }
+    else
+    {
+        appController = nullptr;
+        DBG("HeaderPanel: AppController NON trouvé");
+    }
+}
+
+void HeaderPanel::connectGenerateButton()
+{
+    if (!appController)
+    {
+        DBG("HeaderPanel::connectGenerateButton() - Pas de contrôleur disponible");
+        return;
+    }
+    
+    // Connecter le callback du bouton Generate au contrôleur
+    generateButton.onClick = [this]() {
+        DBG("🎵 Bouton Generate cliqué ! Appel du contrôleur...");
+        
+        if (appController)
+        {
+            appController->startGeneration();
+        }
+        else
+        {
+            DBG("  ❌ Erreur : AppController non disponible");
+        }
+    };
+    
+    DBG("HeaderPanel: Bouton Generate connecté au contrôleur ✓");
 }
 
 void HeaderPanel::valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged,
@@ -98,4 +172,4 @@ void HeaderPanel::updateDockState()
 {
     // Note: Cette méthode est conservée pour une éventuelle utilisation future
     // avec d'autres états UI via le ValueTree
-} 
+}

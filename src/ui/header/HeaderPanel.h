@@ -6,6 +6,8 @@
 
 // Forward declarations
 class FontManager;
+class AppController;
+class AudioPluginAudioProcessorEditor;
 
 class HeaderPanel : public ColoredPanel, public juce::ValueTree::Listener
 {
@@ -18,6 +20,9 @@ public:
 
     void resized() override;
     void paint (juce::Graphics& g) override;
+    
+    // === DÉCOUVERTE DE SERVICE ===
+    void parentHierarchyChanged() override;
 
     // =================================================================================
     // ValueTree::Listener interface
@@ -32,11 +37,17 @@ public:
 private:
     void updateDockState();
     
+    // === DÉCOUVERTE DE SERVICE ===
+    AppController* appController = nullptr;
+    void findAppController();
+    void connectGenerateButton();
+    
     juce::SharedResourcePointer<FontManager> fontManager;
     
     juce::Label      mainLabel;
-    StyledButton     dButton;
-    juce::ValueTree  appState;  // Référence au ValueTree global
+    StyledButton     generateButton;  // Bouton Generate (vert)
+    StyledButton     dButton;         // Bouton D (gris)
+    juce::ValueTree  appState;        // Référence au ValueTree global
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (HeaderPanel)
-}; 
+};
