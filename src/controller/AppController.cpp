@@ -237,9 +237,30 @@ void AppController::handleAsyncUpdate()
     {
         DBG("  ✅ Génération réussie ! Mise à jour de l'état...");
         
-        // ✅ Mettre à jour l'état : succès
+        // 1. Sauvegarder le fichier .diatony associé (état du modèle en XML)
+        juce::String midiPath = generationService.getLastGeneratedMidiPath();
+        if (midiPath.isNotEmpty())
+        {
+            juce::File midiFile(midiPath);
+            juce::File diatonyFile = midiFile.withFileExtension("diatony");
+            
+            // Sérialiser le ValueTree en XML
+            juce::String xmlContent = piece.getState().toXmlString();
+            bool saved = diatonyFile.replaceWithText(xmlContent);
+            
+            if (saved)
+            {
+                DBG("  📄 Fichier .diatony sauvegardé : " << diatonyFile.getFullPathName());
+            }
+            else
+            {
+                DBG("  ⚠️ Impossible de sauvegarder le fichier .diatony");
+            }
+        }
+        
+        // 2. Mettre à jour l'état UI : succès
         selectionState.setProperty("generationStatus", "completed", nullptr);
-        selectionState.setProperty("midiFilePath", juce::String::fromUTF8("Fichier MIDI généré avec succès"), nullptr);
+        selectionState.setProperty("midiFilePath", midiPath, nullptr);
     }
     else
     {
