@@ -92,6 +92,13 @@ public:
      * @return true si la dernière génération a réussi, false sinon
      */
     bool getLastGenerationSuccess() const;
+    
+    /**
+     * @brief Obtient le chemin du dernier fichier MIDI généré
+     * 
+     * @return Chemin complet du fichier MIDI, ou chaîne vide si aucune génération réussie
+     */
+    juce::String getLastGeneratedMidiPath() const;
 
 protected:
     /**
@@ -174,6 +181,7 @@ private:
     
     // Résultats de la génération (thread-safe avec std::atomic)
     std::atomic<bool> generationSuccess { false };
+    juce::String lastGeneratedMidiPath;  // Chemin du dernier fichier MIDI généré
     
     // Synchronisation
     juce::CriticalSection callbackLock;  // Protection pour l'accès au callback
