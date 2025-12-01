@@ -188,14 +188,6 @@ target_sources(DiatonyDawApplication
         src/ui/section/components/EditZone/Parameters/zone4/Zone4ContentArea.h
         src/ui/section/components/EditZone/Parameters/zone4/Zone4ContentArea.cpp
         
-        # UI Components - OverviewZone/PlayBack
-        src/ui/section/components/OverviewZone/PlayBack/PlaybackActionArea.h
-        src/ui/section/components/OverviewZone/PlayBack/PlaybackActionArea.cpp
-        
-        # UI Components - OverviewZone/GenerateAndMore
-        src/ui/section/components/OverviewZone/GenerateAndMore/GenerationButtons.h
-        src/ui/section/components/OverviewZone/GenerateAndMore/GenerationButtons.cpp
-        
         # UI Components - OverviewZone/Overview
         src/ui/section/components/OverviewZone/Overview/ScrollableContentPanel.h
         src/ui/section/components/OverviewZone/Overview/ScrollableContentPanel.cpp
