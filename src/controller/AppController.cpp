@@ -223,6 +223,71 @@ void AppController::startGeneration()
     // NOTE : handleAsyncUpdate() sera appelé automatiquement quand le thread terminera
 }
 
+// Chargement de projet depuis un fichier .diatony
+bool AppController::loadProjectFromFile(const juce::File& file)
+{
+    DBG("=================================================================");
+    DBG("📂 AppController::loadProjectFromFile()");
+    DBG("=================================================================");
+    
+    // === 1. VALIDATIONS PRÉALABLES ===
+    if (!file.existsAsFile())
+    {
+        DBG("  ❌ Erreur : Le fichier n'existe pas - " << file.getFullPathName());
+        return false;
+    }
+    
+    if (!file.hasFileExtension(".diatony") && !file.hasFileExtension(".xml"))
+    {
+        DBG("  ❌ Erreur : Extension invalide - attendu .diatony ou .xml");
+        return false;
+    }
+    
+    DBG("  📄 Fichier : " << file.getFileName());
+    
+    // === 2. PARSING XML ===
+    auto xml = juce::XmlDocument::parse(file);
+    
+    if (xml == nullptr)
+    {
+        DBG("  ❌ Erreur parsing XML : " << file.getFullPathName());
+        return false;
+    }
+    
+    // === 3. VALIDATION STRUCTURE XML ===
+    if (xml->getTagName() != "Piece")
+    {
+        DBG("  ❌ Tag racine invalide : attendu 'Piece', reçu '" << xml->getTagName() << "'");
+        return false;
+    }
+    
+    // === 4. CRÉATION VALUETREE ===
+    juce::ValueTree newState = juce::ValueTree::fromXml(*xml);
+    
+    if (!newState.isValid())
+    {
+        DBG("  ❌ ValueTree invalide après conversion XML");
+        return false;
+    }
+    
+    DBG("  ✓ XML parsé avec succès");
+    DBG("  ✓ Sections : " << newState.getNumChildren());
+    
+    // === 5. MISE À JOUR ATOMIQUE DU MODÈLE ===
+    // On passe nullptr pour l'UndoManager car on ne veut pas "annuler" 
+    // le chargement complet d'un fichier via Ctrl+Z
+    piece.getState().copyPropertiesAndChildrenFrom(newState, nullptr);
+    
+    // === 6. CLEAR DE LA SÉLECTION ===
+    // Le modèle a changé, la sélection précédente n'est plus valide
+    clearSelection();
+    
+    DBG("  ✅ Projet chargé : " << file.getFileNameWithoutExtension());
+    DBG("=================================================================");
+    
+    return true;
+}
+
 // Callback AsyncUpdater : appelé sur le message thread quand la génération est terminée
 void AppController::handleAsyncUpdate()
 {

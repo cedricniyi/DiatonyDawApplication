@@ -4,6 +4,8 @@
 #include "footer/FooterPanel.h"
 #include "UIStateIdentifiers.h"
 #include "extra/Component/DiatonyAlertWindow.h"
+#include "PluginEditor.h"
+#include "controller/AppController.h"
 
 //==============================================================================
 MainContentComponent::MainContentComponent() 
@@ -320,17 +322,83 @@ void MainContentComponent::filesDropped(const juce::StringArray& files, int x, i
 {
     juce::ignoreUnused(x, y);
     
-    // Cacher l'overlay
+    // Cacher l'overlay immédiatement
     dragOverlay.setVisible(false);
     
-    // Trouver le premier fichier .diatony
-    for (const auto& file : files)
+    // === 1. VALIDATION DES FICHIERS ===
+    if (files.isEmpty())
+        return;
+    
+    if (files.size() > 1)
     {
-        if (file.endsWithIgnoreCase(".diatony"))
+        showPopup(
+            DiatonyAlertWindow::AlertType::Warning,
+            "Attention",
+            juce::String::fromUTF8("Veuillez déposer un seul fichier à la fois."),
+            "OK"
+        );
+        return;
+    }
+    
+    // === 2. TROUVER LE FICHIER .diatony ===
+    juce::String diatonyFilePath;
+    for (const auto& filePath : files)
+    {
+        if (filePath.endsWithIgnoreCase(".diatony"))
         {
-            DBG("📂 Fichier lâché : " << file);
-            // TODO Phase 2 : Charger le fichier et mettre à jour le modèle
+            diatonyFilePath = filePath;
             break;
         }
+    }
+    
+    if (diatonyFilePath.isEmpty())
+    {
+        showPopup(
+            DiatonyAlertWindow::AlertType::Warning,
+            "Format invalide",
+            juce::String::fromUTF8("Le fichier déposé n'est pas un fichier .diatony valide."),
+            "OK"
+        );
+        return;
+    }
+    
+    // === 3. OBTENIR L'APPCONTROLLER ===
+    auto* pluginEditor = findParentComponentOfClass<AudioPluginAudioProcessorEditor>();
+    if (pluginEditor == nullptr)
+    {
+        DBG("❌ Impossible de trouver AudioPluginAudioProcessorEditor");
+        showPopup(
+            DiatonyAlertWindow::AlertType::Error,
+            "Erreur interne",
+            juce::String::fromUTF8("Impossible d'accéder au contrôleur de l'application."),
+            "OK"
+        );
+        return;
+    }
+    
+    auto& appController = pluginEditor->getAppController();
+    
+    // === 4. CHARGER LE FICHIER ===
+    juce::File file(diatonyFilePath);
+    bool success = appController.loadProjectFromFile(file);
+    
+    // === 5. FEEDBACK UTILISATEUR ===
+    if (success)
+    {
+        showPopup(
+            DiatonyAlertWindow::AlertType::Success,
+            juce::String::fromUTF8("Projet Chargé"),
+            juce::String::fromUTF8("Le fichier « ") + file.getFileNameWithoutExtension() + juce::String::fromUTF8(" » a été chargé avec succès."),
+            "OK"
+        );
+    }
+    else
+    {
+        showPopup(
+            DiatonyAlertWindow::AlertType::Error,
+            "Erreur de chargement",
+            juce::String::fromUTF8("Impossible de charger le fichier.\n\nVérifiez qu'il s'agit d'un fichier .diatony valide."),
+            "OK"
+        );
     }
 } 
