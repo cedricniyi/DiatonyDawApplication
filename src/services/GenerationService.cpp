@@ -221,6 +221,11 @@ bool GenerationService::getLastGenerationSuccess() const
     return generationSuccess.load();
 }
 
+juce::String GenerationService::getLastGeneratedMidiPath() const
+{
+    return lastGeneratedMidiPath;
+}
+
 // ========================================
 // LOGIQUE DE GÉNÉRATION (maintenant privée)
 // ========================================
@@ -585,6 +590,9 @@ bool GenerationService::generateMidiFromPiece(const Piece& piece, const juce::St
         juce::String fileName = "diatony_piece_" + timestamp + ".mid";
         juce::File midiFile = appSupportDir.getChildFile(fileName);
         juce::String finalPath = midiFile.getFullPathName();
+        
+        // Stocker le chemin pour pouvoir le récupérer après la génération
+        lastGeneratedMidiPath = finalPath;
         
         DBG("📄 Fichier MIDI : " << finalPath);
         DBG("");

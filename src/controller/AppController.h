@@ -61,6 +61,15 @@ public:
     // Génération
     void startGeneration();
     
+    // Chargement de projet
+    /**
+     * @brief Charge un projet depuis un fichier .diatony (XML)
+     * 
+     * @param file Le fichier à charger
+     * @return true si le chargement a réussi, false sinon
+     */
+    bool loadProjectFromFile(const juce::File& file);
+    
     // Undo/Redo
     void undo();
     void redo();
