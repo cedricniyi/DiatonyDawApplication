@@ -2,12 +2,14 @@
 
 #include <JuceHeader.h>
 #include "ui/extra/Component/Panel/ColoredPanel.h"
-#include "OverviewArea.h"
-
-// Forward declarations  
-class FontManager;
+#include "ui/extra/Button/OutlineTextButton.h"
+#include "OverviewContentArea.h"
 
 //==============================================================================
+/**
+ * Zone d'action de l'Overview - Contient directement le ContentArea et le bouton
+ * (Structure aplatie, sans le niveau intermédiaire OverviewArea)
+ */
 class OverviewActionArea : public ColoredPanel
 {
 public:
@@ -16,13 +18,12 @@ public:
     void paint(juce::Graphics& g) override;
     void resized() override;
     
-    // Accès au composant OverviewArea
-    OverviewArea& getOverviewArea();
+    // Accès au composant OverviewContentArea
+    OverviewContentArea& getContentArea();
     
 private:
-    juce::SharedResourcePointer<FontManager> fontManager;
-    OverviewArea overviewArea;
-    juce::FlexBox flexBox;
+    OverviewContentArea contentArea;
+    OutlineTextButton actionButton;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(OverviewActionArea)
 };

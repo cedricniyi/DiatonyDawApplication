@@ -3,26 +3,22 @@
 
 //==============================================================================
 OverviewActionArea::OverviewActionArea() 
-    : ColoredPanel(juce::Colour::fromString("#fffcfcff"))
+    : ColoredPanel(juce::Colour::fromString("#fffcfcff")),
+      actionButton("+", juce::Colour::fromString("#FF4747b5"), 
+                   juce::Colour::fromString("#FF4747b5"), 2.5f, 
+                   16.0f, FontManager::FontWeight::Bold)
 {
-    // Définir l'alpha pour que le composant en dessous soit visible
+    // Fond légèrement transparent
     setAlpha(0.85f); 
     
-    // Ajouter uniquement l'OverviewArea
-    addAndMakeVisible(overviewArea);
+    // Ajouter directement le ContentArea et le bouton (structure aplatie)
+    addAndMakeVisible(contentArea);
+    addAndMakeVisible(actionButton);
     
-    // Configuration du FlexBox (simplifié, un seul élément centré)
-    flexBox.flexDirection = juce::FlexBox::Direction::row;
-    flexBox.justifyContent = juce::FlexBox::JustifyContent::center;
-    flexBox.alignItems = juce::FlexBox::AlignItems::center;
-    flexBox.flexWrap = juce::FlexBox::Wrap::noWrap;
-    
-    // OverviewArea occupe tout l'espace disponible
-    auto overviewSize = overviewArea.getPreferredSize();
-    flexBox.items.add(juce::FlexItem(overviewArea)
-        .withMinWidth(150.0f)
-        .withHeight(overviewSize.getHeight())
-        .withFlex(1, 1, 200.0f));
+    // Connecter le bouton à la création de nouveaux panels
+    actionButton.onClick = [this]() {
+        contentArea.addSmallPanel();
+    };
 }
 
 void OverviewActionArea::paint(juce::Graphics& g)
@@ -33,17 +29,23 @@ void OverviewActionArea::paint(juce::Graphics& g)
 
 void OverviewActionArea::resized()
 {
-    auto bounds = getLocalBounds();
+    auto area = getLocalBounds().reduced(8, 6);
     
-    // Marges adaptatives basées sur la taille disponible
-    int horizontalMargin = juce::jmin(8, bounds.getWidth() / 18);
-    int verticalMargin = juce::jmin(4, bounds.getHeight() / 25);
+    // Bouton à droite avec la même hauteur que le contentArea
+    constexpr int BUTTON_WIDTH = 50;
+    constexpr int SPACING = 8;
     
-    auto area = bounds.reduced(horizontalMargin, verticalMargin);
-    flexBox.performLayout(area.toFloat());
+    auto buttonArea = area.removeFromRight(BUTTON_WIDTH);
+    area.removeFromRight(SPACING);
+    
+    // ContentArea prend tout l'espace restant
+    contentArea.setBounds(area);
+    
+    // Bouton avec la même hauteur
+    actionButton.setBounds(buttonArea);
 }
 
-OverviewArea& OverviewActionArea::getOverviewArea()
+OverviewContentArea& OverviewActionArea::getContentArea()
 {
-    return overviewArea;
+    return contentArea;
 }
