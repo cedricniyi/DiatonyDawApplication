@@ -8,7 +8,7 @@
 //==============================================================================
 OverviewContentArea::OverviewContentArea() 
     : ColoredPanel(juce::Colour::fromString("#ffe3e3ff")),
-      scrollableContent(std::make_unique<ScrollableContentPanel>())
+      overlayContainer(std::make_unique<juce::Component>())
 {
     setAlpha(1.0f);
     
@@ -89,10 +89,10 @@ void OverviewContentArea::refreshFromModel()
         return;
         
     // ✅ TERRE BRÛLÉE : Toujours effacer d'abord, puis reconstruire
-    if (scrollableContent)
-    {
-        scrollableContent->clearAllPanels();
-    }
+    sectionPanels.clear();
+    modulationPanels.clear();
+    if (overlayContainer)
+        overlayContainer->removeAllChildren();
     
     // Compteur d'index pour les sections (position visuelle, pas ID)
     int sectionIndex = 0;
@@ -111,6 +111,9 @@ void OverviewContentArea::refreshFromModel()
             createPanelForModulation(child);
         }
     }
+    
+    // Appliquer le layout superposé
+    layoutPanels();
     
     updateVisibility();
     
@@ -193,7 +196,7 @@ void OverviewContentArea::handleSectionRemoved()
 
 void OverviewContentArea::createPanelForSection(const juce::ValueTree& sectionNode, int sectionIndex, bool autoSelect)
 {
-    if (!scrollableContent)
+    if (!overlayContainer)
         return;
     
     // Récupérer l'ID de la section (identifiant unique permanent)
@@ -208,8 +211,8 @@ void OverviewContentArea::createPanelForSection(const juce::ValueTree& sectionNo
     // Stocker l'ID pour l'identification (utilisé par onPanelClicked pour la conversion ID→Index)
     newPanel->setUserData(sectionId);
     
-    // ✅ AFFICHAGE : Utiliser l'INDEX (position visuelle 1, 2, 3...) PAS l'ID
-    newPanel->setDisplayText(juce::String(sectionIndex + 1));
+    // ✅ AFFICHAGE : Utiliser l'INDEX avec préfixe "P" (P1, P2, P3...)
+    newPanel->setDisplayText("P" + juce::String(sectionIndex + 1));
     newPanel->setShowText(true);
     
     // Référence au panel avant transfert de propriété
@@ -221,8 +224,6 @@ void OverviewContentArea::createPanelForSection(const juce::ValueTree& sectionNo
     };
     
     // Configuration du callback clic droit (suppression)
-    // ✅ IMPORTANT : On utilise l'ID pour convertir en index au moment du clic
-    // car l'index peut changer si d'autres sections sont supprimées avant celle-ci
     newPanel->onRightClick = [this, sectionId]() {
         if (appController)
         {
@@ -241,27 +242,20 @@ void OverviewContentArea::createPanelForSection(const juce::ValueTree& sectionNo
         }
     };
     
-    // Dimensions du panel
-    constexpr int SECTION_WIDTH = 40;
-    constexpr int SECTION_HEIGHT = 25;
-    
-    // Ajout au contenu scrollable
-    std::unique_ptr<juce::Component> component(newPanel.release());
-    scrollableContent->addSmallPanel(std::move(component), SECTION_WIDTH, SECTION_HEIGHT);
+    // Ajouter au conteneur et stocker dans le vecteur
+    overlayContainer->addAndMakeVisible(*newPanel);
+    sectionPanels.push_back(std::move(newPanel));
     
     // Sélection automatique si demandée
     if (autoSelect && appController && sectionIndex >= 0)
     {
         appController->selectSection(sectionIndex);
     }
-    
-    updateVisibility();
-    resized();
 }
 
 void OverviewContentArea::createPanelForModulation(const juce::ValueTree& modulationNode)
 {
-    if (!scrollableContent)
+    if (!overlayContainer)
         return;
     
     // Récupérer l'ID de la modulation
@@ -276,33 +270,24 @@ void OverviewContentArea::createPanelForModulation(const juce::ValueTree& modula
     // Définir le type de contenu
     newPanel->setContentType(PanelContentType::Modulation);
     
-    // Stocker l'ID de la modulation (plus besoin d'offset !)
+    // Stocker l'ID de la modulation
     newPanel->setUserData(modulationId);
     
-    // ✅ OPTIONNEL : Désactiver l'affichage du texte pour les modulations
-    newPanel->setShowText(false);  // Les modulations ne sont pas numérotées par défaut
-    
-    // Si tu veux quand même afficher l'ID de la modulation, décommente la ligne suivante :
-    // newPanel->setDisplayText(juce::String(modulationId+1));
+    // ✅ Pas de texte + transparence pour voir les sections en dessous
+    newPanel->setShowText(false);
+    newPanel->setAlpha(0.7f);
     
     // Référence au panel avant transfert de propriété
     ButtonColoredPanel* newPanelPtr = newPanel.get();
     
-    // Configuration du callback de clic (utilise onPanelClicked qui gère la conversion ID→Index)
+    // Configuration du callback de clic
     newPanel->onClick = [this, newPanelPtr]() {
         this->onPanelClicked(newPanelPtr);
     };
     
-    // ✅ DÉCOUPLÉ : OverviewContentArea décide des dimensions selon la logique métier
-    constexpr int MODULATION_WIDTH = 30;  // 5px plus large que carré comme demandé
-    constexpr int MODULATION_HEIGHT = 25;
-    
-    // Ajout au contenu scrollable avec dimensions explicites
-    std::unique_ptr<juce::Component> component(newPanel.release());
-    scrollableContent->addSmallPanel(std::move(component), MODULATION_WIDTH, MODULATION_HEIGHT);
-    
-    updateVisibility();
-    resized();
+    // Ajouter au conteneur et stocker dans le vecteur
+    overlayContainer->addAndMakeVisible(*newPanel);
+    modulationPanels.push_back(std::move(newPanel));
 }
 
 // === MÉTHODES UI EXISTANTES ===
@@ -320,17 +305,12 @@ void OverviewContentArea::resized()
     viewport.setBounds(contentArea);
     emptyLabel.setBounds(contentArea);
     
-    if (scrollableContent)
-    {
-        scrollableContent->setSize(scrollableContent->getWidth(), PREFERRED_HEIGHT);
-    }
+    // Relayout des panels avec les nouvelles dimensions
+    layoutPanels();
 }
 
 void OverviewContentArea::addSmallPanel()
 {
-    if (!scrollableContent)
-        return;
-    
     // Utilisation d'AppController pour l'architecture réactive
     if (appController != nullptr)
     {
@@ -340,46 +320,74 @@ void OverviewContentArea::addSmallPanel()
     }
     
     // Fallback : création manuelle si AppController indisponible
+    if (!overlayContainer)
+        return;
+        
     auto newPanel = std::make_unique<ButtonColoredPanel>(juce::Colours::blue);
     int panelId = nextPanelId++;
     newPanel->setUserData(panelId);
-    
-    // ✅ CONFIGURABLE : Affichage de l'ID sur le panel (fallback)
-    newPanel->setDisplayText(juce::String(panelId));
-    newPanel->setShowText(true);  // Par défaut activé pour rétrocompatibilité
-    
-    // La sélection est maintenant gérée centralement - pas besoin de désélection manuelle
+    newPanel->setContentType(PanelContentType::Section);
+    newPanel->setDisplayText("P" + juce::String(panelId));
+    newPanel->setShowText(true);
     
     ButtonColoredPanel* newPanelPtr = newPanel.get();
-    
-    // Configuration du callback de clic
     newPanel->onClick = [this, newPanelPtr]() {
         this->onPanelClicked(newPanelPtr);
     };
     
-    // Ajout et sélection du nouveau panel
-    std::unique_ptr<juce::Component> component(newPanel.release());
-    scrollableContent->addSmallPanel(std::move(component));
+    overlayContainer->addAndMakeVisible(*newPanel);
+    sectionPanels.push_back(std::move(newPanel));
     
-    // La sélection visuelle sera gérée par updateSelectionHighlight()
-    
+    layoutPanels();
     updateVisibility();
-    resized();
+}
+
+void OverviewContentArea::layoutPanels()
+{
+    if (!overlayContainer) return;
+    
+    // Calculer la hauteur totale nécessaire (modulations plus hautes que sections)
+    int totalHeight = juce::jmax(SECTION_HEIGHT, MODULATION_HEIGHT) + 10;
+    int centerY = totalHeight / 2;
+    
+    int x = 0;
+    int ySection = centerY - (SECTION_HEIGHT / 2);  // Sections centrées verticalement
+    int yModulation = centerY - (MODULATION_HEIGHT / 2);  // Modulations centrées (dépassent en haut/bas)
+    
+    // 1) Positionner les sections côte à côte (sans espacement)
+    for (size_t i = 0; i < sectionPanels.size(); ++i)
+    {
+        sectionPanels[i]->setBounds(x, ySection, SECTION_WIDTH, SECTION_HEIGHT);
+        x += SECTION_WIDTH;
+    }
+    
+    // 2) Positionner les modulations à cheval sur les frontières entre sections
+    x = SECTION_WIDTH - (MODULATION_WIDTH / 2);  // Commence au milieu de la frontière S1-S2
+    for (size_t i = 0; i < modulationPanels.size(); ++i)
+    {
+        modulationPanels[i]->setBounds(x, yModulation, MODULATION_WIDTH, MODULATION_HEIGHT);
+        modulationPanels[i]->toFront(false);  // Les modulations au premier plan
+        x += SECTION_WIDTH;
+    }
+    
+    // Mettre à jour la taille du conteneur
+    int totalWidth = static_cast<int>(sectionPanels.size()) * SECTION_WIDTH;
+    overlayContainer->setSize(juce::jmax(totalWidth, 100), totalHeight);
 }
 
 void OverviewContentArea::clearAllPanels()
 {
-    if (scrollableContent)
-    {
-        scrollableContent->clearAllPanels();
-        updateVisibility();
-        resized();
-    }
+    sectionPanels.clear();
+    modulationPanels.clear();
+    if (overlayContainer)
+        overlayContainer->removeAllChildren();
+    updateVisibility();
+    resized();
 }
 
 bool OverviewContentArea::hasContent() const
 {
-    return scrollableContent && scrollableContent->getNumPanels() > 0;
+    return !sectionPanels.empty();
 }
 
 juce::Rectangle<int> OverviewContentArea::getPreferredSize() const
@@ -391,10 +399,10 @@ juce::Rectangle<int> OverviewContentArea::getPreferredSize() const
 
 void OverviewContentArea::setupViewport()
 {
-    scrollableContent->setSize(100, PREFERRED_HEIGHT);
+    overlayContainer->setSize(100, PREFERRED_HEIGHT);
     
     // Configuration du viewport avec scrollbar horizontale uniquement
-    viewport.setViewedComponent(scrollableContent.get(), false);
+    viewport.setViewedComponent(overlayContainer.get(), false);
     viewport.setScrollBarsShown(false, true, false, false);
     viewport.setScrollBarPosition(true, true);
     
@@ -468,39 +476,40 @@ void OverviewContentArea::onPanelClicked(ButtonColoredPanel* clickedPanel)
 
 void OverviewContentArea::updateSelectionHighlight()
 {
-    if (!selectionState.isValid() || !scrollableContent)
+    if (!selectionState.isValid())
         return;
     
     // Obtenir l'ID de l'élément sélectionné depuis l'état central
     juce::String selectedElementId = selectionState.getProperty(ContextIdentifiers::selectedElementId, "");
     juce::String selectionType = selectionState.getProperty(ContextIdentifiers::selectionType, "None");
     
-    // Parcourir tous les panels pour mettre à jour leur état visuel
-    for (int i = 0; i < scrollableContent->getNumChildComponents(); ++i)
+    // Parcourir les panels de section
+    for (auto& panel : sectionPanels)
     {
-        if (auto* panel = dynamic_cast<ButtonColoredPanel*>(scrollableContent->getChildComponent(i)))
+        int userData = static_cast<int>(panel->getUserData());
+        bool shouldBeSelected = false;
+        
+        if (selectionType == "Section")
         {
-            int userData = static_cast<int>(panel->getUserData());
-            PanelContentType panelType = panel->getContentType();
-            
-            // Déterminer si ce panel doit être sélectionné
-            bool shouldBeSelected = false;
-            
-            if (selectionType == "Section" && panelType == PanelContentType::Section)
-            {
-                // Panel de section
-                juce::String expectedElementId = "Section_" + juce::String(userData);
-                shouldBeSelected = (expectedElementId == selectedElementId);
-            }
-            else if (selectionType == "Modulation" && panelType == PanelContentType::Modulation)
-            {
-                // Panel de modulation
-                juce::String expectedElementId = "Modulation_" + juce::String(userData);
-                shouldBeSelected = (expectedElementId == selectedElementId);
-            }
-            
-            // Mettre à jour l'état visuel du panel
-            panel->setSelected(shouldBeSelected);
+            juce::String expectedElementId = "Section_" + juce::String(userData);
+            shouldBeSelected = (expectedElementId == selectedElementId);
         }
+        
+        panel->setSelected(shouldBeSelected);
+    }
+    
+    // Parcourir les panels de modulation
+    for (auto& panel : modulationPanels)
+    {
+        int userData = static_cast<int>(panel->getUserData());
+        bool shouldBeSelected = false;
+        
+        if (selectionType == "Modulation")
+        {
+            juce::String expectedElementId = "Modulation_" + juce::String(userData);
+            shouldBeSelected = (expectedElementId == selectedElementId);
+        }
+        
+        panel->setSelected(shouldBeSelected);
     }
 } 

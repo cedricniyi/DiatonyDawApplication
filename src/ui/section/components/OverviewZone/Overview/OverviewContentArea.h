@@ -4,7 +4,7 @@
 #include <juce_data_structures/juce_data_structures.h>
 #include <juce_gui_basics/juce_gui_basics.h>
 #include "ui/extra/Component/Panel/ColoredPanel.h"
-#include "ScrollableContentPanel.h"
+#include "ui/extra/Button/ButtonColoredPanel.h"
 #include "controller/ContextIdentifiers.h"
 
 // Forward declarations
@@ -65,8 +65,12 @@ public:
 private:
     // Composants UI
     juce::Viewport viewport;
-    std::unique_ptr<ScrollableContentPanel> scrollableContent;
+    std::unique_ptr<juce::Component> overlayContainer;  // Conteneur pour layout superposé
     juce::Label emptyLabel;
+    
+    // Stockage séparé des panels pour le layout superposé
+    std::vector<std::unique_ptr<ButtonColoredPanel>> sectionPanels;
+    std::vector<std::unique_ptr<ButtonColoredPanel>> modulationPanels;
     
     // === DÉCOUVERTE DE SERVICE ===
     AppController* appController = nullptr;  // Trouvé via parentHierarchyChanged()
@@ -75,10 +79,14 @@ private:
     juce::ValueTree modelState;     // ValueTree du modèle écouté via ValueTree::Listener
     juce::ValueTree selectionState; // ValueTree de l'état de sélection
     
-    // Configuration
+    // Configuration - Dimensions pour le layout superposé
     static constexpr int PREFERRED_WIDTH = 300;
-    static constexpr int PREFERRED_HEIGHT = 35;
+    static constexpr int PREFERRED_HEIGHT = 45;  // Plus haut pour les modulations
     static constexpr int CONTENT_MARGIN = 5;
+    static constexpr int SECTION_WIDTH = 60;
+    static constexpr int SECTION_HEIGHT = 25;
+    static constexpr int MODULATION_WIDTH = 24;
+    static constexpr int MODULATION_HEIGHT = 35;
     
     // Gestion des IDs de panels
     int nextPanelId = 1;
@@ -99,6 +107,7 @@ private:
     void createPanelForSection(const juce::ValueTree& sectionNode, int sectionIndex, bool autoSelect);  // Crée un panel visuel pour une section
     void createPanelForModulation(const juce::ValueTree& modulationNode);  // Crée un panel visuel pour une modulation
     void updateSelectionHighlight(); // Met à jour l'aspect visuel des panels selon la sélection centrale
+    void layoutPanels();  // Positionne les panels avec modulations superposées aux jonctions
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(OverviewContentArea)
 }; 
