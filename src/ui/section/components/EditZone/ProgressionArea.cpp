@@ -4,9 +4,10 @@
 #include "ui/PluginEditor.h"
 
 //==============================================================================
-ProgressionArea::ProgressionArea() 
-    : ColoredPanel(juce::Colours::white)
+ProgressionArea::ProgressionArea()
 {
+    setOpaque(false);
+    
     // Ajouter la vue de bienvenue (visible par défaut)
     addAndMakeVisible(welcomeView);
     
@@ -31,14 +32,25 @@ ProgressionArea::~ProgressionArea()
 
 void ProgressionArea::paint(juce::Graphics& g)
 {
-    // Dessiner le fond coloré via ColoredPanel
-    ColoredPanel::paint(g);
+    auto bounds = getLocalBounds().toFloat();
+    
+    // Créer le path arrondi
+    juce::Path panelPath;
+    panelPath.addRoundedRectangle(bounds, cornerRadius);
+    
+    // Fond semi-transparent (style BaseZone)
+    g.setColour(juce::Colours::black.withAlpha(0.3f));
+    g.fillPath(panelPath);
+    
+    // Contour léger
+    g.setColour(juce::Colours::grey.withAlpha(0.4f));
+    g.drawRoundedRectangle(bounds.reduced(0.5f), cornerRadius, static_cast<float>(borderThickness));
 }
 
 void ProgressionArea::resized()
 {
-    // Appliquer le padding à toute la zone
-    auto area = getLocalBounds().reduced(20, 10);
+    // Les enfants remplissent tout l'espace (pas de padding)
+    auto area = getLocalBounds();
     
     // Positionner les trois vues dans toute la zone disponible
     // Seule la vue visible sera affichée
@@ -53,7 +65,7 @@ void ProgressionArea::resized()
 
 void ProgressionArea::parentHierarchyChanged()
 {
-    ColoredPanel::parentHierarchyChanged();
+    juce::Component::parentHierarchyChanged();
     findAppController();
 }
 
@@ -216,4 +228,4 @@ void ProgressionArea::updateContentBasedOnSelection()
         modulationEditor->setModulationState(juce::ValueTree());
         welcomeView.setVisible(true);
     }
-} 
+}

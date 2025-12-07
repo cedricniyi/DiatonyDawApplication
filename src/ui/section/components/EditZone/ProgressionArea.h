@@ -1,7 +1,6 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "ui/extra/Component/Panel/ColoredPanel.h"
 #include "WelcomeView.h"
 #include "SectionEditor.h"
 #include "ModulationEditor.h"
@@ -12,7 +11,11 @@ class AppController;
 class AudioPluginAudioProcessorEditor;
 
 //==============================================================================
-class ProgressionArea : public ColoredPanel, public juce::ValueTree::Listener
+/**
+ * Zone d'édition de progression
+ * Dessin custom style BaseZone (fond semi-transparent + contour arrondi)
+ */
+class ProgressionArea : public juce::Component, public juce::ValueTree::Listener
 {
 public:
     ProgressionArea();
@@ -45,9 +48,14 @@ private:
     juce::ValueTree selectionState; // État de sélection centralisé
     juce::ValueTree modelState;     // État du modèle pour détecter les suppressions
     
+    // Style constants
+    static constexpr float cornerRadius = 8.0f;
+    static constexpr int borderThickness = 1;
+    static constexpr int contentPadding = 10;  // Espacement interne pour les enfants
+    
     // Méthodes privées
     void findAppController();
     void updateContentBasedOnSelection();
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ProgressionArea)
-}; 
+};
