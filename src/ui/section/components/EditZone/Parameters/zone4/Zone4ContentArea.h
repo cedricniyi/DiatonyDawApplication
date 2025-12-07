@@ -45,16 +45,8 @@ private:
     static constexpr int TOP_PADDING = 6;
     static constexpr int BOTTOM_PADDING = 0;     // Pas de padding en bas pour la scrollbar
     
-    // Gestion des couleurs pour les rectangles
+    // Compteur pour les rectangles
     int nextRectangleId = 1;
-    juce::Array<juce::Colour> availableColours = {
-        juce::Colours::lightblue,
-        juce::Colours::lightgreen,
-        juce::Colours::lightyellow,
-        juce::Colours::lightpink,
-        juce::Colours::lightcyan,
-        juce::Colours::lightgrey
-    };
     
     // Valeurs validées depuis DiatonyTypes.h (suivant l'architecture des Zones 1-3)
     // Les 16 degrés d'accords disponibles
