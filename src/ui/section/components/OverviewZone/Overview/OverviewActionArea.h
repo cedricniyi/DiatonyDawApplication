@@ -1,16 +1,15 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "ui/extra/Component/Panel/ColoredPanel.h"
-#include "ui/extra/Button/OutlineTextButton.h"
+#include "ui/extra/Button/StyledButton.h"
 #include "OverviewContentArea.h"
 
 //==============================================================================
 /**
  * Zone d'action de l'Overview - Contient directement le ContentArea et le bouton
- * (Structure aplatie, sans le niveau intermédiaire OverviewArea)
+ * Dessin custom style BaseZone (fond semi-transparent + contour)
  */
-class OverviewActionArea : public ColoredPanel
+class OverviewActionArea : public juce::Component
 {
 public:
     OverviewActionArea();
@@ -23,7 +22,12 @@ public:
     
 private:
     OverviewContentArea contentArea;
-    OutlineTextButton actionButton;
+    StyledButton actionButton;
+    
+    // Style constants
+    static constexpr float cornerRadius = 8.0f;
+    static constexpr int borderThickness = 1;
+    static constexpr int contentPadding = 10;  // Espacement interne pour les enfants
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(OverviewActionArea)
 };

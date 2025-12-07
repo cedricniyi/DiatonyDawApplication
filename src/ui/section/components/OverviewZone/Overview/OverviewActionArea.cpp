@@ -3,19 +3,19 @@
 
 //==============================================================================
 OverviewActionArea::OverviewActionArea() 
-    : ColoredPanel(juce::Colour::fromString("#fffcfcff")),
-      actionButton("+", juce::Colour::fromString("#FF4747b5"), 
-                   juce::Colour::fromString("#FF4747b5"), 2.5f, 
-                   16.0f, FontManager::FontWeight::Bold)
+    : actionButton("+", 
+                   juce::Colours::grey,
+                   juce::Colours::darkgrey, 
+                   18.0f, 
+                   FontManager::FontWeight::Bold)
 {
-    // Fond légèrement transparent
-    setAlpha(0.85f); 
+    setOpaque(false);
     
-    // Ajouter directement le ContentArea et le bouton (structure aplatie)
+    // Ajouter les composants enfants
     addAndMakeVisible(contentArea);
     addAndMakeVisible(actionButton);
     
-    // Connecter le bouton à la création de nouveaux panels
+    // Configurer le callback du bouton pour ajouter une section
     actionButton.onClick = [this]() {
         contentArea.addSmallPanel();
     };
@@ -23,26 +23,34 @@ OverviewActionArea::OverviewActionArea()
 
 void OverviewActionArea::paint(juce::Graphics& g)
 {
-    // Dessiner le fond coloré via ColoredPanel
-    ColoredPanel::paint(g);
+    auto bounds = getLocalBounds().toFloat();
+    
+    // Fond semi-transparent style BaseZone
+    g.setColour(juce::Colours::black.withAlpha(0.3f));
+    g.fillRoundedRectangle(bounds, cornerRadius);
+    
+    // Contour léger
+    g.setColour(juce::Colours::grey.withAlpha(0.4f));
+    g.drawRoundedRectangle(bounds.reduced(0.5f), cornerRadius, static_cast<float>(borderThickness));
 }
 
 void OverviewActionArea::resized()
 {
-    auto area = getLocalBounds().reduced(8, 6);
+    auto bounds = getLocalBounds();
     
-    // Bouton à droite avec la même hauteur que le contentArea
-    constexpr int BUTTON_WIDTH = 50;
-    constexpr int SPACING = 8;
+    // Padding interne
+    auto area = bounds.reduced(contentPadding + 2, contentPadding);
     
-    auto buttonArea = area.removeFromRight(BUTTON_WIDTH);
-    area.removeFromRight(SPACING);
+    // Bouton "+" à droite avec largeur fixe
+    constexpr int buttonWidth = 50;
+    constexpr int spacing = 8;
     
-    // ContentArea prend tout l'espace restant
-    contentArea.setBounds(area);
-    
-    // Bouton avec la même hauteur
+    auto buttonArea = area.removeFromRight(buttonWidth);
     actionButton.setBounds(buttonArea);
+    
+    // ContentArea prend le reste de l'espace
+    area.removeFromRight(spacing);
+    contentArea.setBounds(area);
 }
 
 OverviewContentArea& OverviewActionArea::getContentArea()
