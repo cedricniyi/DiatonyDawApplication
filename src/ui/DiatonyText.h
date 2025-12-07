@@ -127,4 +127,37 @@ namespace DiatonyText {
         }
         return {}; // Ne devrait jamais arriver
     }
+    
+    // Abréviations courtes pour affichage compact (panels d'accords)
+    inline juce::String getShortQualityName(Diatony::ChordQuality quality) {
+        switch (quality) {
+            case Diatony::ChordQuality::Auto:              return "Auto";
+            case Diatony::ChordQuality::Major:             return "M";
+            case Diatony::ChordQuality::Minor:             return "m";
+            case Diatony::ChordQuality::Diminished:        return "dim";
+            case Diatony::ChordQuality::Augmented:         return "aug";
+            case Diatony::ChordQuality::AugmentedSixth:    return "Aug6";
+            case Diatony::ChordQuality::DominantSeventh:   return "7";
+            case Diatony::ChordQuality::MajorSeventh:      return "M7";
+            case Diatony::ChordQuality::MinorSeventh:      return "m7";
+            case Diatony::ChordQuality::DiminishedSeventh: return "dim7";
+            case Diatony::ChordQuality::HalfDiminished:    return "m7b5";
+            case Diatony::ChordQuality::MinorMajorSeventh: return "mM7";
+            case Diatony::ChordQuality::MajorNinthDominant:return "9";
+            case Diatony::ChordQuality::MinorNinthDominant:return "m9";
+        }
+        return "?";
+    }
+    
+    // Abréviations courtes pour les états d'accords
+    inline juce::String getShortStateName(Diatony::ChordState state) {
+        switch (state) {
+            case Diatony::ChordState::Fundamental:      return "Root";
+            case Diatony::ChordState::FirstInversion:   return "1st";
+            case Diatony::ChordState::SecondInversion:  return "2nd";
+            case Diatony::ChordState::ThirdInversion:   return "3rd";
+            case Diatony::ChordState::FourthInversion:  return "4th";
+        }
+        return "?";
+    }
 }

@@ -11,7 +11,8 @@ SectionPanel::SectionPanel()
 
 void SectionPanel::paint(juce::Graphics& g)
 {
-
+    // Fond gris foncé #333333
+    g.fillAll(juce::Colour::fromString("#FF333333"));
 }
 
 void SectionPanel::resized()
