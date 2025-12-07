@@ -3,21 +3,19 @@
 #include <JuceHeader.h>
 #include <juce_data_structures/juce_data_structures.h>
 #include <juce_gui_basics/juce_gui_basics.h>
-#include "ui/extra/Component/Panel/ColoredPanel.h"
 #include "utils/FontManager.h"
-#include "Parameters/Zone1.h"
-#include "Parameters/Zone2.h"
-#include "Parameters/Zone3.h"
+#include "Parameters/KeyZone.h"
+#include "Parameters/ModeZone.h"
 #include "Parameters/Zone4.h"
 #include "model/Section.h"
 #include "model/NoteConverter.h"
 #include "controller/AppController.h"
 
 /**
- * Composant d'édition de section - Placeholder pour l'édition détaillée d'une section
+ * Composant d'édition de section - Transparent, remplit ProgressionArea
  * Reçoit l'ID de la section à éditer et affiche des informations/contrôles d'édition
  */
-class SectionEditor : public ColoredPanel, public juce::ValueTree::Listener
+class SectionEditor : public juce::Component, public juce::ValueTree::Listener
 {
 public:
     SectionEditor();
@@ -63,21 +61,18 @@ private:
     AppController* appController = nullptr; // Pointeur vers AppController (non-owning)
     juce::SharedResourcePointer<FontManager> fontManager;
     
-    // Composants des 4 zones de paramètres
-    Zone1 zone1Component;
-    Zone2 zone2Component;
-    Zone3 zone3Component;
-    Zone4 zone4Component;
+    // Composants des zones de paramètres (style BaseZone)
+    KeyZone keyZone;      // Tonalité (BaseZone + KeySelector)
+    ModeZone modeZone;    // Mode Majeur/Mineur (BaseZone)
+    Zone4 zone4Component; // Accords
     
     // Zones de layout
-    juce::Rectangle<int> headerArea;
+    juce::Rectangle<int> notchArea;    // Encoche centrée pour le titre
     juce::Rectangle<int> contentArea;
     
-    // Zones de contenu (4 zones au total)
-    juce::Rectangle<int> zone1Area;  // Première ligne, première colonne
-    juce::Rectangle<int> zone2Area;  // Première ligne, deuxième colonne  
-    juce::Rectangle<int> zone3Area;  // Première ligne, troisième colonne
-    juce::Rectangle<int> zone4Area;  // Seconde ligne, toute la largeur
+    // Zones de contenu (layout FlexBox pour ligne 1)
+    juce::Rectangle<int> topRowArea;   // Première ligne (KeyZone + ModeZone)
+    juce::Rectangle<int> zone4Area;    // Seconde ligne, toute la largeur
     
     // Proportions pour les lignes et colonnes (valeurs Fr pour Grid)
     int firstRowHeightFr = 40;   // Première ligne : 40 parts
@@ -93,6 +88,7 @@ private:
     void updateContent();
     void drawBorder(juce::Graphics& g);
     void drawSeparatorLine(juce::Graphics& g);
+    void drawNotch(juce::Graphics& g);  // Dessine l'encoche centrée
     void calculateContentZones();
 
     // Helpers binding

@@ -2,14 +2,14 @@
 #include "ui/PluginEditor.h"
 
 SectionEditor::SectionEditor()
-    : ColoredPanel(juce::Colours::lightblue.withAlpha(0.25f)) // Bleu clair plus visible
 {
+    setOpaque(false);  // Transparent
+    
     setupSectionNameLabel();
     
-    // Ajouter les composants des 4 zones
-    addAndMakeVisible(zone1Component);
-    addAndMakeVisible(zone2Component);
-    addAndMakeVisible(zone3Component);
+    // Ajouter les composants des zones (style BaseZone)
+    addAndMakeVisible(keyZone);
+    addAndMakeVisible(modeZone);
     addAndMakeVisible(zone4Component);
     
     bindZonesToModel();
@@ -27,29 +27,25 @@ SectionEditor::~SectionEditor()
 
 void SectionEditor::paint(juce::Graphics& g)
 {
-    // Dessiner le fond coloré via ColoredPanel
-    ColoredPanel::paint(g);
-    
-    // Dessiner la bordure sophistiquée
-    drawBorder(g);
-    
-    // Dessiner le trait de séparation
-    drawSeparatorLine(g);
+    // Dessiner l'encoche centrée en haut
+    drawNotch(g);
 }
 
 void SectionEditor::resized()
 {
-    auto bounds = getLocalBounds().reduced(20);
+    auto bounds = getLocalBounds();
     
-    // Zone du header : titre + espacement pour le trait
-    headerArea = bounds.removeFromTop(60); // Hauteur augmentée pour inclure le trait
+    // Encoche en haut : petite zone pour le label centré
+    constexpr int NOTCH_HEIGHT = 24;
+    constexpr int NOTCH_WIDTH = 100;
     
-    // Zone du contenu : le reste de l'espace
-    contentArea = bounds; // Garde tout le reste pour le contenu futur
+    // Positionner le label dans l'encoche (centré horizontalement)
+    int notchX = (bounds.getWidth() - NOTCH_WIDTH) / 2;
+    notchArea = juce::Rectangle<int>(notchX, 0, NOTCH_WIDTH, NOTCH_HEIGHT);
+    sectionNameLabel.setBounds(notchArea);
     
-    // Positionner le titre dans la zone header (avec un peu de marge)
-    auto titleBounds = headerArea.reduced(0, 5).removeFromTop(40);
-    sectionNameLabel.setBounds(titleBounds);
+    // Zone du contenu : tout l'espace sous l'encoche avec padding
+    contentArea = bounds.withTrimmedTop(NOTCH_HEIGHT + 4).reduced(10);
     
     // Calculer et définir les 4 zones de contenu avec Grid
     calculateContentZones();
@@ -115,12 +111,12 @@ void SectionEditor::refreshTitle()
 
 void SectionEditor::setupSectionNameLabel()
 {
-    // Configuration du label de nom de section
+    // Configuration du label pour l'encoche - discret et centré
     sectionNameLabel.setJustificationType(juce::Justification::centred);
-    sectionNameLabel.setColour(juce::Label::textColourId, juce::Colours::darkblue);
+    sectionNameLabel.setColour(juce::Label::textColourId, juce::Colours::white.withAlpha(0.9f));
     
-    // Application de la police via FontManager - taille légèrement plus grande
-    auto sectionNameFontOptions = fontManager->getSFProDisplay(28.0f, FontManager::FontWeight::Bold);
+    // Police plus petite pour l'encoche
+    auto sectionNameFontOptions = fontManager->getSFProDisplay(13.0f, FontManager::FontWeight::Medium);
     sectionNameLabel.setFont(juce::Font(sectionNameFontOptions));
     
     addAndMakeVisible(sectionNameLabel);
@@ -128,7 +124,7 @@ void SectionEditor::setupSectionNameLabel()
 
 void SectionEditor::parentHierarchyChanged()
 {
-    ColoredPanel::parentHierarchyChanged();
+    juce::Component::parentHierarchyChanged();
     findAppController();
 }
 
@@ -162,7 +158,7 @@ void SectionEditor::updateContent()
             
             if (sectionIndex >= 0)
             {
-                displayName = "Section " + juce::String(sectionIndex + 1);
+                displayName = "Progression " + juce::String(sectionIndex + 1);
             }
         }
         else if (currentSectionId.startsWith("Section_"))
@@ -202,89 +198,117 @@ void SectionEditor::drawBorder(juce::Graphics& g)
 
 void SectionEditor::drawSeparatorLine(juce::Graphics& g)
 {
-    // Dessiner un trait de séparation entre le header et le contenu
-    auto separatorY = headerArea.getBottom(); // 10px de décalage depuis le header
-    auto separatorStart = headerArea.getX();
-    auto separatorEnd = headerArea.getRight();
+    // Plus utilisé - gardé pour compatibilité
+    juce::ignoreUnused(g);
+}
+
+void SectionEditor::drawNotch(juce::Graphics& g)
+{
+    if (notchArea.isEmpty())
+        return;
     
-    g.setColour(juce::Colours::darkblue.withAlpha(0.15f));
-    g.drawHorizontalLine(separatorY, static_cast<float>(separatorStart), static_cast<float>(separatorEnd));
+    // Dessiner l'encoche avec coins arrondis en bas seulement
+    auto notchBounds = notchArea.toFloat();
+    
+    juce::Path notchPath;
+    notchPath.addRoundedRectangle(
+        notchBounds.getX(), notchBounds.getY(),
+        notchBounds.getWidth(), notchBounds.getHeight(),
+        6.0f, 6.0f,    // cornerSize
+        false, false,  // Pas de coins arrondis en haut
+        true, true     // Coins arrondis en bas
+    );
+    
+    // Fond de l'encoche - semi-transparent discret
+    g.setColour(juce::Colours::black.withAlpha(0.4f));
+    g.fillPath(notchPath);
+    
+    // Bordure subtile
+    g.setColour(juce::Colours::grey.withAlpha(0.3f));
+    g.strokePath(notchPath, juce::PathStrokeType(1.0f));
 }
 
 void SectionEditor::calculateContentZones()
 {
     if (contentArea.isEmpty())
         return;
+    // Précédemment j'utilisais GRID ici
+    // ═══════════════════════════════════════════════════════════════════════════
+    // 🎛️ PARAMÈTRES DE LAYOUT - Modifie ces valeurs pour ajuster les proportions
+    // ═══════════════════════════════════════════════════════════════════════════
     
-    // Utiliser juce::Grid pour diviser la zone de contenu en 4 zones
-    juce::Grid grid;
+    // Proportions verticales (entre ligne 1 et ligne 2)
+    constexpr float TOP_ROW_FLEX = 0.35f;    // Ligne 1 : KeyZone + ModeZone (25%)
+    constexpr float ZONE4_FLEX = 0.65f;      // Ligne 2 : Zone4 accords (75%)
+    constexpr int ROW_SPACING = 10;          // Espacement entre les lignes
     
-    using Track = juce::Grid::TrackInfo;
-    using Fr = juce::Grid::Fr;
-    using Px = juce::Grid::Px;
+    // Proportions horizontales (dans la ligne 1)
+    constexpr float KEY_ZONE_FLEX = 75.0f;   // KeyZone : 75%
+    constexpr float MODE_ZONE_FLEX = 25.0f;  // ModeZone : 25%
+    constexpr int COLUMN_SPACING = 10;       // Espacement entre KeyZone et ModeZone
     
-    // Définir les lignes : 40% pour la première ligne, 60% pour la seconde
-    grid.templateRows = { 
-        Track(Fr(40)), 
-        Track(Fr(60)) 
-    };
+    // ═══════════════════════════════════════════════════════════════════════════
     
-    // Définir les colonnes : 3 colonnes égales pour la première ligne
-    grid.templateColumns = { 
-        Track(Fr(1)), 
-        Track(Fr(1)), 
-        Track(Fr(1))
-    };
+    // === FlexBox principal : 2 lignes verticales ===
+    juce::FlexBox mainFlex;
+    mainFlex.flexDirection = juce::FlexBox::Direction::column;
+    mainFlex.justifyContent = juce::FlexBox::JustifyContent::flexStart;
+    mainFlex.alignItems = juce::FlexBox::AlignItems::stretch;
     
-    // Espacement entre les zones
-    grid.columnGap = Px(10);
-    grid.rowGap = Px(10);
+    // Ligne 1 : Conteneur pour KeyZone + ModeZone
+    // On crée un composant "virtuel" pour le layout, mais on utilise un FlexBox imbriqué
+    mainFlex.items.add(juce::FlexItem()
+        .withFlex(TOP_ROW_FLEX)
+        .withMargin(juce::FlexItem::Margin(0, 0, ROW_SPACING / 2, 0)));
     
-    // Ajouter les composants réels à la grille
-    grid.items.add(juce::GridItem(zone1Component).withArea(1, 1));  // Zone 1: ligne 1, colonne 1
-    grid.items.add(juce::GridItem(zone2Component).withArea(1, 2));  // Zone 2: ligne 1, colonne 2
-    grid.items.add(juce::GridItem(zone3Component).withArea(1, 3));  // Zone 3: ligne 1, colonne 3
-    grid.items.add(juce::GridItem(zone4Component).withArea(2, 1, 3, 4)); // Zone 4: ligne 2, colonnes 1-3
+    // Ligne 2 : Zone4 (accords)
+    mainFlex.items.add(juce::FlexItem(zone4Component)
+        .withFlex(ZONE4_FLEX)
+        .withMargin(juce::FlexItem::Margin(ROW_SPACING / 2, 0, 0, 0)));
     
-    // Appliquer le layout
-    grid.performLayout(contentArea);
+    mainFlex.performLayout(contentArea.toFloat());
     
-    // Stocker les bounds calculés pour référence (optionnel, pour debugging)
-    zone1Area = zone1Component.getBounds();
-    zone2Area = zone2Component.getBounds();
-    zone3Area = zone3Component.getBounds();
-    zone4Area = zone4Component.getBounds();
+    // Récupérer la zone calculée pour la ligne 1
+    topRowArea = juce::Rectangle<int>(
+        contentArea.getX(),
+        contentArea.getY(),
+        contentArea.getWidth(),
+        static_cast<int>(contentArea.getHeight() * TOP_ROW_FLEX) - ROW_SPACING / 2
+    );
+    
+    // === FlexBox pour ligne 1 : KeyZone + ModeZone horizontalement ===
+    juce::FlexBox topRowFlex;
+    topRowFlex.flexDirection = juce::FlexBox::Direction::row;
+    topRowFlex.justifyContent = juce::FlexBox::JustifyContent::spaceBetween;
+    topRowFlex.alignItems = juce::FlexBox::AlignItems::stretch;
+    
+    topRowFlex.items.add(juce::FlexItem(keyZone)
+        .withFlex(KEY_ZONE_FLEX)
+        .withMargin(juce::FlexItem::Margin(0, COLUMN_SPACING / 2, 0, 0)));
+    
+    topRowFlex.items.add(juce::FlexItem(modeZone)
+        .withFlex(MODE_ZONE_FLEX)
+        .withMargin(juce::FlexItem::Margin(0, 0, 0, COLUMN_SPACING / 2)));
+    
+    topRowFlex.performLayout(topRowArea.toFloat());
 } 
 
 void SectionEditor::bindZonesToModel()
 {
-    // Zone1: Base note
-    zone1Component.onBaseNoteChanged = [this](Diatony::BaseNote base)
+    // KeyZone: Note + Altération unifiées
+    keyZone.getOnKeyChanged() = [this](int noteIndex, Diatony::BaseNote base, Diatony::Alteration alt)
     {
+        juce::ignoreUnused(base);
         if (!currentSectionState.isValid()) return;
         Section section(currentSectionState);
-        auto alt = section.getAlteration();
-        auto note = Diatony::toDiatonyNote(base, alt);
-        section.setNote(note);
-    };
-
-    // Zone2: Alteration
-    zone2Component.onAlterationChanged = [this](Diatony::Alteration alt)
-    {
-        if (!currentSectionState.isValid()) return;
-        Section section(currentSectionState);
-        // Conserver la lettre (BaseNote) courante: la déduire avec l'ancienne altération
-        auto oldAlt = section.getAlteration();
-        auto note = section.getNote();
-        auto base = Diatony::toBaseNote(note, oldAlt);
-
-        // Appliquer la nouvelle altération et recalculer la note chromatique
+        
+        // Mettre à jour la note et l'altération directement
         section.setAlteration(alt);
-        section.setNote(Diatony::toDiatonyNote(base, alt));
+        section.setNote(static_cast<Diatony::Note>(noteIndex));
     };
 
-    // Zone3: Mode
-    zone3Component.onModeChanged = [this](Diatony::Mode mode)
+    // ModeZone: Mode Majeur/Mineur
+    modeZone.onModeChanged = [this](Diatony::Mode mode)
     {
         if (!currentSectionState.isValid()) return;
         Section section(currentSectionState);
@@ -316,15 +340,13 @@ void SectionEditor::syncZonesFromModel()
     Section section(currentSectionState);
 
     auto note = section.getNote();
-    auto alt = section.getAlteration();
     auto isMajor = section.getIsMajor();
 
-    // Déduire BaseNote depuis Note + Altération
-    auto base = Diatony::toBaseNote(note, alt);
-
-    zone1Component.setSelectedBaseNote(base);
-    zone2Component.setSelectedAlteration(alt);
-    zone3Component.setSelectedMode(isMajor ? Diatony::Mode::Major : Diatony::Mode::Minor);
+    // Synchroniser KeyZone avec la note (0-11)
+    keyZone.setKey(static_cast<int>(note));
+    
+    // Synchroniser ModeZone avec le mode
+    modeZone.setSelectedMode(isMajor ? Diatony::Mode::Major : Diatony::Mode::Minor);
     
     // Synchroniser Zone4 avec la progression d'accords (avec les valeurs réelles)
     auto progression = section.getProgression();
