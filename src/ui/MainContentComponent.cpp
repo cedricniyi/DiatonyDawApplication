@@ -14,12 +14,13 @@ MainContentComponent::MainContentComponent()
       sectionPanel(),
       footerPanel(),
       headerFlex(7.5f),
-      sectionFlex(57.5f),
+      sectionFlex(10.5f),
       footerFlex(15.0f)
 {        
     addAndMakeVisible(headerPanel);
     addAndMakeVisible(sectionPanel);
-    addAndMakeVisible(footerPanel);
+    // Footer masqué temporairement
+    addChildComponent(footerPanel);
     
     // Drag & Drop overlay (invisible par défaut)
     addChildComponent(dragOverlay);
@@ -67,39 +68,30 @@ void MainContentComponent::setSelectionState(juce::ValueTree& state)
 
 void MainContentComponent::paint(juce::Graphics& g)
 {   
-    // Dégradé linéaire à 135 degrés
-    auto bounds = getLocalBounds().toFloat();
-    
-    auto center = bounds.getCentre();
-    auto diagonal = std::sqrt(bounds.getWidth() * bounds.getWidth() + bounds.getHeight() * bounds.getHeight()) * 0.5f;
-    
-    auto angleRad = juce::MathConstants<float>::pi * 135.0f / 180.0f;
-    auto startPoint = center - juce::Point<float>(std::cos(angleRad), std::sin(angleRad)) * diagonal;
-    auto endPoint = center + juce::Point<float>(std::cos(angleRad), std::sin(angleRad)) * diagonal;
-    
-    juce::ColourGradient gradient(
-        juce::Colour::fromString("fff5f7fa"), startPoint,
-        juce::Colour::fromString("ffc3cfe2"), endPoint,
-        false
-    );
-    
-    g.setGradientFill(gradient);
-    g.fillRect(bounds);
+    // Fond uni gris #5b5b5b
+    g.fillAll(juce::Colour::fromString("#FF2A2A2A"));
 }
 
 void MainContentComponent::resized()
 {
+    auto bounds = getLocalBounds();
     int padding = 8;
-    auto content = getLocalBounds().reduced(padding);
+    
+    // Header avec hauteur FIXE de 60px (ne se compresse pas)
+    constexpr int HEADER_HEIGHT = 60;
+    headerPanel.setBounds(bounds.removeFromTop(HEADER_HEIGHT));
+    
+    // Le reste avec padding
+    auto content = bounds.reduced(padding, 0);  // Padding horizontal seulement
+    content.removeFromTop(4);  // Petit espace après le header
 
-    // Layout vertical avec FlexBox
+    // Layout vertical avec FlexBox pour le reste
     juce::FlexBox fb;
     fb.flexDirection = juce::FlexBox::Direction::column;
 
     fb.items = {
-        juce::FlexItem(headerPanel).withFlex(headerFlex).withMargin({ 0, 0, 4, 0 }),
-        juce::FlexItem(sectionPanel).withFlex(sectionFlex).withMargin({ 4, 0, 4, 0 }),
-        juce::FlexItem(footerPanel).withFlex(footerFlex).withMargin({ 4, 0, 0, 0 })
+        juce::FlexItem(sectionPanel).withFlex(1.0f)
+        // Footer masqué temporairement
     };
 
     fb.performLayout(content);
