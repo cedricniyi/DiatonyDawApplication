@@ -46,10 +46,10 @@ namespace DiatonyText {
     
     inline juce::String getModulationTypeName(Diatony::ModulationType type) {
         switch (type) {
-            case Diatony::ModulationType::PerfectCadence: return juce::String::fromUTF8("Cadence Parfaite");
-            case Diatony::ModulationType::PivotChord: return "Accord Pivot";
-            case Diatony::ModulationType::Alteration: return juce::String::fromUTF8("Altération");
-            case Diatony::ModulationType::Chromatic: return "Chromatique";
+            case Diatony::ModulationType::PerfectCadence: return juce::String::fromUTF8("Perfect Cadence");
+            case Diatony::ModulationType::PivotChord: return "Pivot Chord";
+            case Diatony::ModulationType::Alteration: return juce::String::fromUTF8("Alteration");
+            case Diatony::ModulationType::Chromatic: return "Chromatic";
         }
         return {}; // Ne devrait jamais arriver
     }
@@ -78,11 +78,11 @@ namespace DiatonyText {
     
     inline juce::String getChordStateName(Diatony::ChordState state) {
         switch (state) {
-            case Diatony::ChordState::Fundamental: return "Fondamental";
-            case Diatony::ChordState::FirstInversion: return juce::String::fromUTF8("1er renversement");
-            case Diatony::ChordState::SecondInversion: return juce::String::fromUTF8("2e renversement");
-            case Diatony::ChordState::ThirdInversion: return juce::String::fromUTF8("3e renversement");
-            case Diatony::ChordState::FourthInversion: return juce::String::fromUTF8("4e renversement");
+            case Diatony::ChordState::Fundamental: return "Root";
+            case Diatony::ChordState::FirstInversion: return juce::String::fromUTF8("First inversion");
+            case Diatony::ChordState::SecondInversion: return juce::String::fromUTF8("Second inversion");
+            case Diatony::ChordState::ThirdInversion: return juce::String::fromUTF8("Third inversion");
+            case Diatony::ChordState::FourthInversion: return juce::String::fromUTF8("Fourth inversion");
         }
         return {}; // Ne devrait jamais arriver
     }
@@ -90,19 +90,19 @@ namespace DiatonyText {
     inline juce::String getChordQualityName(Diatony::ChordQuality quality) {
         switch (quality) {
             case Diatony::ChordQuality::Auto: return "Auto";
-            case Diatony::ChordQuality::Major: return "Majeur";
-            case Diatony::ChordQuality::Minor: return "Mineur";
-            case Diatony::ChordQuality::Diminished: return juce::String::fromUTF8("Diminué");
-            case Diatony::ChordQuality::Augmented: return juce::String::fromUTF8("Augmenté");
+            case Diatony::ChordQuality::Major: return "Major";
+            case Diatony::ChordQuality::Minor: return "Minor";
+            case Diatony::ChordQuality::Diminished: return juce::String::fromUTF8("Diminished");
+            case Diatony::ChordQuality::Augmented: return juce::String::fromUTF8("Augmented");
             case Diatony::ChordQuality::AugmentedSixth: return juce::String::fromUTF8("6te Aug");
-            case Diatony::ChordQuality::DominantSeventh: return juce::String::fromUTF8("7e Dominante");
-            case Diatony::ChordQuality::MajorSeventh: return juce::String::fromUTF8("7e Majeure");
-            case Diatony::ChordQuality::MinorSeventh: return juce::String::fromUTF8("7e Mineure");
-            case Diatony::ChordQuality::DiminishedSeventh: return juce::String::fromUTF8("7e Diminuée");
-            case Diatony::ChordQuality::HalfDiminished: return juce::String::fromUTF8("Semi-diminué");
-            case Diatony::ChordQuality::MinorMajorSeventh: return juce::String::fromUTF8("7e Min-Maj");
-            case Diatony::ChordQuality::MajorNinthDominant: return juce::String::fromUTF8("9e Maj Dom");
-            case Diatony::ChordQuality::MinorNinthDominant: return juce::String::fromUTF8("9e Min Dom");
+            case Diatony::ChordQuality::DominantSeventh: return juce::String::fromUTF8("Dominant Seventh");
+            case Diatony::ChordQuality::MajorSeventh: return juce::String::fromUTF8("Major Seventh");
+            case Diatony::ChordQuality::MinorSeventh: return juce::String::fromUTF8("Minor Seventh");
+            case Diatony::ChordQuality::DiminishedSeventh: return juce::String::fromUTF8("Diminished Seventh");
+            case Diatony::ChordQuality::HalfDiminished: return juce::String::fromUTF8("Half-diminished");
+            case Diatony::ChordQuality::MinorMajorSeventh: return juce::String::fromUTF8("Minor Major Seventh");
+            case Diatony::ChordQuality::MajorNinthDominant: return juce::String::fromUTF8("Major Ninth Dominant");
+            case Diatony::ChordQuality::MinorNinthDominant: return juce::String::fromUTF8("Minor Ninth Dominant");
         }
         return {}; // Ne devrait jamais arriver
     }
