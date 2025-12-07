@@ -3,6 +3,7 @@
 #include <JuceHeader.h>
 #include "ui/extra/Component/Panel/ColoredPanel.h"
 #include "ui/extra/Button/StyledButton.h"
+#include "MidiDragZone.h"
 
 // Forward declarations
 class FontManager;
@@ -46,6 +47,7 @@ private:
     
     juce::Label      mainLabel;
     StyledButton     generateButton;  // Bouton Generate (vert)
+    MidiDragZone     midiDragZone;    // Zone de drag MIDI
     StyledButton     dButton;         // Bouton D (gris)
     juce::ValueTree  appState;        // Référence au ValueTree global
     int              titleZoneWidth = 250;  // Largeur de la zone titre pour les séparations

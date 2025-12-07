@@ -34,6 +34,9 @@ HeaderPanel::HeaderPanel()
     generateButton.setTooltip(juce::String::fromUTF8("Générer une solution musicale"));
     addAndMakeVisible (generateButton);
 
+    // Configuration de la zone de drag MIDI
+    addAndMakeVisible (midiDragZone);
+
     // Configuration du bouton D - ouvre le dossier des solutions MIDI
     dButton.setTooltip("Ouvrir le dossier des solutions MIDI");
     dButton.onClick = []() {
@@ -91,6 +94,12 @@ void HeaderPanel::resized()
         .withMinHeight(static_cast<float>(buttonSize))
         .withMargin(juce::FlexItem::Margin(0, 12, 0, 0)));
     
+    // Zone de drag MIDI (entre Generate et D)
+    buttonFlex.items.add(juce::FlexItem(midiDragZone)
+        .withMinWidth(60.0f)
+        .withMinHeight(static_cast<float>(buttonSize))
+        .withMargin(juce::FlexItem::Margin(0, 12, 0, 0)));
+    
     // Bouton D (carré)
     buttonFlex.items.add(juce::FlexItem(dButton)
         .withMinWidth(static_cast<float>(buttonSize))
@@ -141,6 +150,10 @@ void HeaderPanel::findAppController()
         
         // Connecter le bouton de génération une fois AppController trouvé
         connectGenerateButton();
+        
+        // Connecter la zone de drag MIDI au selectionState
+        midiDragZone.setSelectionState(appController->getSelectionState());
+        DBG("HeaderPanel: MidiDragZone connectée au selectionState ✓");
     }
     else
     {
