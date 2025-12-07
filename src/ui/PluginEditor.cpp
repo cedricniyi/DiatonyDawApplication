@@ -45,11 +45,19 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
 
     // Configuration des contraintes de taille de la fenêtre.
     constrainer = std::make_unique<juce::ComponentBoundsConstrainer>();
-    constrainer->setSizeLimits(1300, 569, 1694, 847);
-    constrainer->setFixedAspectRatio(1500.0 / 750.0);
+    constrainer->setMinimumWidth(1200);
+    constrainer->setMaximumWidth(1750);
+    constrainer->setMinimumHeight(500);  // Hauteur fixe
+    constrainer->setMaximumHeight(500);  // Hauteur fixe (min == max)
+    // Pas d'aspect ratio → la hauteur reste à 500 peu importe la largeur
     setConstrainer(constrainer.get());
     
-    setSize(1500, 750);
+    setSize(1200, 500);
+    
+    #if DEBUG
+    // Permettre la réception des événements clavier pour les raccourcis de dev
+    setWantsKeyboardFocus(true);
+    #endif
 
     // Initialisation des animateurs.
     // RootAnimator gère le layout flexible principal.
