@@ -3,7 +3,6 @@
 #include <JuceHeader.h>
 #include <juce_data_structures/juce_data_structures.h>
 #include <juce_gui_basics/juce_gui_basics.h>
-#include "ui/extra/Component/Panel/ColoredPanel.h"
 #include "ui/extra/Button/ButtonColoredPanel.h"
 #include "controller/ContextIdentifiers.h"
 
@@ -16,8 +15,9 @@ class AudioPluginAudioProcessorEditor;
 /**
  * Zone de contenu d'aperçu gérant l'affichage de progressions avec gestion d'état vide
  * Architecture réactive : écoute les changements du modèle via ValueTree::Listener
+ * Dessin custom (fond noir arrondi)
  */
-class OverviewContentArea : public ColoredPanel, public juce::ValueTree::Listener
+class OverviewContentArea : public juce::Component, public juce::ValueTree::Listener
 {
 public:
     OverviewContentArea();
@@ -78,6 +78,9 @@ private:
     // === ARCHITECTURE RÉACTIVE ===
     juce::ValueTree modelState;     // ValueTree du modèle écouté via ValueTree::Listener
     juce::ValueTree selectionState; // ValueTree de l'état de sélection
+    
+    // Style constants
+    static constexpr float cornerRadius = 8.0f;
     
     // Configuration - Dimensions pour le layout superposé
     static constexpr int PREFERRED_WIDTH = 300;
