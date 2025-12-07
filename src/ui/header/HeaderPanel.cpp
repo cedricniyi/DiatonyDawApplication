@@ -9,7 +9,7 @@
 
 //==============================================================================
 HeaderPanel::HeaderPanel()
-    : ColoredPanel (juce::Colours::white),
+    : ColoredPanel (juce::Colour::fromString("#FF333333")),
       generateButton (juce::String::fromUTF8("Generate"),
                       juce::Colour::fromString ("#ff22c55e"), // Vert
                       juce::Colour::fromString ("#ff16a34a"), // Vert plus foncé au survol
@@ -22,7 +22,7 @@ HeaderPanel::HeaderPanel()
     // Configuration du label principal
     mainLabel.setText(juce::String::fromUTF8("DiatonyDAWPlugin"),juce::dontSendNotification);
     mainLabel.setJustificationType (juce::Justification::centredLeft);
-    mainLabel.setColour (juce::Label::textColourId, juce::Colours::black);
+    mainLabel.setColour (juce::Label::textColourId, juce::Colours::white);
     
     // Application de la police via FontManager
     auto fontOptions = fontManager->getSFProDisplay(24.0f, FontManager::FontWeight::Bold);
@@ -62,20 +62,23 @@ void HeaderPanel::setAppState(juce::ValueTree& state)
 
 void HeaderPanel::resized()
 {
-    auto area = getLocalBounds().reduced (20, 10);
-
-    // Calcul de la largeur exacte du texte
+    auto bounds = getLocalBounds();
+    
+    // Calcul de la largeur exacte du texte pour définir la zone titre
     juce::GlyphArrangement ga;
-    ga.addLineOfText (mainLabel.getFont(),
-                      mainLabel.getText(),
-                      0, 0);
-    auto labelWidth = static_cast<int>(std::ceil(ga.getBoundingBox(0, -1, false).getWidth()+10));
-
-    // Positionnement du label à gauche
-    mainLabel.setBounds(area.removeFromLeft(labelWidth));
-
-    // Configuration du FlexBox pour les boutons à droite
-    auto buttonSize = area.getHeight();
+    ga.addLineOfText(mainLabel.getFont(), mainLabel.getText(), 0, 0);
+    auto labelWidth = static_cast<int>(std::ceil(ga.getBoundingBox(0, -1, false).getWidth() + 40));
+    
+    // La zone titre = largeur du label + padding
+    titleZoneWidth = labelWidth + 20;
+    
+    // Zone titre (à gauche)
+    auto titleArea = bounds.removeFromLeft(titleZoneWidth).reduced(20, 10);
+    mainLabel.setBounds(titleArea);
+    
+    // Zone boutons (à droite) - avec padding
+    auto buttonArea = bounds.reduced(20, 10);
+    auto buttonSize = buttonArea.getHeight();
     
     juce::FlexBox buttonFlex;
     buttonFlex.flexDirection = juce::FlexBox::Direction::row;
@@ -93,12 +96,29 @@ void HeaderPanel::resized()
         .withMinWidth(static_cast<float>(buttonSize))
         .withMinHeight(static_cast<float>(buttonSize)));
     
-    buttonFlex.performLayout(area);
+    buttonFlex.performLayout(buttonArea);
 }
 
 void HeaderPanel::paint (juce::Graphics& g)
 {
-    ColoredPanel::paint (g);
+    auto bounds = getLocalBounds();
+    
+    // Zone du titre (partie gauche) - couleur un peu plus foncée
+    auto titleZone = bounds.removeFromLeft(titleZoneWidth);
+    g.setColour(juce::Colour(0xFF1E1E1E));
+    g.fillRect(titleZone);
+    
+    // Zone des boutons (partie droite) - couleur légèrement plus claire
+    g.setColour(juce::Colour(0xFF2A2A2A));
+    g.fillRect(bounds);
+    
+    // Bordure en bas du header
+    g.setColour(juce::Colour(0xFF444444));
+    g.fillRect(0, getHeight() - 1, getWidth(), 1);
+    
+    // Séparation verticale entre zone titre et zone boutons
+    g.setColour(juce::Colour(0xFF444444));
+    g.fillRect(titleZoneWidth, 0, 1, getHeight());
 }
 
 // === DÉCOUVERTE DE SERVICE ===
