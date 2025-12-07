@@ -52,3 +52,25 @@ void DiatonyComboBox::adaptToBackgroundColour(juce::Colour backgroundColour)
     // Forcer le repaint
     repaint();
 }
+
+void DiatonyComboBox::setShortTextForItem(int itemId, const juce::String& shortText)
+{
+    // Déléguer au LookAndFeel qui gère l'affichage du texte court
+    diatonyLookAndFeel.setShortTextForItem(itemId, shortText);
+}
+
+void DiatonyComboBox::enableShortDisplayMode(bool enabled)
+{
+    // Déléguer au LookAndFeel
+    diatonyLookAndFeel.setShortDisplayMode(enabled);
+    // Forcer une mise à jour de l'affichage
+    refreshDisplayedText();
+}
+
+void DiatonyComboBox::refreshDisplayedText()
+{
+    // Force le LookAndFeel à repositionner le label, ce qui met à jour le texte court
+    // en appelant positionComboBoxText
+    resized();
+    repaint();
+}
