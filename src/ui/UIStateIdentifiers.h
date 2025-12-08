@@ -23,4 +23,8 @@ namespace UIStateIdentifiers
     // =================================================================================
     // Propriétés d'état UI - Header/Dock
     const juce::Identifier dockVisible { "dockVisible" };
+    
+    // =================================================================================
+    // Propriétés d'état UI - History Panel (panneau latéral droit)
+    const juce::Identifier historyPanelVisible { "historyPanelVisible" };
 } 
