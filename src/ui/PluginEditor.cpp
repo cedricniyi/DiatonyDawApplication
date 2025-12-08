@@ -3,8 +3,8 @@
 #include "melatonin_inspector/melatonin_inspector.h"
 #include "utils/FontManager.h"
 #include "ui/animation/AnimationManager.h"
+#include "ui/animation/SlidingPanelAnimator.h"
 #include "ui/RootAnimator.h"
-#include "ui/footer/animator/FooterAnimator.h"
 #include "controller/AppController.h"
 
 //==============================================================================
@@ -19,6 +19,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     appState.setProperty(UIStateIdentifiers::footerExpanded, false, nullptr);
     appState.setProperty(UIStateIdentifiers::dockVisible, false, nullptr);
     appState.setProperty(UIStateIdentifiers::interactivePianoVisible, false, nullptr);
+    appState.setProperty(UIStateIdentifiers::historyPanelVisible, false, nullptr);
     
     #if DEBUG
         // Attache un logger pour déboguer les changements du ValueTree (mode non-récursif pour l'UI State).
@@ -63,8 +64,31 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     // RootAnimator gère le layout flexible principal.
     rootAnimator = std::make_unique<RootAnimator>(*mainContent, *AnimationManager::getInstance());
     
-    // FooterAnimator gère les animations spécifiques au panneau de pied de page.
-    footerAnimator = std::make_unique<FooterAnimator>(mainContent->getFooterPanel(), *AnimationManager::getInstance());
+    // FooterAnimator (générique) - anime le panneau footer
+    footerAnimator = std::make_unique<SlidingPanelAnimator>(
+        mainContent->getFooterPanel().getGridFractionRef(),
+        mainContent->getFooterPanel().getFadingComponent(),
+        [this]() { mainContent->getFooterPanel().resized(); },
+        *AnimationManager::getInstance()
+    );
+    
+    // Connecter le callback du FooterPanel au SlidingPanelAnimator
+    mainContent->getFooterPanel().onInteractivePianoVisibilityChange = [this](bool visible) {
+        footerAnimator->setVisible(visible);
+    };
+    
+    // HistoryAnimator (générique) - anime le panneau History latéral
+    historyAnimator = std::make_unique<SlidingPanelAnimator>(
+        mainContent->getHistoryPanel().getWidthFractionRef(),
+        mainContent->getHistoryPanel().getFadingComponent(),
+        [this]() { mainContent->resized(); },
+        *AnimationManager::getInstance()
+    );
+    
+    // Connecter le callback du HistoryPanel au SlidingPanelAnimator
+    mainContent->getHistoryPanel().onVisibilityChange = [this](bool visible) {
+        historyAnimator->setVisible(visible);
+    };
 
     // L'architecture est réactive : l'UI écoute les changements du modèle (ValueTree)
     // et se met à jour automatiquement.
