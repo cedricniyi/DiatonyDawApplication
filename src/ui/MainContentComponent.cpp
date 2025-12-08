@@ -2,6 +2,7 @@
 #include "header/HeaderPanel.h"
 #include "section/SectionPanel.h"
 #include "footer/FooterPanel.h"
+#include "history/HistoryPanel.h"
 #include "UIStateIdentifiers.h"
 #include "extra/Component/DiatonyAlertWindow.h"
 #include "PluginEditor.h"
@@ -13,6 +14,7 @@ MainContentComponent::MainContentComponent()
       headerPanel(),
       sectionPanel(),
       footerPanel(),
+      historyPanel(),
       headerFlex(7.5f),
       sectionFlex(10.5f),
       footerFlex(15.0f)
@@ -21,6 +23,9 @@ MainContentComponent::MainContentComponent()
     addAndMakeVisible(sectionPanel);
     // Footer masqué temporairement
     addChildComponent(footerPanel);
+    
+    // History Panel (visible mais largeur animée)
+    addAndMakeVisible(historyPanel);
     
     // Drag & Drop overlay (invisible par défaut)
     addChildComponent(dragOverlay);
@@ -52,6 +57,7 @@ void MainContentComponent::setAppState(juce::ValueTree& state)
     // Propagation de l'état aux panels enfants
     headerPanel.setAppState(appState);
     footerPanel.setAppState(appState);
+    historyPanel.setAppState(appState);
     // sectionPanel.setAppState(appState);  // Si nécessaire plus tard
 }
 
@@ -75,6 +81,26 @@ void MainContentComponent::paint(juce::Graphics& g)
 void MainContentComponent::resized()
 {
     auto bounds = getLocalBounds();
+    
+    // === LAYOUT HORIZONTAL : Zone principale | History Panel ===
+    // Calculer la largeur du panneau History (animée de 0 à 250px)
+    constexpr int HISTORY_PANEL_MAX_WIDTH = 250;
+    int historyWidth = static_cast<int>(HISTORY_PANEL_MAX_WIDTH * historyPanel.getWidthFraction());
+    
+    // History Panel à droite (largeur animée)
+    if (historyWidth > 0)
+    {
+        auto historyBounds = bounds.removeFromRight(historyWidth);
+        historyPanel.setBounds(historyBounds);
+        historyPanel.setVisible(true);
+    }
+    else
+    {
+        historyPanel.setBounds(0, 0, 0, 0);
+        historyPanel.setVisible(false);
+    }
+    
+    // === ZONE PRINCIPALE (header + section + footer) ===
     int padding = 8;
     
     // Header avec hauteur FIXE de 60px (ne se compresse pas)
@@ -134,6 +160,11 @@ HeaderPanel& MainContentComponent::getHeaderPanel()
 SectionPanel& MainContentComponent::getSectionPanel()
 {
     return sectionPanel;
+}
+
+HistoryPanel& MainContentComponent::getHistoryPanel()
+{
+    return historyPanel;
 }
 
 void MainContentComponent::valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged,

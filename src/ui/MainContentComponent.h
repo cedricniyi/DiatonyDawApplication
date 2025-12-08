@@ -4,6 +4,7 @@
 #include "header/HeaderPanel.h"
 #include "section/SectionPanel.h"
 #include "footer/FooterPanel.h"
+#include "history/HistoryPanel.h"
 #include "extra/Component/DiatonyAlertWindow.h"
 
 //==============================================================================
@@ -42,6 +43,7 @@ public:
     FooterPanel& getFooterPanel();
     HeaderPanel& getHeaderPanel();
     SectionPanel& getSectionPanel();
+    HistoryPanel& getHistoryPanel();
 
     // === Callbacks pour que RootAnimator puisse s'y abonner (même pattern que FooterPanel) ===
     
@@ -69,10 +71,11 @@ private:
     juce::ValueTree appState;
     juce::ValueTree selectionState;  // Pour écouter les changements de génération
 
-    // 3 Panels principaux
+    // 3 Panels principaux + History Panel latéral
     HeaderPanel headerPanel;
     SectionPanel sectionPanel;
     FooterPanel footerPanel;
+    HistoryPanel historyPanel;
     
     // Valeurs flex pour le layout
     float headerFlex;
