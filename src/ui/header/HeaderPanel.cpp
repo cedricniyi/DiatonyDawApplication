@@ -6,6 +6,7 @@
 #include "controller/AppController.h"
 #include "utils/FontManager.h"
 #include "utils/FileUtils.h"
+#include "IconBinaryData.h"
 
 //==============================================================================
 HeaderPanel::HeaderPanel()
@@ -43,6 +44,25 @@ HeaderPanel::HeaderPanel()
         FileUtils::openMidiSolutionsFolder();
     };
     addAndMakeVisible (dButton);
+    
+    // Configuration du bouton hamburger (menu) - style identique au bouton D
+    hamburgerButton = std::make_unique<IconStyledButton>(
+        "HamburgerMenu",
+        IconData::icon_hamburger_svg,
+        IconData::icon_hamburger_svgSize,
+        juce::Colour::fromString("ff808080"),  // Gris (même couleur que dButton)
+        juce::Colour::fromString("ff606060"),  // Gris plus foncé au survol
+        juce::Colours::white                    // Couleur de l'icône
+    );
+    
+    hamburgerButton->setTooltip("Menu");
+    
+    hamburgerButton->onClick = []() {
+        DBG("🍔 Bouton hamburger cliqué !");
+        // TODO: Ajouter l'action du menu
+    };
+    
+    addAndMakeVisible(*hamburgerButton);
 }
 
 HeaderPanel::~HeaderPanel()
@@ -102,6 +122,12 @@ void HeaderPanel::resized()
     
     // Bouton D (carré)
     buttonFlex.items.add(juce::FlexItem(dButton)
+        .withMinWidth(static_cast<float>(buttonSize))
+        .withMinHeight(static_cast<float>(buttonSize))
+        .withMargin(juce::FlexItem::Margin(0, 12, 0, 0)));
+    
+    // Bouton hamburger (carré, à droite du bouton D)
+    buttonFlex.items.add(juce::FlexItem(*hamburgerButton)
         .withMinWidth(static_cast<float>(buttonSize))
         .withMinHeight(static_cast<float>(buttonSize)));
     
