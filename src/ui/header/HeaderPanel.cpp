@@ -55,12 +55,9 @@ HeaderPanel::HeaderPanel()
         juce::Colours::white                    // Couleur de l'icône
     );
     
-    hamburgerButton->setTooltip("Menu");
+    hamburgerButton->setTooltip("Ouvrir/fermer le panneau History");
     
-    hamburgerButton->onClick = []() {
-        DBG("🍔 Bouton hamburger cliqué !");
-        // TODO: Ajouter l'action du menu
-    };
+    // Le callback sera connecté dans setAppState une fois le ValueTree disponible
     
     addAndMakeVisible(*hamburgerButton);
 }
@@ -78,6 +75,18 @@ void HeaderPanel::setAppState(juce::ValueTree& state)
         
     appState = state;
     appState.addListener(this);
+    
+    // Connecter le bouton hamburger pour toggle le panneau History
+    hamburgerButton->onClick = [this]() {
+        if (appState.isValid())
+        {
+            bool currentVisible = static_cast<bool>(
+                appState.getProperty(UIStateIdentifiers::historyPanelVisible, false)
+            );
+            appState.setProperty(UIStateIdentifiers::historyPanelVisible, !currentVisible, nullptr);
+            DBG("🍔 Bouton hamburger cliqué ! History Panel visible: " << (!currentVisible ? "true" : "false"));
+        }
+    };
     
     // Synchronisation de l'état initial
     updateDockState();
