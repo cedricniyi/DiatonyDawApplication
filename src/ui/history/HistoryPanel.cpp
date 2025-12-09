@@ -2,9 +2,134 @@
 #include "ui/UIStateIdentifiers.h"
 #include "utils/FontManager.h"
 #include "utils/FileUtils.h"
+#include "model/ModelIdentifiers.h"
+
+//==============================================================================
+// HistoryRowComponent implementation
+//==============================================================================
+
+HistoryRowComponent::HistoryRowComponent(HistoryPanel& parentPanel)
+    : owner(parentPanel)
+{
+}
+
+void HistoryRowComponent::setRowData(const HistoryItem& item, int rowNum, bool isSelected)
+{
+    currentItem = item;
+    rowNumber = rowNum;
+    selected = isSelected;
+    repaint();
+}
+
+void HistoryRowComponent::paint(juce::Graphics& g)
+{
+    auto width = getWidth();
+    auto height = getHeight();
+    
+    // === FOND ===
+    if (selected)
+        g.fillAll(juce::Colour(0xFF3A5A6A));  // Bleu-gris sélectionné
+    else if (rowNumber % 2 == 0)
+        g.fillAll(juce::Colour(0xFF1A1A1A));  // Fond pair
+    else
+        g.fillAll(juce::Colour(0xFF222222));  // Fond impair
+    
+    // Marges internes
+    auto bounds = juce::Rectangle<int>(0, 0, width, height).reduced(10, 6);
+    
+    // === LIGNE 1 : NOM + DATE ===
+    auto topRow = bounds.removeFromTop(20);
+    
+    // Formater le timestamp pour l'affichage
+    juce::String timestampStr = HistoryPanel::formatTimestamp(currentItem.timestamp);
+    
+    // Date à droite
+    auto dateFont = juce::Font(fontManager->getSFProDisplay(11.0f, FontManager::FontWeight::Regular));
+    g.setFont(dateFont);
+    g.setColour(selected ? juce::Colours::white.withAlpha(0.7f) : juce::Colour(0xFF888888));
+    
+    int dateWidth = static_cast<int>(dateFont.getStringWidthFloat(timestampStr)) + 4;
+    auto dateArea = topRow.removeFromRight(dateWidth);
+    g.drawText(timestampStr, dateArea, juce::Justification::centredRight, false);
+    
+    // Nom à gauche
+    topRow.removeFromRight(8);
+    auto nameFont = juce::Font(fontManager->getSFProDisplay(14.0f, FontManager::FontWeight::Semibold));
+    g.setFont(nameFont);
+    g.setColour(selected ? juce::Colours::white : juce::Colour(0xFFE0E0E0));
+    g.drawText(currentItem.name, topRow, juce::Justification::centredLeft, true);
+    
+    // === LIGNE 2 : STATS ===
+    bounds.removeFromTop(4);
+    auto botRow = bounds;
+    
+    auto statsFont = juce::Font(fontManager->getSFProDisplay(12.0f, FontManager::FontWeight::Regular));
+    g.setFont(statsFont);
+    g.setColour(selected ? juce::Colours::white.withAlpha(0.85f) : juce::Colour(0xFFAAAAAA));
+    
+    juce::String stats;
+    stats << currentItem.startKey;
+    stats << "  |  S:" << currentItem.numSections;
+    stats << "  |  M:" << currentItem.numModulations;
+    stats << "  |  A:" << currentItem.numChords;
+    
+    g.drawText(stats, botRow, juce::Justification::centredLeft, false);
+    
+    // === BORDURE INFÉRIEURE ===
+    g.setColour(juce::Colour(0xFF333333));
+    g.fillRect(0, height - 1, width, 1);
+}
+
+void HistoryRowComponent::mouseDrag(const juce::MouseEvent& e)
+{
+    juce::ignoreUnused(e);
+    
+    // Vérifier que le fichier .diatony existe
+    if (!currentItem.diatonyFile.existsAsFile())
+    {
+        DBG("⚠️ Fichier .diatony introuvable : " << currentItem.diatonyFile.getFullPathName());
+        return;
+    }
+    
+    // Trouver le DragAndDropContainer parent (HistoryPanel)
+    auto* dragContainer = juce::DragAndDropContainer::findParentDragContainerFor(this);
+    
+    if (dragContainer == nullptr)
+    {
+        DBG("❌ Pas de DragAndDropContainer parent !");
+        return;
+    }
+    
+    // Créer la description du drag : préfixe + chemin du fichier .diatony
+    juce::String dragDescription = "HISTORY_ITEM:" + currentItem.diatonyFile.getFullPathName();
+    
+    DBG("📋 Drag interne : " << currentItem.name);
+    
+    // Créer une image de prévisualisation pour le drag
+    juce::Image dragImage(juce::Image::ARGB, 180, 40, true);
+    {
+        juce::Graphics g(dragImage);
+        g.fillAll(juce::Colour(0xFF3A5A6A).withAlpha(0.9f));
+        g.setColour(juce::Colours::white);
+        auto font = juce::Font(fontManager->getSFProDisplay(13.0f, FontManager::FontWeight::Semibold));
+        g.setFont(font);
+        g.drawText(currentItem.name, dragImage.getBounds().reduced(8, 0), 
+                   juce::Justification::centredLeft, true);
+    }
+    
+    // Lancer le drag interne JUCE
+    dragContainer->startDragging(
+        dragDescription,
+        this,
+        juce::ScaledImage(dragImage),
+        true  // Permettre le drag vers d'autres fenêtres JUCE
+    );
+}
 
 //==============================================================================
 // ContentContainer implementation
+//==============================================================================
+
 HistoryPanel::ContentContainer::ContentContainer()
 {
     setOpaque(false);
@@ -14,39 +139,40 @@ void HistoryPanel::ContentContainer::resized()
 {
     auto bounds = getLocalBounds();
     
-    // Zone du bouton "Open Folder" - première row
+    // Zone du bouton "Open Folder"
     if (openFolderButton)
     {
         auto buttonArea = bounds.removeFromTop(BUTTON_ZONE_HEIGHT);
         openFolderButton->setBounds(buttonArea.reduced(12, 8));
     }
     
-    // ListBox prend le reste de l'espace
+    // ListBox prend le reste
     historyList.setBounds(bounds);
 }
 
 //==============================================================================
 // HistoryPanel implementation
+//==============================================================================
+
 HistoryPanel::HistoryPanel() 
     : isPanelVisible(false),
       widthTransitionFraction(0.0f)
 {
-    // Configuration du header - titre centré
+    // Configuration du header
     headerLabel.setText("History", juce::dontSendNotification);
     headerLabel.setJustificationType(juce::Justification::centred);
     headerLabel.setColour(juce::Label::textColourId, juce::Colours::white);
     
-    // Même style de police que le header principal
     auto fontOptions = fontManager->getSFProDisplay(18.0f, FontManager::FontWeight::Semibold);
     headerLabel.setFont(juce::Font(fontOptions));
     
     addAndMakeVisible(headerLabel);
     
-    // Configuration du bouton "Open Folder" dans le conteneur
+    // Configuration du bouton "Open Folder"
     contentContainer.openFolderButton = std::make_unique<StyledButton>(
         juce::String::fromUTF8("Open Folder"),
-        juce::Colour::fromString("ff808080"),  // Gris
-        juce::Colour::fromString("ff606060"),  // Gris plus foncé au survol
+        juce::Colour::fromString("ff808080"),
+        juce::Colour::fromString("ff606060"),
         13.0f, FontManager::FontWeight::Medium
     );
     contentContainer.openFolderButton->setTooltip("Ouvrir le dossier des solutions MIDI");
@@ -55,7 +181,7 @@ HistoryPanel::HistoryPanel()
     };
     contentContainer.addAndMakeVisible(*contentContainer.openFolderButton);
     
-    // Configuration de la ListBox dans le conteneur
+    // Configuration de la ListBox
     contentContainer.historyList.setModel(this);
     contentContainer.historyList.setRowHeight(ROW_HEIGHT);
     contentContainer.historyList.setColour(juce::ListBox::backgroundColourId, juce::Colour(0xFF1A1A1A));
@@ -66,9 +192,6 @@ HistoryPanel::HistoryPanel()
     // Le conteneur fade in/out
     contentContainer.setAlpha(0.0f);
     addAndMakeVisible(contentContainer);
-    
-    // Générer les données de test
-    generateMockData();
 }
 
 HistoryPanel::~HistoryPanel()
@@ -85,7 +208,6 @@ void HistoryPanel::setAppState(juce::ValueTree& state)
     appState = state;
     appState.addListener(this);
     
-    // Synchronise l'état initial
     updateVisibilityState();
 }
 
@@ -93,19 +215,17 @@ void HistoryPanel::paint(juce::Graphics& g)
 {
     auto bounds = getLocalBounds();
     
-    // Fond principal du panneau
     g.fillAll(juce::Colour(0xFF1E1E1E));
     
-    // Header zone - fond identique au HeaderPanel principal
     auto headerZone = bounds.removeFromTop(HEADER_HEIGHT);
     g.setColour(juce::Colour(0xFF1E1E1E));
     g.fillRect(headerZone);
     
-    // Bordure en bas du header (même style que HeaderPanel)
+    // Bordure en bas du header
     g.setColour(juce::Colour(0xFF444444));
     g.fillRect(0, HEADER_HEIGHT - 1, getWidth(), 1);
     
-    // Bordure à gauche du panneau (séparation avec le contenu principal)
+    // Bordure à gauche
     g.setColour(juce::Colour(0xFF444444));
     g.fillRect(0, 0, 1, getHeight());
 }
@@ -114,14 +234,10 @@ void HistoryPanel::resized()
 {
     auto bounds = getLocalBounds();
     
-    // Header - titre centré sur toute la largeur
     auto headerArea = bounds.removeFromTop(HEADER_HEIGHT);
     headerLabel.setBounds(headerArea);
     
-    // Bordure à gauche
     bounds.removeFromLeft(1);
-    
-    // Le conteneur (bouton + liste) prend le reste
     contentContainer.setBounds(bounds);
 }
 
@@ -151,72 +267,187 @@ float HistoryPanel::getWidthFraction() const
 }
 
 //==============================================================================
+// Chargement dynamique depuis le disque
+//==============================================================================
+
+void HistoryPanel::refreshFromDisk()
+{
+    DBG("📂 HistoryPanel::refreshFromDisk() - Scan du dossier...");
+    
+    items.clear();
+    
+    // Localiser le dossier des solutions
+    juce::File solutionsDir = juce::File::getSpecialLocation(juce::File::userHomeDirectory)
+        .getChildFile(APPLICATION_SUPPORT_PATH)
+        .getChildFile("DiatonyDawApplication")
+        .getChildFile("Solutions")
+        .getChildFile("MidiFiles");
+    
+    if (!solutionsDir.exists())
+    {
+        DBG("  ⚠️ Dossier inexistant : " << solutionsDir.getFullPathName());
+        contentContainer.historyList.updateContent();
+        return;
+    }
+    
+    // Scanner les fichiers .diatony
+    juce::Array<juce::File> diatonyFiles;
+    solutionsDir.findChildFiles(diatonyFiles, juce::File::findFiles, false, "*.diatony");
+    
+    DBG("  📄 " << diatonyFiles.size() << " fichier(s) .diatony trouvé(s)");
+    
+    // Parser chaque fichier
+    for (const auto& file : diatonyFiles)
+    {
+        HistoryItem item;
+        if (parseHistoryFile(file, item))
+        {
+            items.push_back(item);
+        }
+    }
+    
+    // Trier par date de modification (plus récent en premier)
+    std::sort(items.begin(), items.end(), 
+        [](const HistoryItem& a, const HistoryItem& b) {
+            return a.timestamp > b.timestamp;
+        });
+    
+    DBG("  ✅ " << items.size() << " item(s) chargé(s)");
+    
+    // Rafraîchir la ListBox
+    contentContainer.historyList.updateContent();
+}
+
+bool HistoryPanel::parseHistoryFile(const juce::File& file, HistoryItem& outItem)
+{
+    // Parser le XML
+    auto xml = juce::XmlDocument::parse(file);
+    
+    if (xml == nullptr || !xml->hasTagName("Piece"))
+    {
+        DBG("    ⚠️ XML invalide : " << file.getFileName());
+        return false;
+    }
+    
+    // Remplir les infos de base
+    outItem.diatonyFile = file;
+    outItem.midiFile = file.withFileExtension("mid");
+    outItem.name = file.getFileNameWithoutExtension();
+    outItem.timestamp = file.getLastModificationTime();
+    
+    // Compter les éléments
+    outItem.numSections = 0;
+    outItem.numModulations = 0;
+    outItem.numChords = 0;
+    outItem.startKey = "?";
+    
+    // Parcourir les enfants du XML
+    for (auto* child : xml->getChildIterator())
+    {
+        if (child->hasTagName("Section"))
+        {
+            outItem.numSections++;
+            
+            // Extraire la tonalité de la première section
+            if (outItem.numSections == 1)
+            {
+                int noteIndex = child->getIntAttribute("tonalityNote", 0);
+                bool isMajor = child->getBoolAttribute("isMajor", true);
+                outItem.startKey = noteToKeyLabel(noteIndex, isMajor);
+            }
+            
+            // Compter les accords dans la Progression
+            if (auto* progression = child->getChildByName("Progression"))
+            {
+                outItem.numChords += progression->getNumChildElements();
+            }
+        }
+        else if (child->hasTagName("Modulation"))
+        {
+            outItem.numModulations++;
+        }
+    }
+    
+    return true;
+}
+
+juce::String HistoryPanel::noteToKeyLabel(int noteIndex, bool isMajor)
+{
+    // Table des noms de notes (avec préférence pour bémols sur certaines)
+    static const char* noteNames[] = {
+        "C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"
+    };
+    
+    if (noteIndex < 0 || noteIndex > 11)
+        return "?";
+    
+    juce::String label = noteNames[noteIndex];
+    label += isMajor ? "" : "m";  // Ajouter "m" pour mineur
+    
+    return label;
+}
+
+juce::String HistoryPanel::formatTimestamp(const juce::Time& time)
+{
+    auto now = juce::Time::getCurrentTime();
+    auto today = juce::Time(now.getYear(), now.getMonth(), now.getDayOfMonth(), 0, 0);
+    auto yesterday = today - juce::RelativeTime::days(1);
+    
+    if (time >= today)
+    {
+        // Aujourd'hui : afficher l'heure
+        return time.formatted("%H:%M");
+    }
+    else if (time >= yesterday)
+    {
+        // Hier
+        return "Hier";
+    }
+    else
+    {
+        // Plus ancien : afficher la date
+        return time.formatted("%d/%m");
+    }
+}
+
+//==============================================================================
 // ListBoxModel implementation
+//==============================================================================
 
 int HistoryPanel::getNumRows()
 {
     return static_cast<int>(items.size());
 }
 
-void HistoryPanel::paintListBoxItem(int rowNumber, juce::Graphics& g, 
-                                    int width, int height, bool rowIsSelected)
+void HistoryPanel::paintListBoxItem(int /*rowNumber*/, juce::Graphics& /*g*/, 
+                                    int /*width*/, int /*height*/, bool /*rowIsSelected*/)
+{
+    // On utilise refreshComponentForRow() à la place, donc cette méthode est vide
+}
+
+juce::Component* HistoryPanel::refreshComponentForRow(int rowNumber, bool isRowSelected,
+                                                       juce::Component* existingComponentToUpdate)
 {
     if (rowNumber < 0 || rowNumber >= static_cast<int>(items.size()))
-        return;
+    {
+        // Supprimer le composant s'il existe mais qu'il n'y a plus de données
+        if (existingComponentToUpdate != nullptr)
+            delete existingComponentToUpdate;
+        return nullptr;
+    }
     
-    const auto& item = items[static_cast<size_t>(rowNumber)];
+    // Réutiliser ou créer un composant
+    auto* rowComponent = dynamic_cast<HistoryRowComponent*>(existingComponentToUpdate);
     
-    // === FOND ===
-    if (rowIsSelected)
-        g.fillAll(juce::Colour(0xFF3A5A6A));  // Bleu-gris sélectionné
-    else if (rowNumber % 2 == 0)
-        g.fillAll(juce::Colour(0xFF1A1A1A));  // Fond pair
-    else
-        g.fillAll(juce::Colour(0xFF222222));  // Fond impair (légèrement différent)
+    if (rowComponent == nullptr)
+    {
+        rowComponent = new HistoryRowComponent(*this);
+    }
     
-    // Marges internes
-    auto bounds = juce::Rectangle<int>(0, 0, width, height).reduced(10, 6);
+    // Mettre à jour les données
+    rowComponent->setRowData(items[static_cast<size_t>(rowNumber)], rowNumber, isRowSelected);
     
-    // === LIGNE 1 : NOM + DATE ===
-    auto topRow = bounds.removeFromTop(20);
-    
-    // Date à droite (en premier pour réserver l'espace)
-    auto dateFont = juce::Font(fontManager->getSFProDisplay(11.0f, FontManager::FontWeight::Regular));
-    g.setFont(dateFont);
-    g.setColour(rowIsSelected ? juce::Colours::white.withAlpha(0.7f) : juce::Colour(0xFF888888));
-    
-    // Calculer la largeur de la date
-    int dateWidth = dateFont.getStringWidth(item.timestamp) + 4;
-    auto dateArea = topRow.removeFromRight(dateWidth);
-    g.drawText(item.timestamp, dateArea, juce::Justification::centredRight, false);
-    
-    // Nom à gauche (prend le reste, avec ellipsis si trop long)
-    topRow.removeFromRight(8);  // Petit espace avant la date
-    auto nameFont = juce::Font(fontManager->getSFProDisplay(14.0f, FontManager::FontWeight::Semibold));
-    g.setFont(nameFont);
-    g.setColour(rowIsSelected ? juce::Colours::white : juce::Colour(0xFFE0E0E0));
-    g.drawText(item.name, topRow, juce::Justification::centredLeft, true);  // true = ellipsis
-    
-    // === LIGNE 2 : DASHBOARD STATS ===
-    bounds.removeFromTop(4);  // Petit espace entre les lignes
-    auto botRow = bounds;
-    
-    auto statsFont = juce::Font(fontManager->getSFProDisplay(12.0f, FontManager::FontWeight::Regular));
-    g.setFont(statsFont);
-    g.setColour(rowIsSelected ? juce::Colours::white.withAlpha(0.85f) : juce::Colour(0xFFAAAAAA));
-    
-    // Format compact : Key | S:n | M:n | A:n
-    juce::String stats;
-    stats << item.startKey;
-    stats << "  |  S:" << item.numSections;
-    stats << "  |  M:" << item.numModulations;
-    stats << "  |  A:" << item.numChords;
-    
-    g.drawText(stats, botRow, juce::Justification::centredLeft, false);
-    
-    // === BORDURE INFÉRIEURE COMPLÈTE ===
-    g.setColour(juce::Colour(0xFF333333));
-    g.fillRect(0, height - 1, width, 1);
+    return rowComponent;
 }
 
 void HistoryPanel::listBoxItemClicked(int row, const juce::MouseEvent&)
@@ -232,19 +463,30 @@ void HistoryPanel::listBoxItemDoubleClicked(int row, const juce::MouseEvent&)
     if (row >= 0 && row < static_cast<int>(items.size()))
     {
         DBG("📋 Double-clic sur : " << items[static_cast<size_t>(row)].name);
-        // TODO: Charger cette solution
+        // TODO: Charger cette solution dans l'éditeur
     }
 }
 
 //==============================================================================
 // ValueTree::Listener implementation
+//==============================================================================
 
-void HistoryPanel::valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged,
+void HistoryPanel::valueTreePropertyChanged(juce::ValueTree& /*treeWhosePropertyHasChanged*/,
                                            const juce::Identifier& property)
 {
     if (property == UIStateIdentifiers::historyPanelVisible)
     {
         updateVisibilityState();
+    }
+    else if (property.toString() == "generationStatus")
+    {
+        // Rafraîchir après une génération
+        juce::String status = appState.getProperty("generationStatus", "").toString();
+        if (status == "completed")
+        {
+            DBG("📂 Génération terminée, rafraîchissement de l'historique...");
+            refreshFromDisk();
+        }
     }
 }
 
@@ -259,59 +501,19 @@ void HistoryPanel::updateVisibilityState()
     
     bool visible = static_cast<bool>(appState.getProperty(UIStateIdentifiers::historyPanelVisible, false));
     
-    // Notifie l'Animator pour déclencher l'animation de visibilité
+    // Rafraîchir quand le panneau devient visible
+    if (visible)
+    {
+        refreshFromDisk();
+    }
+    
     if (onVisibilityChange)
     {
         onVisibilityChange(visible);
     }
     else
     {
-        // Fallback : mise à jour directe de l'état si aucun animateur n'est attaché
         setExpanded(visible);
         widthTransitionFraction = visible ? 1.0f : 0.0f;
     }
-}
-
-//==============================================================================
-// Mock data generation
-
-void HistoryPanel::generateMockData()
-{
-    items.clear();
-    
-    // === AUJOURD'HUI ===
-    items.push_back({ "Idee Refrain V2", "16:45", "Cm", 4, 3, 32 });
-    items.push_back({ "Bridge Alternative", "14:30", "Am", 2, 1, 12 });
-    items.push_back({ "Intro Piano Solo", "11:20", "Dm", 1, 0, 8 });
-    
-    // === HIER ===
-    items.push_back({ "Symphonie Inachevee", "Hier", "Eb", 12, 8, 145 });
-    items.push_back({ "Variation Theme Principal", "Hier", "Bb", 3, 2, 24 });
-    items.push_back({ "Test Harmonique Rapide", "Hier", "C", 1, 0, 4 });
-    
-    // === CETTE SEMAINE ===
-    items.push_back({ "Progression Jazz chromatique", "07/12", "F#m", 2, 5, 16 });
-    items.push_back({ "Ballade Triste", "06/12", "Gm", 3, 1, 24 });
-    items.push_back({ "Outro Cinematique", "05/12", "Em", 2, 2, 20 });
-    items.push_back({ "Hook Electro", "04/12", "Am", 1, 0, 8 });
-    
-    // === SEMAINE DERNIERE ===
-    items.push_back({ "Couplet Final V3", "01/12", "Fm", 2, 1, 16 });
-    items.push_back({ "Intro Epique", "28/11", "Dm", 2, 2, 18 });
-    items.push_back({ "Transition Orchestrale", "27/11", "Ab", 1, 3, 12 });
-    items.push_back({ "Pre-Chorus Energique", "26/11", "E", 2, 1, 14 });
-    items.push_back({ "Coda Finale", "25/11", "G", 1, 1, 8 });
-    
-    // === PLUS ANCIEN ===
-    items.push_back({ "Esquisse Nocturne", "20/11", "Bbm", 3, 2, 28 });
-    items.push_back({ "Meditation Modale", "18/11", "D", 4, 4, 36 });
-    items.push_back({ "Riff Principal V1", "15/11", "A", 1, 0, 6 });
-    items.push_back({ "Harmonie Complexe Test", "12/11", "C#m", 5, 6, 48 });
-    items.push_back({ "Prototype Ambient", "10/11", "F", 2, 1, 16 });
-    items.push_back({ "Structure Verse-Chorus", "08/11", "G", 4, 2, 32 });
-    items.push_back({ "Modulation Enharmonique", "05/11", "Gb", 2, 4, 18 });
-    items.push_back({ "Premier Brouillon", "01/11", "Am", 1, 0, 4 });
-    
-    // Mettre à jour la ListBox
-    contentContainer.historyList.updateContent();
 }
