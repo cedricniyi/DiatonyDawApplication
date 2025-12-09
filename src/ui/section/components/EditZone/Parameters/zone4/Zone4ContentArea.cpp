@@ -197,7 +197,7 @@ void Zone4ContentArea::setupViewport()
 void Zone4ContentArea::setupEmptyLabel()
 {
     // Configuration du label d'état vide
-    emptyLabel.setText(juce::String::fromUTF8("Aucun élément ajouté"), juce::dontSendNotification);
+    emptyLabel.setText(juce::String::fromUTF8("No chord added"), juce::dontSendNotification);
     emptyLabel.setJustificationType(juce::Justification::centred);
     emptyLabel.setColour(juce::Label::textColourId, juce::Colours::grey.withAlpha(0.7f));
     

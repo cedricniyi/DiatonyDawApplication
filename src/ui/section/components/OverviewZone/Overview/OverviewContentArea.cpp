@@ -364,7 +364,7 @@ void OverviewContentArea::setupViewport()
 
 void OverviewContentArea::setupEmptyLabel()
 {
-    emptyLabel.setText(juce::String::fromUTF8("Aucune progression n'a été ajoutée à la pièce"), juce::dontSendNotification);
+    emptyLabel.setText(juce::String::fromUTF8("No progression has been added"), juce::dontSendNotification);
     emptyLabel.setJustificationType(juce::Justification::centred);
     emptyLabel.setColour(juce::Label::textColourId, juce::Colours::grey.withAlpha(0.7f));
     
