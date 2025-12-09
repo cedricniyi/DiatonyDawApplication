@@ -50,7 +50,6 @@ private:
     juce::Label      mainLabel;
     StyledButton     generateButton;  // Bouton Generate (vert)
     MidiDragZone     midiDragZone;    // Zone de drag MIDI
-    StyledButton     dButton;         // Bouton D (gris)
     std::unique_ptr<IconStyledButton> hamburgerButton;  // Bouton menu hamburger (SVG)
     juce::ValueTree  appState;        // Référence au ValueTree global
     int              titleZoneWidth = 250;  // Largeur de la zone titre pour les séparations

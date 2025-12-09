@@ -5,7 +5,6 @@
 #include "ui/PluginEditor.h"
 #include "controller/AppController.h"
 #include "utils/FontManager.h"
-#include "utils/FileUtils.h"
 #include "IconBinaryData.h"
 
 //==============================================================================
@@ -14,11 +13,7 @@ HeaderPanel::HeaderPanel()
       generateButton (juce::String::fromUTF8("Generate"),
                       juce::Colour::fromString ("#ff22c55e"), // Vert
                       juce::Colour::fromString ("#ff16a34a"), // Vert plus foncé au survol
-                      14.0f, FontManager::FontWeight::Medium),
-      dButton (juce::String::fromUTF8("D"),
-               juce::Colour::fromString ("ff808080"), // Gris
-               juce::Colour::fromString ("ff606060"), // Gris plus foncé au survol
-               14.0f, FontManager::FontWeight::Black)
+                      14.0f, FontManager::FontWeight::Medium)
 {
     // Configuration du label principal
     mainLabel.setText(juce::String::fromUTF8("DiatonyDAWPlugin"),juce::dontSendNotification);
@@ -37,15 +32,8 @@ HeaderPanel::HeaderPanel()
 
     // Configuration de la zone de drag MIDI
     addAndMakeVisible (midiDragZone);
-
-    // Configuration du bouton D - ouvre le dossier des solutions MIDI
-    dButton.setTooltip("Ouvrir le dossier des solutions MIDI");
-    dButton.onClick = []() {
-        FileUtils::openMidiSolutionsFolder();
-    };
-    addAndMakeVisible (dButton);
     
-    // Configuration du bouton hamburger (menu) - style identique au bouton D
+    // Configuration du bouton hamburger (menu)
     hamburgerButton = std::make_unique<IconStyledButton>(
         "HamburgerMenu",
         IconData::icon_hamburger_svg,
@@ -123,19 +111,13 @@ void HeaderPanel::resized()
         .withMinHeight(static_cast<float>(buttonSize))
         .withMargin(juce::FlexItem::Margin(0, 12, 0, 0)));
     
-    // Zone de drag MIDI (entre Generate et D)
+    // Zone de drag MIDI (entre Generate et hamburger)
     buttonFlex.items.add(juce::FlexItem(midiDragZone)
         .withMinWidth(60.0f)
         .withMinHeight(static_cast<float>(buttonSize))
         .withMargin(juce::FlexItem::Margin(0, 12, 0, 0)));
     
-    // Bouton D (carré)
-    buttonFlex.items.add(juce::FlexItem(dButton)
-        .withMinWidth(static_cast<float>(buttonSize))
-        .withMinHeight(static_cast<float>(buttonSize))
-        .withMargin(juce::FlexItem::Margin(0, 12, 0, 0)));
-    
-    // Bouton hamburger (carré, à droite du bouton D)
+    // Bouton hamburger (carré)
     buttonFlex.items.add(juce::FlexItem(*hamburgerButton)
         .withMinWidth(static_cast<float>(buttonSize))
         .withMinHeight(static_cast<float>(buttonSize)));
