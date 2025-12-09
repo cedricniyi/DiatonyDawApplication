@@ -100,6 +100,9 @@ void MainContentComponent::resized()
         historyPanel.setVisible(false);
     }
     
+    // Sauvegarder la zone principale pour l'overlay (sans le HistoryPanel)
+    auto mainAreaBounds = bounds;
+    
     // === ZONE PRINCIPALE (header + section + footer) ===
     int padding = 8;
     
@@ -128,8 +131,8 @@ void MainContentComponent::resized()
         activePopup->setBounds(getLocalBounds());
     }
     
-    // Positionner l'overlay de drag & drop
-    dragOverlay.setBounds(getLocalBounds());
+    // Positionner l'overlay de drag & drop UNIQUEMENT sur la zone principale (pas sur HistoryPanel)
+    dragOverlay.setBounds(mainAreaBounds);
 }
 
 float& MainContentComponent::getHeaderFlexRef()
@@ -421,6 +424,95 @@ void MainContentComponent::filesDropped(const juce::StringArray& files, int x, i
             DiatonyAlertWindow::AlertType::Error,
             "Erreur de chargement",
             juce::String::fromUTF8("Impossible de charger le fichier.\n\nVérifiez qu'il s'agit d'un fichier .diatony valide."),
+            "OK"
+        );
+    }
+}
+
+//==============================================================================
+// DragAndDropTarget interface (drag interne depuis HistoryPanel)
+//==============================================================================
+
+bool MainContentComponent::isInterestedInDragSource(const SourceDetails& dragSourceDetails)
+{
+    // Accepter uniquement les drags depuis HistoryPanel
+    // La description commence par "HISTORY_ITEM:" suivie du chemin du fichier
+    juce::String description = dragSourceDetails.description.toString();
+    return description.startsWith("HISTORY_ITEM:");
+}
+
+void MainContentComponent::itemDragEnter(const SourceDetails& dragSourceDetails)
+{
+    juce::ignoreUnused(dragSourceDetails);
+    
+    DBG("📂 Drag Enter (interne) : item d'historique");
+    dragOverlay.setVisible(true);
+    dragOverlay.toFront(false);
+}
+
+void MainContentComponent::itemDragExit(const SourceDetails& dragSourceDetails)
+{
+    juce::ignoreUnused(dragSourceDetails);
+    
+    DBG("📂 Drag Exit (interne)");
+    dragOverlay.setVisible(false);
+}
+
+void MainContentComponent::itemDropped(const SourceDetails& dragSourceDetails)
+{
+    // Cacher l'overlay
+    dragOverlay.setVisible(false);
+    
+    // === 1. EXTRAIRE LE CHEMIN DU FICHIER ===
+    juce::String description = dragSourceDetails.description.toString();
+    
+    if (!description.startsWith("HISTORY_ITEM:"))
+    {
+        DBG("❌ Description invalide : " << description);
+        return;
+    }
+    
+    // Extraire le chemin après le préfixe
+    juce::String diatonyFilePath = description.fromFirstOccurrenceOf("HISTORY_ITEM:", false, false);
+    
+    DBG("📂 Item dropped depuis historique : " << diatonyFilePath);
+    
+    // === 2. OBTENIR L'APPCONTROLLER ===
+    auto* pluginEditor = findParentComponentOfClass<AudioPluginAudioProcessorEditor>();
+    if (pluginEditor == nullptr)
+    {
+        DBG("❌ Impossible de trouver AudioPluginAudioProcessorEditor");
+        showPopup(
+            DiatonyAlertWindow::AlertType::Error,
+            "Erreur interne",
+            juce::String::fromUTF8("Impossible d'accéder au contrôleur de l'application."),
+            "OK"
+        );
+        return;
+    }
+    
+    auto& appController = pluginEditor->getAppController();
+    
+    // === 3. CHARGER LE FICHIER ===
+    juce::File file(diatonyFilePath);
+    bool success = appController.loadProjectFromFile(file);
+    
+    // === 4. FEEDBACK UTILISATEUR ===
+    if (success)
+    {
+        showPopup(
+            DiatonyAlertWindow::AlertType::Success,
+            juce::String::fromUTF8("Session Restaurée"),
+            juce::String::fromUTF8("La session « ") + file.getFileNameWithoutExtension() + juce::String::fromUTF8(" » a été restaurée."),
+            "OK"
+        );
+    }
+    else
+    {
+        showPopup(
+            DiatonyAlertWindow::AlertType::Error,
+            "Erreur de chargement",
+            juce::String::fromUTF8("Impossible de charger la session.\n\nLe fichier est peut-être corrompu."),
             "OK"
         );
     }
