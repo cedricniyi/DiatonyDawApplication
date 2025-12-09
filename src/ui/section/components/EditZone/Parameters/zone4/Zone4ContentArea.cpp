@@ -110,6 +110,16 @@ void Zone4ContentArea::addRectangle(juce::ValueTree chordState)
             int newQuality = comboboxIndex - 1;
             chordState.setProperty(ModelIdentifiers::quality, newQuality, nullptr);
         };
+        
+        // Connecter le callback de suppression (long press)
+        newRectangle->onDeleteRequested = [chordState]() mutable {
+            if (chordState.isValid()) {
+                auto parent = chordState.getParent();
+                if (parent.isValid()) {
+                    parent.removeChild(chordState, nullptr);
+                }
+            }
+        };
     }
     else
     {
