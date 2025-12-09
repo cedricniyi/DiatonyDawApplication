@@ -2,15 +2,37 @@
 
 #include <JuceHeader.h>
 #include "utils/FontManager.h"
+#include "ui/extra/Button/StyledButton.h"
+#include <vector>
+#include <memory>
 
 //==============================================================================
 /**
- * @brief Panneau latéral droit affichant l'historique
+ * @brief Structure représentant un snapshot d'historique
  * 
- * Ce panneau se révèle/masque avec animation via HistoryPanelAnimator.
- * Il contient un header "History" et une zone de contenu scrollable.
+ * Contient les métadonnées d'une solution générée précédemment.
  */
-class HistoryPanel : public juce::Component, public juce::ValueTree::Listener
+struct HistoryItem
+{
+    juce::String name;        // Nom de la solution (ex: "Idée Refrain V2")
+    juce::String timestamp;   // Date/heure ("14:30" si aujourd'hui, "08/12" sinon)
+    juce::String startKey;    // Tonalité de départ (ex: "Cm", "Eb")
+    int numSections;          // Nombre de sections/progressions
+    int numModulations;       // Nombre de modulations
+    int numChords;            // Nombre total d'accords
+};
+
+//==============================================================================
+/**
+ * @brief Panneau latéral droit affichant l'historique des solutions
+ * 
+ * Ce panneau se révèle/masque avec animation via SlidingPanelAnimator.
+ * Il contient un header "History" et une ListBox scrollable affichant
+ * les solutions précédemment générées.
+ */
+class HistoryPanel : public juce::Component, 
+                     public juce::ValueTree::Listener,
+                     public juce::ListBoxModel
 {
 public:
     HistoryPanel();
@@ -32,7 +54,7 @@ public:
     /** Retourne l'état d'expansion actuel */
     bool getExpanded() const;
     
-    /** Retourne une référence au composant qui fade in/out (le contenu) */
+    /** Retourne une référence au composant qui fade in/out (la ListBox) */
     juce::Component& getFadingComponent();
     
     /** Retourne une référence à la fraction de largeur pour l'animation */
@@ -47,6 +69,14 @@ public:
     std::function<void(bool)> onVisibilityChange;
 
     // =================================================================================
+    // ListBoxModel interface
+    int getNumRows() override;
+    void paintListBoxItem(int rowNumber, juce::Graphics& g, 
+                          int width, int height, bool rowIsSelected) override;
+    void listBoxItemClicked(int row, const juce::MouseEvent& e) override;
+    void listBoxItemDoubleClicked(int row, const juce::MouseEvent& e) override;
+
+    // =================================================================================
     // ValueTree::Listener interface
     void valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged,
                                   const juce::Identifier& property) override;
@@ -58,19 +88,26 @@ public:
     
 private:
     void updateVisibilityState();
+    void generateMockData();
     
     // Header du panneau
     juce::Label headerLabel;
     
-    // Zone de contenu (placeholder pour l'instant)
-    class ContentArea : public juce::Component
+    // Conteneur pour le contenu qui fade (bouton + liste)
+    class ContentContainer : public juce::Component
     {
     public:
-        ContentArea();
-        void paint(juce::Graphics& g) override;
+        ContentContainer();
+        void resized() override;
+        
+        std::unique_ptr<StyledButton> openFolderButton;
+        juce::ListBox historyList;
+        
+        static constexpr int BUTTON_ZONE_HEIGHT = 50;
     };
     
-    ContentArea contentArea;
+    ContentContainer contentContainer;
+    std::vector<HistoryItem> items;
     
     juce::SharedResourcePointer<FontManager> fontManager;
     
@@ -79,9 +116,9 @@ private:
     
     juce::ValueTree appState;      // Référence au ValueTree global
     
-    static constexpr int HEADER_HEIGHT = 60;  // Même hauteur que le HeaderPanel principal
+    static constexpr int HEADER_HEIGHT = 60;   // Même hauteur que le HeaderPanel principal
     static constexpr int PANEL_WIDTH = 250;
+    static constexpr int ROW_HEIGHT = 54;      // Hauteur d'un item (2 lignes + padding)
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(HistoryPanel)
 };
-
