@@ -15,6 +15,9 @@ HeaderPanel::HeaderPanel()
                       juce::Colour::fromString ("#ff16a34a"), // Vert plus foncé au survol
                       14.0f, FontManager::FontWeight::Medium)
 {
+    // Charger le logo Diatony
+    loadLogo();
+    
     // Configuration du label principal
     mainLabel.setText(juce::String::fromUTF8("DiatonyDAWPlugin"),juce::dontSendNotification);
     mainLabel.setJustificationType (juce::Justification::centredLeft);
@@ -33,12 +36,12 @@ HeaderPanel::HeaderPanel()
     // Configuration de la zone de drag MIDI
     addAndMakeVisible (midiDragZone);
     
-    // Configuration du bouton hamburger (menu)
+    // Configuration du bouton History (icône horloge)
     hamburgerButton = std::make_unique<IconStyledButton>(
-        "HamburgerMenu",
-        IconData::icon_hamburger_svg,
-        IconData::icon_hamburger_svgSize,
-        juce::Colour::fromString("ff808080"),  // Gris (même couleur que dButton)
+        "HistoryButton",
+        IconData::historysvgrepo_svg,
+        IconData::historysvgrepo_svgSize,
+        juce::Colour::fromString("ff808080"),  // Gris
         juce::Colour::fromString("ff606060"),  // Gris plus foncé au survol
         juce::Colours::white                    // Couleur de l'icône
     );
@@ -87,13 +90,17 @@ void HeaderPanel::resized()
     // Calcul de la largeur exacte du texte pour définir la zone titre
     juce::GlyphArrangement ga;
     ga.addLineOfText(mainLabel.getFont(), mainLabel.getText(), 0, 0);
-    auto labelWidth = static_cast<int>(std::ceil(ga.getBoundingBox(0, -1, false).getWidth() + 40));
+    auto labelWidth = static_cast<int>(std::ceil(ga.getBoundingBox(0, -1, false).getWidth()));
     
-    // La zone titre = largeur du label + padding
-    titleZoneWidth = labelWidth + 20;
+    // La zone titre = logo + espacement + label + padding minimal
+    titleZoneWidth = LOGO_SIZE + 8 + labelWidth + 40;  // Réduit le padding total
     
     // Zone titre (à gauche)
-    auto titleArea = bounds.removeFromLeft(titleZoneWidth).reduced(20, 10);
+    auto titleArea = bounds.removeFromLeft(titleZoneWidth).reduced(16, 10);
+    
+    // Le logo est dessiné dans paint(), on réserve juste l'espace
+    titleArea.removeFromLeft(LOGO_SIZE + 8);  // Logo + espacement
+    
     mainLabel.setBounds(titleArea);
     
     // Zone boutons (à droite) - avec padding
@@ -145,6 +152,21 @@ void HeaderPanel::paint (juce::Graphics& g)
     // Séparation verticale entre zone titre et zone boutons
     g.setColour(juce::Colour(0xFF444444));
     g.fillRect(titleZoneWidth, 0, 1, getHeight());
+    
+    // Dessiner le logo Diatony (blanc, centré verticalement)
+    if (logoDrawable != nullptr)
+    {
+        int logoX = 16;
+        int logoY = (getHeight() - LOGO_SIZE) / 2;
+        auto logoBounds = juce::Rectangle<float>(
+            static_cast<float>(logoX), 
+            static_cast<float>(logoY), 
+            static_cast<float>(LOGO_SIZE), 
+            static_cast<float>(LOGO_SIZE)
+        );
+        
+        logoDrawable->drawWithin(g, logoBounds, juce::RectanglePlacement::centred, 1.0f);
+    }
 }
 
 // === DÉCOUVERTE DE SERVICE ===
@@ -222,4 +244,27 @@ void HeaderPanel::updateDockState()
 {
     // Note: Cette méthode est conservée pour une éventuelle utilisation future
     // avec d'autres états UI via le ValueTree
+}
+
+void HeaderPanel::loadLogo()
+{
+    // Charger le SVG depuis les ressources binaires
+    auto svgString = juce::String::fromUTF8(IconData::diatony_logo_svg, 
+                                            IconData::diatony_logo_svgSize);
+    auto svgXml = juce::XmlDocument::parse(svgString);
+    
+    if (svgXml == nullptr)
+    {
+        DBG("HeaderPanel::loadLogo - Échec du parsing du SVG logo");
+        return;
+    }
+    
+    logoDrawable = juce::Drawable::createFromSVG(*svgXml);
+    
+    if (logoDrawable != nullptr)
+    {
+        // Colorier le logo en blanc
+        logoDrawable->replaceColour(juce::Colours::black, juce::Colours::white);
+        DBG("HeaderPanel: Logo Diatony chargé ✓");
+    }
 }
