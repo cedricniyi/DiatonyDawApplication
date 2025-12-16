@@ -20,6 +20,12 @@ InfoColoredPanel::InfoColoredPanel(juce::Colour color)
     // Écouter les changements de degré pour mettre à jour la bande colorée (fonction tonale)
     degreeCombo.addListener(this);
     
+    // Charger les icônes SVG pour le cadenas
+    lockIcon = juce::Drawable::createFromImageData(IconData::lock1svgrepocom_svg, 
+                                                    IconData::lock1svgrepocom_svgSize);
+    unlockIcon = juce::Drawable::createFromImageData(IconData::unlocksvgrepocom_svg, 
+                                                      IconData::unlocksvgrepocom_svgSize);
+    
     setupLabels();
 }
 
@@ -110,7 +116,11 @@ void InfoColoredPanel::drawTopSquares(juce::Graphics& g, const juce::Rectangle<i
     
     // Carré 2 : Cadenas (cliquable)
     lockSquareArea = juce::Rectangle<int>(startX + SQUARE_SIZE + SQUARE_SPACING, y, SQUARE_SIZE, SQUARE_SIZE);
-    g.setColour(locked ? squareColor : squareColor.withAlpha(0.5f));
+    // Fond jaunâtre si verrouillé, gris semi-transparent sinon
+    if (locked)
+        g.setColour(juce::Colour(0xFFD4A017).withAlpha(0.7f));  // Or/jaune
+    else
+        g.setColour(squareColor.withAlpha(0.5f));
     g.fillRoundedRectangle(lockSquareArea.toFloat(), 4.0f);
     drawLockIcon(g, lockSquareArea, locked);
     
@@ -123,39 +133,24 @@ void InfoColoredPanel::drawTopSquares(juce::Graphics& g, const juce::Rectangle<i
 
 void InfoColoredPanel::drawLockIcon(juce::Graphics& g, const juce::Rectangle<int>& area, bool isLocked)
 {
-    auto textColor = getColor().contrasting(0.8f);
-    g.setColour(textColor);
+    // Sélectionner l'icône appropriée
+    auto* iconToDraw = isLocked ? lockIcon.get() : unlockIcon.get();
     
-    // Dessiner un cadenas simplifié
-    auto center = area.getCentre().toFloat();
-    float iconSize = area.getWidth() * 0.5f;
+    if (iconToDraw == nullptr)
+        return;
     
-    // Corps du cadenas (rectangle)
-    juce::Rectangle<float> body(center.x - iconSize * 0.4f, center.y - iconSize * 0.1f,
-                                 iconSize * 0.8f, iconSize * 0.7f);
-    g.fillRoundedRectangle(body, 1.5f);
+    // Créer une copie pour recolorier sans modifier l'original
+    auto iconCopy = iconToDraw->createCopy();
     
-    // Anse du cadenas (arc)
-    juce::Path shackle;
-    float shackleWidth = iconSize * 0.5f;
-    float shackleHeight = iconSize * 0.5f;
+    // Couleur de l'icône : même couleur que le texte existant
+    auto iconColor = getColor().contrasting(0.8f);
+    iconCopy->replaceColour(juce::Colours::black, iconColor);
     
-    if (isLocked)
-    {
-        // Cadenas fermé : anse connectée
-        shackle.addArc(center.x - shackleWidth * 0.5f, center.y - shackleHeight - iconSize * 0.1f,
-                       shackleWidth, shackleHeight,
-                       juce::MathConstants<float>::pi, 0.0f, true);
-    }
-    else
-    {
-        // Cadenas ouvert : anse décalée vers le haut
-        shackle.addArc(center.x - shackleWidth * 0.5f, center.y - shackleHeight - iconSize * 0.3f,
-                       shackleWidth, shackleHeight,
-                       juce::MathConstants<float>::pi, juce::MathConstants<float>::pi * 0.3f, true);
-    }
+    // Zone de dessin avec padding pour que l'icône ne touche pas les bords
+    auto iconBounds = area.toFloat().reduced(3.0f);
     
-    g.strokePath(shackle, juce::PathStrokeType(1.5f));
+    // Dessiner l'icône centrée dans la zone
+    iconCopy->drawWithin(g, iconBounds, juce::RectanglePlacement::centred, 1.0f);
 }
 
 void InfoColoredPanel::drawDeleteIcon(juce::Graphics& g, const juce::Rectangle<int>& area)

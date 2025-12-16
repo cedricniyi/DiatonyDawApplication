@@ -4,6 +4,7 @@
 #include "ColoredPanel.h"
 #include "ui/extra/Component/ComboBox/DiatonyComboBox.h"
 #include "utils/FontManager.h"
+#include "IconBinaryData.h"
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 🎛️ PARAMÈTRES D'AFFICHAGE - Modifie ces valeurs !
@@ -95,6 +96,8 @@ private:
     // Cadenas (carré 2)
     bool locked = false;
     juce::Rectangle<int> lockSquareArea;
+    std::unique_ptr<juce::Drawable> lockIcon;
+    std::unique_ptr<juce::Drawable> unlockIcon;
     
     // Suppression (carré 3) - Long press avec feedback visuel
     juce::Rectangle<int> deleteSquareArea;
