@@ -250,18 +250,22 @@ void InfoColoredPanel::timerCallback()
         // Long press complété !
         stopTimer();
         isDeleteHeldDown = false;
+        deleteProgress = 0.0f;  // Reset avant destruction
         
         DBG("Long press completed - Delete requested!");
         
+        // Différer la suppression pour permettre à timerCallback() de se terminer
+        // avant que le composant ne soit détruit (évite use-after-free)
         if (onDeleteRequested)
-            onDeleteRequested();
-        
-        // Reset visuel après l'action
-        juce::Timer::callAfterDelay(150, [this]
         {
-            deleteProgress = 0.0f;
-            repaint();
-        });
+            auto callback = onDeleteRequested;  // Copier le std::function
+            juce::MessageManager::callAsync([callback]() {
+                if (callback)
+                    callback();
+            });
+        }
+        
+        return;  // IMPORTANT: sortir immédiatement, ne plus toucher à this
     }
     
     repaint();
