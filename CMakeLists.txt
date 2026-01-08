@@ -111,6 +111,8 @@ target_sources(DiatonyDawApplication
         src/ui/extra/Button/CircularButton.cpp
         src/ui/extra/Button/SelectableStyledButton.h
         src/ui/extra/Button/SelectableStyledButton.cpp
+        src/ui/extra/Button/IconStyledButton.h
+        src/ui/extra/Button/IconStyledButton.cpp
         
         # UI Extra Components - Component
         src/ui/extra/Component/DiatonyAlertWindow.h
@@ -273,6 +275,31 @@ else()
     message(WARNING "Please place your SF Pro .otf files in src/utils/Fonts/")
 endif()
 
+# === Configuration des Assets SVG ===
+set(ASSETS_DIR "${CMAKE_SOURCE_DIR}/src/utils/assets")
+file(GLOB SVG_ASSETS "${ASSETS_DIR}/*.svg")
+
+if(SVG_ASSETS)
+    list(LENGTH SVG_ASSETS ASSET_COUNT)
+    message(STATUS "Found ${ASSET_COUNT} SVG assets")
+    
+    foreach(ASSET ${SVG_ASSETS})
+        get_filename_component(ASSET_NAME ${ASSET} NAME)
+        message(STATUS "  - ${ASSET_NAME}")
+    endforeach()
+    
+    # Créer les ressources binaires pour les icônes SVG
+    juce_add_binary_data(IconResources
+        SOURCES ${SVG_ASSETS}
+        HEADER_NAME "IconBinaryData.h"
+        NAMESPACE "IconData"
+    )
+    
+    message(STATUS "SVG assets successfully added to binary resources")
+else()
+    message(WARNING "No SVG assets found in ${ASSETS_DIR}")
+endif()
+
 target_include_directories(DiatonyDawApplication PRIVATE 
     ${CMAKE_SOURCE_DIR}/src
     ${CMAKE_CURRENT_BINARY_DIR}  # Pour accéder à BinaryData.h généré
@@ -305,6 +332,12 @@ target_link_libraries(DiatonyDawApplication
 if(TARGET FontResources)
     target_link_libraries(DiatonyDawApplication PRIVATE FontResources)
     message(STATUS "FontResources target linked to DiatonyDawApplication")
+endif()
+
+# Link icon resources if they were created
+if(TARGET IconResources)
+    target_link_libraries(DiatonyDawApplication PRIVATE IconResources)
+    message(STATUS "IconResources target linked to DiatonyDawApplication")
 endif()
 
 
