@@ -124,4 +124,4 @@ namespace Diatony {
         Sharp = 1       // Dièse
     };
 
-} // namespace Diatony 
+} 

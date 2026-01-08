@@ -1,18 +1,9 @@
 #include "Modulation.h"
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// CONSTRUCTEUR
-// ═══════════════════════════════════════════════════════════════════════════════
-
 Modulation::Modulation(juce::ValueTree state) : state(state)
 {
-    // En mode debug, vérifier que le ValueTree est du bon type
     jassert(!state.isValid() || state.hasType(ModelIdentifiers::MODULATION));
 }
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// SETTERS
-// ═══════════════════════════════════════════════════════════════════════════════
 
 void Modulation::setModulationType(Diatony::ModulationType newType)
 {
@@ -50,82 +41,26 @@ void Modulation::setName(const juce::String& newName)
         state.setProperty(ModelIdentifiers::name, newName, nullptr);
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// GETTERS
-// ═══════════════════════════════════════════════════════════════════════════════
+int Modulation::getId() const { return state.getProperty(ModelIdentifiers::id, -1); }
+Diatony::ModulationType Modulation::getModulationType() const { return intToModulationType(state.getProperty(ModelIdentifiers::modulationType, 0)); }
+int Modulation::getFromSectionId() const { return state.getProperty(ModelIdentifiers::fromSectionId, -1); }
+int Modulation::getToSectionId() const { return state.getProperty(ModelIdentifiers::toSectionId, -1); }
+int Modulation::getFromChordIndex() const { return state.getProperty(ModelIdentifiers::fromChordIndex, -1); }
+int Modulation::getToChordIndex() const { return state.getProperty(ModelIdentifiers::toChordIndex, -1); }
+juce::String Modulation::getName() const { return state.getProperty(ModelIdentifiers::name, "Unknown Modulation").toString(); }
 
-int Modulation::getId() const
-{
-    return state.getProperty(ModelIdentifiers::id, -1);
-}
-
-Diatony::ModulationType Modulation::getModulationType() const
-{
-    return intToModulationType(state.getProperty(ModelIdentifiers::modulationType, 0));
-}
-
-int Modulation::getFromSectionId() const
-{
-    return state.getProperty(ModelIdentifiers::fromSectionId, -1);
-}
-
-int Modulation::getToSectionId() const
-{
-    return state.getProperty(ModelIdentifiers::toSectionId, -1);
-}
-
-int Modulation::getFromChordIndex() const
-{
-    return state.getProperty(ModelIdentifiers::fromChordIndex, -1);
-}
-
-int Modulation::getToChordIndex() const
-{
-    return state.getProperty(ModelIdentifiers::toChordIndex, -1);
-}
-
-juce::String Modulation::getName() const
-{
-    return state.getProperty(ModelIdentifiers::name, "Unknown Modulation").toString();
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// MÉTHODES UTILITAIRES
-// ═══════════════════════════════════════════════════════════════════════════════
-
-bool Modulation::hasValidSectionReferences() const
-{
-    return getFromSectionId() >= 0 && getToSectionId() >= 0;
-}
-
-bool Modulation::hasChordIndices() const
-{
-    return getFromChordIndex() >= 0 && getToChordIndex() >= 0;
-}
+bool Modulation::hasValidSectionReferences() const { return getFromSectionId() >= 0 && getToSectionId() >= 0; }
+bool Modulation::hasChordIndices() const { return getFromChordIndex() >= 0 && getToChordIndex() >= 0; }
 
 juce::String Modulation::toString() const
 {
     if (!isValid())
         return "Invalid Modulation";
     
-    juce::String result = getName();
-    result += " (ID=" + juce::String(getId());
-    result += ", Section " + juce::String(getFromSectionId());
-    result += " -> Section " + juce::String(getToSectionId()) + ")";
-    
-    return result;
+    return getName() + " (ID=" + juce::String(getId()) +
+           ", Section " + juce::String(getFromSectionId()) +
+           " -> Section " + juce::String(getToSectionId()) + ")";
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// HELPERS DE CONVERSION
-// ═══════════════════════════════════════════════════════════════════════════════
-
-int Modulation::modulationTypeToInt(Diatony::ModulationType type)
-{
-    return static_cast<int>(type);
-}
-
-Diatony::ModulationType Modulation::intToModulationType(int value)
-{
-    return static_cast<Diatony::ModulationType>(value);
-}
+int Modulation::modulationTypeToInt(Diatony::ModulationType type) { return static_cast<int>(type); }
+Diatony::ModulationType Modulation::intToModulationType(int value) { return static_cast<Diatony::ModulationType>(value); }
