@@ -89,8 +89,6 @@ target_sources(DiatonyDawApplication
         # UI Extra Components - Panel
         src/ui/extra/Component/Panel/ColoredPanel.h
         src/ui/extra/Component/Panel/ColoredPanel.cpp
-        src/ui/extra/Component/Panel/ClickableColoredPanel.h
-        src/ui/extra/Component/Panel/ClickableColoredPanel.cpp
         src/ui/extra/Component/Panel/InfoColoredPanel.h
         src/ui/extra/Component/Panel/InfoColoredPanel.cpp
         # UI Extra Components - Zone (reusable zones like BaseZone)
@@ -103,12 +101,8 @@ target_sources(DiatonyDawApplication
         # UI Extra Components - Button  
         src/ui/extra/Button/ButtonColoredPanel.h
         src/ui/extra/Button/ButtonColoredPanel.cpp
-        src/ui/extra/Button/OutlineTextButton.h
-        src/ui/extra/Button/OutlineTextButton.cpp
         src/ui/extra/Button/StyledButton.h
         src/ui/extra/Button/StyledButton.cpp
-        src/ui/extra/Button/CircularButton.h
-        src/ui/extra/Button/CircularButton.cpp
         src/ui/extra/Button/SelectableStyledButton.h
         src/ui/extra/Button/SelectableStyledButton.cpp
         src/ui/extra/Button/IconStyledButton.h
@@ -121,8 +115,6 @@ target_sources(DiatonyDawApplication
         src/ui/extra/Component/SimpleToastComponent.cpp
         src/ui/extra/Component/TextPill.h
         src/ui/extra/Component/TextPill.cpp
-        src/ui/extra/Component/ToastComponent.h
-        src/ui/extra/Component/ToastComponent.cpp
         
         # UI Footer Components
         src/ui/footer/components/InteractivePiano/PianoKey.h
@@ -187,8 +179,6 @@ target_sources(DiatonyDawApplication
         src/ui/section/components/EditZone/Parameters/ModeZone.cpp
         src/ui/section/components/EditZone/Parameters/KeySelectorComponent.h
         src/ui/section/components/EditZone/Parameters/KeySelectorComponent.cpp
-        src/ui/section/components/EditZone/Parameters/Zone3.h
-        src/ui/section/components/EditZone/Parameters/Zone3.cpp
         src/ui/section/components/EditZone/Parameters/Zone4.h
         src/ui/section/components/EditZone/Parameters/Zone4.cpp
         
