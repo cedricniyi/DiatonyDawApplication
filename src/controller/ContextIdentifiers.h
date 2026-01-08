@@ -1,12 +1,10 @@
 #pragma once
 #include <juce_core/juce_core.h>
 
+/** @brief Identifiants pour le ValueTree de sélection UI. */
 namespace ContextIdentifiers
 {
-    // Identifiant pour le ValueTree de l'état de sélection
     const juce::Identifier SELECTION_STATE { "SelectionState" };
-    
-    // Propriétés de l'état de sélection
     const juce::Identifier selectionType     { "selectionType" };
     const juce::Identifier selectedElementId { "selectedElementId" };
 } 
