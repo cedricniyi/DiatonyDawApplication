@@ -186,8 +186,8 @@ void MainContentComponent::valueTreePropertyChanged(juce::ValueTree& treeWhosePr
             juce::MessageManager::callAsync([this]() {
                 showPopup(
                     DiatonyAlertWindow::AlertType::Info,
-                    juce::String::fromUTF8("Génération en cours"),
-                    juce::String::fromUTF8("Diatony recherche une solution musicale...\n\nVeuillez patienter, cela peut prendre quelques secondes."),
+                    juce::String::fromUTF8("Generating..."),
+                    juce::String::fromUTF8("Diatony is searching for a musical solution...\n\nPlease wait, this may take a few seconds."),
                     ""  // Pas de bouton → non fermable par l'utilisateur
                 );
             });
@@ -200,8 +200,8 @@ void MainContentComponent::valueTreePropertyChanged(juce::ValueTree& treeWhosePr
             juce::MessageManager::callAsync([this]() {
                 showPopup(
                     DiatonyAlertWindow::AlertType::Success,
-                    juce::String::fromUTF8("Génération Réussie"),
-                    juce::String::fromUTF8("Le fichier MIDI a été généré avec succès !\n\nLa solution a été trouvée par le solveur Diatony."),
+                    juce::String::fromUTF8("Generation Complete"),
+                    juce::String::fromUTF8("The MIDI file was generated successfully!\n\nA solution was found by the Diatony solver."),
                     "OK"
                 );
             });
@@ -218,8 +218,8 @@ void MainContentComponent::valueTreePropertyChanged(juce::ValueTree& treeWhosePr
             juce::MessageManager::callAsync([this, errorMessage]() {
                 showPopup(
                     DiatonyAlertWindow::AlertType::Error,
-                    juce::String::fromUTF8("Échec de la Génération"),
-                    juce::String::fromUTF8("Le solveur n'a pas pu trouver de solution :\n\n") + errorMessage,
+                    juce::String::fromUTF8("Generation Failed"),
+                    juce::String::fromUTF8("The solver could not find a solution:\n\n") + errorMessage,
                     "OK"
                 );
             });
@@ -310,7 +310,7 @@ void MainContentComponent::DragOverlay::paint(juce::Graphics& g)
     // Texte centré
     g.setColour(juce::Colour(0xFF1A1A1A));
     g.setFont(juce::Font(fontManager->getSFProDisplay(20.0f, FontManager::FontWeight::Semibold)));
-    g.drawText(juce::String::fromUTF8("📂 Déposer votre fichier .diatony ici"),
+    g.drawText(juce::String::fromUTF8("📂 Drop your .diatony file here"),
                centerRect, juce::Justification::centred, true);
 }
 
@@ -359,8 +359,8 @@ void MainContentComponent::filesDropped(const juce::StringArray& files, int x, i
     {
         showPopup(
             DiatonyAlertWindow::AlertType::Warning,
-            "Attention",
-            juce::String::fromUTF8("Veuillez déposer un seul fichier à la fois."),
+            "Warning",
+            juce::String::fromUTF8("Please drop only one file at a time."),
             "OK"
         );
         return;
@@ -381,8 +381,8 @@ void MainContentComponent::filesDropped(const juce::StringArray& files, int x, i
     {
         showPopup(
             DiatonyAlertWindow::AlertType::Warning,
-            "Format invalide",
-            juce::String::fromUTF8("Le fichier déposé n'est pas un fichier .diatony valide."),
+            "Invalid Format",
+            juce::String::fromUTF8("The dropped file is not a valid .diatony file."),
             "OK"
         );
         return;
@@ -395,8 +395,8 @@ void MainContentComponent::filesDropped(const juce::StringArray& files, int x, i
         DBG("❌ Impossible de trouver AudioPluginAudioProcessorEditor");
         showPopup(
             DiatonyAlertWindow::AlertType::Error,
-            "Erreur interne",
-            juce::String::fromUTF8("Impossible d'accéder au contrôleur de l'application."),
+            "Internal Error",
+            juce::String::fromUTF8("Unable to access the application controller."),
             "OK"
         );
         return;
@@ -413,8 +413,8 @@ void MainContentComponent::filesDropped(const juce::StringArray& files, int x, i
     {
         showPopup(
             DiatonyAlertWindow::AlertType::Success,
-            juce::String::fromUTF8("Projet Chargé"),
-            juce::String::fromUTF8("Le fichier « ") + file.getFileNameWithoutExtension() + juce::String::fromUTF8(" » a été chargé avec succès."),
+            juce::String::fromUTF8("Project Loaded"),
+            juce::String::fromUTF8("The file \"") + file.getFileNameWithoutExtension() + juce::String::fromUTF8("\" was loaded successfully."),
             "OK"
         );
     }
@@ -422,8 +422,8 @@ void MainContentComponent::filesDropped(const juce::StringArray& files, int x, i
     {
         showPopup(
             DiatonyAlertWindow::AlertType::Error,
-            "Erreur de chargement",
-            juce::String::fromUTF8("Impossible de charger le fichier.\n\nVérifiez qu'il s'agit d'un fichier .diatony valide."),
+            "Loading Error",
+            juce::String::fromUTF8("Unable to load the file.\n\nMake sure it is a valid .diatony file."),
             "OK"
         );
     }
@@ -484,8 +484,8 @@ void MainContentComponent::itemDropped(const SourceDetails& dragSourceDetails)
         DBG("❌ Impossible de trouver AudioPluginAudioProcessorEditor");
         showPopup(
             DiatonyAlertWindow::AlertType::Error,
-            "Erreur interne",
-            juce::String::fromUTF8("Impossible d'accéder au contrôleur de l'application."),
+            "Internal Error",
+            juce::String::fromUTF8("Unable to access the application controller."),
             "OK"
         );
         return;
