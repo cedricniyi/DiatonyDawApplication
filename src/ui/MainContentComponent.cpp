@@ -2,6 +2,7 @@
 #include "header/HeaderPanel.h"
 #include "section/SectionPanel.h"
 #include "footer/FooterPanel.h"
+#include "history/HistoryPanel.h"
 #include "UIStateIdentifiers.h"
 #include "extra/Component/DiatonyAlertWindow.h"
 #include "PluginEditor.h"
@@ -13,13 +14,18 @@ MainContentComponent::MainContentComponent()
       headerPanel(),
       sectionPanel(),
       footerPanel(),
+      historyPanel(),
       headerFlex(7.5f),
-      sectionFlex(57.5f),
+      sectionFlex(10.5f),
       footerFlex(15.0f)
 {        
     addAndMakeVisible(headerPanel);
     addAndMakeVisible(sectionPanel);
-    addAndMakeVisible(footerPanel);
+    // Footer masqué temporairement
+    addChildComponent(footerPanel);
+    
+    // History Panel (visible mais largeur animée)
+    addAndMakeVisible(historyPanel);
     
     // Drag & Drop overlay (invisible par défaut)
     addChildComponent(dragOverlay);
@@ -51,6 +57,7 @@ void MainContentComponent::setAppState(juce::ValueTree& state)
     // Propagation de l'état aux panels enfants
     headerPanel.setAppState(appState);
     footerPanel.setAppState(appState);
+    historyPanel.setAppState(appState);
     // sectionPanel.setAppState(appState);  // Si nécessaire plus tard
 }
 
@@ -67,39 +74,53 @@ void MainContentComponent::setSelectionState(juce::ValueTree& state)
 
 void MainContentComponent::paint(juce::Graphics& g)
 {   
-    // Dégradé linéaire à 135 degrés
-    auto bounds = getLocalBounds().toFloat();
-    
-    auto center = bounds.getCentre();
-    auto diagonal = std::sqrt(bounds.getWidth() * bounds.getWidth() + bounds.getHeight() * bounds.getHeight()) * 0.5f;
-    
-    auto angleRad = juce::MathConstants<float>::pi * 135.0f / 180.0f;
-    auto startPoint = center - juce::Point<float>(std::cos(angleRad), std::sin(angleRad)) * diagonal;
-    auto endPoint = center + juce::Point<float>(std::cos(angleRad), std::sin(angleRad)) * diagonal;
-    
-    juce::ColourGradient gradient(
-        juce::Colour::fromString("fff5f7fa"), startPoint,
-        juce::Colour::fromString("ffc3cfe2"), endPoint,
-        false
-    );
-    
-    g.setGradientFill(gradient);
-    g.fillRect(bounds);
+    // Fond uni gris #5b5b5b
+    g.fillAll(juce::Colour::fromString("#FF2A2A2A"));
 }
 
 void MainContentComponent::resized()
 {
+    auto bounds = getLocalBounds();
+    
+    // === LAYOUT HORIZONTAL : Zone principale | History Panel ===
+    // Calculer la largeur du panneau History (animée de 0 à 250px)
+    constexpr int HISTORY_PANEL_MAX_WIDTH = 250;
+    int historyWidth = static_cast<int>(HISTORY_PANEL_MAX_WIDTH * historyPanel.getWidthFraction());
+    
+    // History Panel à droite (largeur animée)
+    if (historyWidth > 0)
+    {
+        auto historyBounds = bounds.removeFromRight(historyWidth);
+        historyPanel.setBounds(historyBounds);
+        historyPanel.setVisible(true);
+    }
+    else
+    {
+        historyPanel.setBounds(0, 0, 0, 0);
+        historyPanel.setVisible(false);
+    }
+    
+    // Sauvegarder la zone principale pour l'overlay (sans le HistoryPanel)
+    auto mainAreaBounds = bounds;
+    
+    // === ZONE PRINCIPALE (header + section + footer) ===
     int padding = 8;
-    auto content = getLocalBounds().reduced(padding);
+    
+    // Header avec hauteur FIXE de 60px (ne se compresse pas)
+    constexpr int HEADER_HEIGHT = 60;
+    headerPanel.setBounds(bounds.removeFromTop(HEADER_HEIGHT));
+    
+    // Le reste avec padding
+    auto content = bounds.reduced(padding, 0);  // Padding horizontal seulement
+    content.removeFromTop(4);  // Petit espace après le header
 
-    // Layout vertical avec FlexBox
+    // Layout vertical avec FlexBox pour le reste
     juce::FlexBox fb;
     fb.flexDirection = juce::FlexBox::Direction::column;
 
     fb.items = {
-        juce::FlexItem(headerPanel).withFlex(headerFlex).withMargin({ 0, 0, 4, 0 }),
-        juce::FlexItem(sectionPanel).withFlex(sectionFlex).withMargin({ 4, 0, 4, 0 }),
-        juce::FlexItem(footerPanel).withFlex(footerFlex).withMargin({ 4, 0, 0, 0 })
+        juce::FlexItem(sectionPanel).withFlex(1.0f)
+        // Footer masqué temporairement
     };
 
     fb.performLayout(content);
@@ -110,8 +131,8 @@ void MainContentComponent::resized()
         activePopup->setBounds(getLocalBounds());
     }
     
-    // Positionner l'overlay de drag & drop
-    dragOverlay.setBounds(getLocalBounds());
+    // Positionner l'overlay de drag & drop UNIQUEMENT sur la zone principale (pas sur HistoryPanel)
+    dragOverlay.setBounds(mainAreaBounds);
 }
 
 float& MainContentComponent::getHeaderFlexRef()
@@ -144,6 +165,11 @@ SectionPanel& MainContentComponent::getSectionPanel()
     return sectionPanel;
 }
 
+HistoryPanel& MainContentComponent::getHistoryPanel()
+{
+    return historyPanel;
+}
+
 void MainContentComponent::valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged,
                                                    const juce::Identifier& property)
 {
@@ -160,8 +186,8 @@ void MainContentComponent::valueTreePropertyChanged(juce::ValueTree& treeWhosePr
             juce::MessageManager::callAsync([this]() {
                 showPopup(
                     DiatonyAlertWindow::AlertType::Info,
-                    juce::String::fromUTF8("Génération en cours"),
-                    juce::String::fromUTF8("Diatony recherche une solution musicale...\n\nVeuillez patienter, cela peut prendre quelques secondes."),
+                    juce::String::fromUTF8("Generating..."),
+                    juce::String::fromUTF8("Diatony is searching for a musical solution...\n\nPlease wait, this may take a few seconds."),
                     ""  // Pas de bouton → non fermable par l'utilisateur
                 );
             });
@@ -174,8 +200,8 @@ void MainContentComponent::valueTreePropertyChanged(juce::ValueTree& treeWhosePr
             juce::MessageManager::callAsync([this]() {
                 showPopup(
                     DiatonyAlertWindow::AlertType::Success,
-                    juce::String::fromUTF8("Génération Réussie"),
-                    juce::String::fromUTF8("Le fichier MIDI a été généré avec succès !\n\nLa solution a été trouvée par le solveur Diatony."),
+                    juce::String::fromUTF8("Generation Complete"),
+                    juce::String::fromUTF8("The MIDI file was generated successfully!\n\nA solution was found by the Diatony solver."),
                     "OK"
                 );
             });
@@ -192,8 +218,8 @@ void MainContentComponent::valueTreePropertyChanged(juce::ValueTree& treeWhosePr
             juce::MessageManager::callAsync([this, errorMessage]() {
                 showPopup(
                     DiatonyAlertWindow::AlertType::Error,
-                    juce::String::fromUTF8("Échec de la Génération"),
-                    juce::String::fromUTF8("Le solveur n'a pas pu trouver de solution :\n\n") + errorMessage,
+                    juce::String::fromUTF8("Generation Failed"),
+                    juce::String::fromUTF8("The solver could not find a solution:\n\n") + errorMessage,
                     "OK"
                 );
             });
@@ -284,7 +310,7 @@ void MainContentComponent::DragOverlay::paint(juce::Graphics& g)
     // Texte centré
     g.setColour(juce::Colour(0xFF1A1A1A));
     g.setFont(juce::Font(fontManager->getSFProDisplay(20.0f, FontManager::FontWeight::Semibold)));
-    g.drawText(juce::String::fromUTF8("📂 Déposer votre fichier .diatony ici"),
+    g.drawText(juce::String::fromUTF8("📂 Drop your .diatony file here"),
                centerRect, juce::Justification::centred, true);
 }
 
@@ -333,8 +359,8 @@ void MainContentComponent::filesDropped(const juce::StringArray& files, int x, i
     {
         showPopup(
             DiatonyAlertWindow::AlertType::Warning,
-            "Attention",
-            juce::String::fromUTF8("Veuillez déposer un seul fichier à la fois."),
+            "Warning",
+            juce::String::fromUTF8("Please drop only one file at a time."),
             "OK"
         );
         return;
@@ -355,8 +381,8 @@ void MainContentComponent::filesDropped(const juce::StringArray& files, int x, i
     {
         showPopup(
             DiatonyAlertWindow::AlertType::Warning,
-            "Format invalide",
-            juce::String::fromUTF8("Le fichier déposé n'est pas un fichier .diatony valide."),
+            "Invalid Format",
+            juce::String::fromUTF8("The dropped file is not a valid .diatony file."),
             "OK"
         );
         return;
@@ -369,8 +395,8 @@ void MainContentComponent::filesDropped(const juce::StringArray& files, int x, i
         DBG("❌ Impossible de trouver AudioPluginAudioProcessorEditor");
         showPopup(
             DiatonyAlertWindow::AlertType::Error,
-            "Erreur interne",
-            juce::String::fromUTF8("Impossible d'accéder au contrôleur de l'application."),
+            "Internal Error",
+            juce::String::fromUTF8("Unable to access the application controller."),
             "OK"
         );
         return;
@@ -387,8 +413,97 @@ void MainContentComponent::filesDropped(const juce::StringArray& files, int x, i
     {
         showPopup(
             DiatonyAlertWindow::AlertType::Success,
-            juce::String::fromUTF8("Projet Chargé"),
-            juce::String::fromUTF8("Le fichier « ") + file.getFileNameWithoutExtension() + juce::String::fromUTF8(" » a été chargé avec succès."),
+            juce::String::fromUTF8("Project Loaded"),
+            juce::String::fromUTF8("The file \"") + file.getFileNameWithoutExtension() + juce::String::fromUTF8("\" was loaded successfully."),
+            "OK"
+        );
+    }
+    else
+    {
+        showPopup(
+            DiatonyAlertWindow::AlertType::Error,
+            "Loading Error",
+            juce::String::fromUTF8("Unable to load the file.\n\nMake sure it is a valid .diatony file."),
+            "OK"
+        );
+    }
+}
+
+//==============================================================================
+// DragAndDropTarget interface (drag interne depuis HistoryPanel)
+//==============================================================================
+
+bool MainContentComponent::isInterestedInDragSource(const SourceDetails& dragSourceDetails)
+{
+    // Accepter uniquement les drags depuis HistoryPanel
+    // La description commence par "HISTORY_ITEM:" suivie du chemin du fichier
+    juce::String description = dragSourceDetails.description.toString();
+    return description.startsWith("HISTORY_ITEM:");
+}
+
+void MainContentComponent::itemDragEnter(const SourceDetails& dragSourceDetails)
+{
+    juce::ignoreUnused(dragSourceDetails);
+    
+    DBG("📂 Drag Enter (interne) : item d'historique");
+    dragOverlay.setVisible(true);
+    dragOverlay.toFront(false);
+}
+
+void MainContentComponent::itemDragExit(const SourceDetails& dragSourceDetails)
+{
+    juce::ignoreUnused(dragSourceDetails);
+    
+    DBG("📂 Drag Exit (interne)");
+    dragOverlay.setVisible(false);
+}
+
+void MainContentComponent::itemDropped(const SourceDetails& dragSourceDetails)
+{
+    // Cacher l'overlay
+    dragOverlay.setVisible(false);
+    
+    // === 1. EXTRAIRE LE CHEMIN DU FICHIER ===
+    juce::String description = dragSourceDetails.description.toString();
+    
+    if (!description.startsWith("HISTORY_ITEM:"))
+    {
+        DBG("❌ Description invalide : " << description);
+        return;
+    }
+    
+    // Extraire le chemin après le préfixe
+    juce::String diatonyFilePath = description.fromFirstOccurrenceOf("HISTORY_ITEM:", false, false);
+    
+    DBG("📂 Item dropped depuis historique : " << diatonyFilePath);
+    
+    // === 2. OBTENIR L'APPCONTROLLER ===
+    auto* pluginEditor = findParentComponentOfClass<AudioPluginAudioProcessorEditor>();
+    if (pluginEditor == nullptr)
+    {
+        DBG("❌ Impossible de trouver AudioPluginAudioProcessorEditor");
+        showPopup(
+            DiatonyAlertWindow::AlertType::Error,
+            "Internal Error",
+            juce::String::fromUTF8("Unable to access the application controller."),
+            "OK"
+        );
+        return;
+    }
+    
+    auto& appController = pluginEditor->getAppController();
+    
+    // === 3. CHARGER LE FICHIER ===
+    juce::File file(diatonyFilePath);
+    bool success = appController.loadProjectFromFile(file);
+    
+    // === 4. FEEDBACK UTILISATEUR ===
+    if (success)
+    {
+        showPopup(
+            DiatonyAlertWindow::AlertType::Success,
+            juce::String::fromUTF8("Session Restaurée"),
+            juce::String::fromUTF8("La session « ") + file.getFileNameWithoutExtension() + juce::String::fromUTF8(" » a été restaurée."),
             "OK"
         );
     }
@@ -397,7 +512,7 @@ void MainContentComponent::filesDropped(const juce::StringArray& files, int x, i
         showPopup(
             DiatonyAlertWindow::AlertType::Error,
             "Erreur de chargement",
-            juce::String::fromUTF8("Impossible de charger le fichier.\n\nVérifiez qu'il s'agit d'un fichier .diatony valide."),
+            juce::String::fromUTF8("Impossible de charger la session.\n\nLe fichier est peut-être corrompu."),
             "OK"
         );
     }

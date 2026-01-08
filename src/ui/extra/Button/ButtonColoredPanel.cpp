@@ -33,9 +33,9 @@ void ButtonColoredPanel::paintButton(juce::Graphics& g, bool shouldDrawButtonAsH
 {
     auto bounds = getLocalBounds().toFloat();
     
-    // Créer le path pour le rectangle arrondi (identique à ColoredPanel)
+    // Créer le path pour le rectangle (sans coins arrondis)
     juce::Path panelPath;
-    panelPath.addRoundedRectangle(bounds, 10.0f);
+    panelPath.addRectangle(bounds);
 
     // Couleur avec effets hover et sélection
     juce::Colour currentColor;

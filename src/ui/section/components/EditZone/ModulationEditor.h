@@ -3,8 +3,8 @@
 #include <JuceHeader.h>
 #include <juce_data_structures/juce_data_structures.h>
 #include <juce_gui_basics/juce_gui_basics.h>
-#include "ui/extra/Component/Panel/ColoredPanel.h"
-#include "ui/extra/Component/ComboBox/DiatonyComboBox.h"
+#include "ModulationParameters/ModulationTypeZone.h"
+#include "ModulationParameters/SectionChordsZone.h"
 #include "utils/FontManager.h"
 #include "model/Modulation.h"
 #include "model/Section.h"
@@ -16,10 +16,9 @@
 class AudioPluginAudioProcessorEditor;
 
 /**
- * Composant d'édition de modulation - Affiche les informations d'une modulation
- * et de ses sections adjacentes depuis le ValueTree
+ * Composant d'édition de modulation - Transparent avec encoche verdâtre
  */
-class ModulationEditor : public ColoredPanel, public juce::ValueTree::Listener
+class ModulationEditor : public juce::Component, public juce::ValueTree::Listener
 {
 public:
     ModulationEditor();
@@ -73,61 +72,40 @@ private:
     AppController* appController = nullptr;
     
     // Labels pour afficher les informations
-    juce::Label modulationNameLabel;        // Label pour le nom de la modulation
-    juce::Label modulationTypeLabel;        // Label "Type :"
-    DiatonyComboBox modulationTypeComboBox; // ComboBox pour sélectionner le type
-    juce::Label fromSectionLabel;           // Section source
-    juce::Label toSectionLabel;             // Section destination
-    juce::Label chordIndicesLabel;          // Indices d'accords
-    
-    // ComboBoxes listant les accords des sections adjacentes
-    DiatonyComboBox fromChordComboBox;      // ComboBox avec accords de la section source
-    DiatonyComboBox toChordComboBox;        // ComboBox avec accords de la section destination
+    juce::Label modulationNameLabel;        // Label pour le nom de la modulation (dans l'encoche)
+    ModulationTypeZone modulationTypeZone;  // Zone avec 4 boutons pour le type
     
     // Label pour indiquer quand l'intervalle est géré automatiquement
-    juce::Label autoIntervalLabel;          // "Transition gérée automatiquement par le solveur"
+    // Message dynamique centré (automatique vs manuel)
+    juce::Label statusMessageLabel;
+    
+    // Nouvelles zones pour les accords des sections adjacentes
+    SectionChordsZone fromSectionZone;      // 4 derniers accords de la section source
+    SectionChordsZone toSectionZone;        // 4 premiers accords de la section destination
     
     juce::SharedResourcePointer<FontManager> fontManager;
     
     // Zones de layout
-    juce::Rectangle<int> headerArea;
-    juce::Rectangle<int> contentArea;
+    juce::Rectangle<int> notchArea;     // Encoche centrée pour le titre
+    juce::Rectangle<int> contentArea;   // Zone de contenu sous l'encoche
     
-    // Propriétés pour bordure sophistiquée (inspiré de OutlineTextButton)
-    float borderThickness = 2.0f;
-    float cornerRadius = 8.0f;
-    juce::Colour borderColour = juce::Colours::darkgreen;
-    
-    // Valeurs validées depuis DiatonyTypes.h (comme Zone4ContentArea)
-    // Les 4 types de modulation disponibles
-    static constexpr std::array<Diatony::ModulationType, 4> modulationTypes = {
-        Diatony::ModulationType::PerfectCadence,
-        Diatony::ModulationType::PivotChord,
-        Diatony::ModulationType::Alteration,
-        Diatony::ModulationType::Chromatic
-    };
+    // Couleur de l'encoche (légèrement verdâtre)
+    juce::Colour notchBackgroundColour = juce::Colour(0x66228B22);  // Forest green semi-transparent
+    juce::Colour notchBorderColour = juce::Colours::green.withAlpha(0.4f);
     
     void setupModulationNameLabel();
-    void setupInfoLabels();
-    void setupModulationTypeComboBox();
-    void setupChordSelectionComboBoxes();
-    void setupAutoIntervalLabel();
+    void setupModulationTypeZone();
+    void setupStatusMessageLabel();
+    void setupSectionChordsZones();
     void updateContent();
     void syncFromModel();
     void updateIntervalControlsVisibility();  // Affiche/cache les contrôles selon le type
-    void drawBorder(juce::Graphics& g);
-    void drawSeparatorLine(juce::Graphics& g);
+    void drawNotch(juce::Graphics& g);        // Dessine l'encoche centrée
     
     // Callbacks pour les changements
-    void onModulationTypeChanged();
-    void onFromChordChanged();
-    void onToChordChanged();
-    
-    // Helper pour peupler les ComboBoxes d'accords
-    void populateChordComboBoxes();
-    
-    // Helper pour formater les accords d'une section
-    juce::String formatSectionChords(const Section& section) const;
+    void onModulationTypeChanged(Diatony::ModulationType newType);
+    void onFromChordSelected(int chordIndex);
+    void onToChordSelected(int chordIndex);
     
     // Helpers
     void findAppController();

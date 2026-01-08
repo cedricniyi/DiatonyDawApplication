@@ -14,7 +14,7 @@
 
 // Forward declarations pour éviter les dépendances circulaires
 class RootAnimator;
-class FooterAnimator;
+class SlidingPanelAnimator;
 class AppController;
 
 // ==============================================================================
@@ -65,8 +65,9 @@ private:
     std::unique_ptr<MainContentComponent> mainContent;
     
     // Animators pour gérer les animations à différents niveaux
-    std::unique_ptr<RootAnimator> rootAnimator;      // Animations niveau root (flex)
-    std::unique_ptr<FooterAnimator> footerAnimator;  // Animations niveau footer (grid + fade)
+    std::unique_ptr<RootAnimator> rootAnimator;              // Animations niveau root (flex)
+    std::unique_ptr<SlidingPanelAnimator> footerAnimator;    // Animations niveau footer (grid + fade)
+    std::unique_ptr<SlidingPanelAnimator> historyAnimator;   // Animations niveau history panel (width + fade)
 
     // Constrainer pour la taille
     std::unique_ptr<juce::ComponentBoundsConstrainer> constrainer;

@@ -3,7 +3,7 @@
 
 //==============================================================================
 Zone4ContentArea::Zone4ContentArea() 
-    : ColoredPanel(juce::Colours::lightsteelblue.withAlpha(0.75f)),
+    : ColoredPanel(juce::Colours::black),
       scrollableContent(std::make_unique<Zone4ScrollablePanel>())
 {
     setAlpha(1.0f);
@@ -82,6 +82,11 @@ void Zone4ContentArea::addRectangle(juce::ValueTree chordState)
         newRectangle->getStateCombo().setSelectedItemIndex(state, juce::dontSendNotification);
         newRectangle->getQualityCombo().setSelectedItemIndex(quality + 1, juce::dontSendNotification);
         
+        // Forcer la mise à jour du texte court affiché (nécessaire car dontSendNotification ne déclenche pas le listener)
+        newRectangle->getDegreeCombo().refreshDisplayedText();
+        newRectangle->getStateCombo().refreshDisplayedText();
+        newRectangle->getQualityCombo().refreshDisplayedText();
+        
         // Connecter les onChange des comboboxes au ValueTree
         // On capture le ValueTree par valeur (c'est léger, juste un pointeur interne)
         // et les pointeurs vers les comboboxes
@@ -105,6 +110,16 @@ void Zone4ContentArea::addRectangle(juce::ValueTree chordState)
             int newQuality = comboboxIndex - 1;
             chordState.setProperty(ModelIdentifiers::quality, newQuality, nullptr);
         };
+        
+        // Connecter le callback de suppression (long press)
+        newRectangle->onDeleteRequested = [chordState]() mutable {
+            if (chordState.isValid()) {
+                auto parent = chordState.getParent();
+                if (parent.isValid()) {
+                    parent.removeChild(chordState, nullptr);
+                }
+            }
+        };
     }
     else
     {
@@ -113,6 +128,11 @@ void Zone4ContentArea::addRectangle(juce::ValueTree chordState)
         newRectangle->getDegreeCombo().setSelectedItemIndex(0, juce::dontSendNotification);
         newRectangle->getStateCombo().setSelectedItemIndex(0, juce::dontSendNotification);
         newRectangle->getQualityCombo().setSelectedItemIndex(0, juce::dontSendNotification); // Auto
+        
+        // Forcer la mise à jour du texte court affiché
+        newRectangle->getDegreeCombo().refreshDisplayedText();
+        newRectangle->getStateCombo().refreshDisplayedText();
+        newRectangle->getQualityCombo().refreshDisplayedText();
     }
     
     // Ajout au contenu scrollable
@@ -177,13 +197,17 @@ void Zone4ContentArea::setupViewport()
     viewport.setScrollBarsShown(false, true, false, false);
     viewport.setScrollBarPosition(true, true);
     
+    // Couleur de la scrollbar : gris clair transparent
+    viewport.getHorizontalScrollBar().setColour(juce::ScrollBar::thumbColourId, juce::Colours::lightgrey.withAlpha(0.4f));
+    viewport.getHorizontalScrollBar().setColour(juce::ScrollBar::trackColourId, juce::Colours::transparentBlack);
+    
     addAndMakeVisible(viewport);
 }
 
 void Zone4ContentArea::setupEmptyLabel()
 {
     // Configuration du label d'état vide
-    emptyLabel.setText(juce::String::fromUTF8("Aucun élément ajouté"), juce::dontSendNotification);
+    emptyLabel.setText(juce::String::fromUTF8("No chord added"), juce::dontSendNotification);
     emptyLabel.setJustificationType(juce::Justification::centred);
     emptyLabel.setColour(juce::Label::textColourId, juce::Colours::grey.withAlpha(0.7f));
     
@@ -206,10 +230,9 @@ void Zone4ContentArea::updateVisibility()
 
 juce::Colour Zone4ContentArea::getNextColour()
 {
-    // Rotation des couleurs disponibles
-    auto colour = availableColours[(nextRectangleId - 1) % availableColours.size()];
+    // Gris uniforme pour tous les accords (similaire à l'en-tête des BaseZone)
     nextRectangleId++;
-    return colour;
+    return juce::Colours::darkgrey;
 }
 
 void Zone4ContentArea::populateInfoColoredPanel(InfoColoredPanel* panel)
@@ -218,28 +241,36 @@ void Zone4ContentArea::populateInfoColoredPanel(InfoColoredPanel* panel)
         return;
     
     // Préparer les listes de noms pour chaque combobox
+    // Noms longs pour le dropdown, noms courts pour l'affichage sélectionné
     
     // 1. ChordDegree (degré d'accord) - Zone gauche
+    // Les degrés sont déjà courts (I, II, etc.), pas besoin de version courte
     juce::StringArray degreeNames;
     for (const auto& degree : chordDegrees)
     {
         degreeNames.add(DiatonyText::getChordDegreeName(degree));
     }
-    panel->populateLeftCombo(degreeNames);
+    panel->populateDegreeCombo(degreeNames);
     
-    // 2. ChordState (état d'inversion) - Zone top-right
-    juce::StringArray stateNames;
-    for (const auto& state : chordStates)
-    {
-        stateNames.add(DiatonyText::getChordStateName(state));
-    }
-    panel->populateTopRightCombo(stateNames);
-    
-    // 3. ChordQuality (qualité d'accord) - Zone bottom-right
+    // 2. ChordQuality (qualité d'accord) - Zone milieu
+    // Noms complets dans le dropdown, abréviations une fois sélectionné
     juce::StringArray qualityNames;
+    juce::StringArray qualityShortNames;
     for (const auto& quality : chordQualities)
     {
         qualityNames.add(DiatonyText::getChordQualityName(quality));
+        qualityShortNames.add(DiatonyText::getShortQualityName(quality));
     }
-    panel->populateBottomRightCombo(qualityNames);
+    panel->populateQualityCombo(qualityNames, qualityShortNames);
+    
+    // 3. ChordState (état d'inversion) - Zone bas
+    // Noms complets dans le dropdown, abréviations une fois sélectionné
+    juce::StringArray stateNames;
+    juce::StringArray stateShortNames;
+    for (const auto& state : chordStates)
+    {
+        stateNames.add(DiatonyText::getChordStateName(state));
+        stateShortNames.add(DiatonyText::getShortStateName(state));
+    }
+    panel->populateStateCombo(stateNames, stateShortNames);
 }

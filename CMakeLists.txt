@@ -93,6 +93,8 @@ target_sources(DiatonyDawApplication
         src/ui/extra/Component/Panel/ClickableColoredPanel.cpp
         src/ui/extra/Component/Panel/InfoColoredPanel.h
         src/ui/extra/Component/Panel/InfoColoredPanel.cpp
+        # UI Extra Components - Zone (reusable zones like BaseZone)
+        src/ui/extra/Component/Zone/BaseZone.h
         src/ui/extra/Component/ComboBox/DiatonyComboBox.cpp
         src/ui/extra/Component/ComboBox/DiatonyComboBox.h
         src/ui/extra/Component/ComboBox/DiatonyComboBoxLookAndFeel.h
@@ -109,6 +111,8 @@ target_sources(DiatonyDawApplication
         src/ui/extra/Button/CircularButton.cpp
         src/ui/extra/Button/SelectableStyledButton.h
         src/ui/extra/Button/SelectableStyledButton.cpp
+        src/ui/extra/Button/IconStyledButton.h
+        src/ui/extra/Button/IconStyledButton.cpp
         
         # UI Extra Components - Component
         src/ui/extra/Component/DiatonyAlertWindow.h
@@ -131,12 +135,15 @@ target_sources(DiatonyDawApplication
         src/ui/footer/components/MidiPianoContentArea.cpp
         src/ui/footer/components/MidiPianoArea.h
         src/ui/footer/components/MidiPianoArea.cpp
-        src/ui/footer/animator/FooterAnimator.h
-        src/ui/footer/animator/FooterAnimator.cpp
         src/ui/footer/FooterPanel.h
         src/ui/footer/FooterPanel.cpp
+        # UI History Panel
+        src/ui/history/HistoryPanel.h
+        src/ui/history/HistoryPanel.cpp
         src/ui/header/HeaderPanel.h
         src/ui/header/HeaderPanel.cpp
+        src/ui/header/MidiDragZone.h
+        src/ui/header/MidiDragZone.cpp
         src/ui/section/SectionPanel.h
         src/ui/section/SectionPanel.cpp
         src/ui/style/DiatonyLookAndFeel.h
@@ -144,6 +151,8 @@ target_sources(DiatonyDawApplication
         # Animation
         src/ui/animation/AnimationManager.cpp
         src/ui/animation/AnimationManager.h
+        src/ui/animation/SlidingPanelAnimator.cpp
+        src/ui/animation/SlidingPanelAnimator.h
         
         # Fichiers header only (à inclure pour être sûr qu'ils sont pris en compte)
         src/audio/SimpleSound.h
@@ -172,11 +181,21 @@ target_sources(DiatonyDawApplication
         src/ui/section/components/EditZone/ModulationEditor.h
         src/ui/section/components/EditZone/ModulationEditor.cpp
         
+        # UI Components - ModulationParameters (Zone components for ModulationEditor)
+        src/ui/section/components/EditZone/ModulationParameters/ModulationTypeZone.h
+        src/ui/section/components/EditZone/ModulationParameters/ModulationTypeZone.cpp
+        src/ui/section/components/EditZone/ModulationParameters/ChordChip.h
+        src/ui/section/components/EditZone/ModulationParameters/ChordChip.cpp
+        src/ui/section/components/EditZone/ModulationParameters/SectionChordsZone.h
+        src/ui/section/components/EditZone/ModulationParameters/SectionChordsZone.cpp
+        
         # UI Components - Parameters (Zone components for SectionEditor)
-        src/ui/section/components/EditZone/Parameters/Zone1.h
-        src/ui/section/components/EditZone/Parameters/Zone1.cpp
-        src/ui/section/components/EditZone/Parameters/Zone2.h
-        src/ui/section/components/EditZone/Parameters/Zone2.cpp
+        src/ui/section/components/EditZone/Parameters/KeyZone.h
+        src/ui/section/components/EditZone/Parameters/KeyZone.cpp
+        src/ui/section/components/EditZone/Parameters/ModeZone.h
+        src/ui/section/components/EditZone/Parameters/ModeZone.cpp
+        src/ui/section/components/EditZone/Parameters/KeySelectorComponent.h
+        src/ui/section/components/EditZone/Parameters/KeySelectorComponent.cpp
         src/ui/section/components/EditZone/Parameters/Zone3.h
         src/ui/section/components/EditZone/Parameters/Zone3.cpp
         src/ui/section/components/EditZone/Parameters/Zone4.h
@@ -188,13 +207,9 @@ target_sources(DiatonyDawApplication
         src/ui/section/components/EditZone/Parameters/zone4/Zone4ContentArea.h
         src/ui/section/components/EditZone/Parameters/zone4/Zone4ContentArea.cpp
         
-        # UI Components - OverviewZone/Overview
-        src/ui/section/components/OverviewZone/Overview/ScrollableContentPanel.h
-        src/ui/section/components/OverviewZone/Overview/ScrollableContentPanel.cpp
+        # UI Components - OverviewZone/Overview (structure aplatie)
         src/ui/section/components/OverviewZone/Overview/OverviewContentArea.h
         src/ui/section/components/OverviewZone/Overview/OverviewContentArea.cpp
-        src/ui/section/components/OverviewZone/Overview/OverviewArea.h
-        src/ui/section/components/OverviewZone/Overview/OverviewArea.cpp
         src/ui/section/components/OverviewZone/Overview/OverviewActionArea.h
         src/ui/section/components/OverviewZone/Overview/OverviewActionArea.cpp
 
@@ -217,6 +232,9 @@ target_sources(DiatonyDawApplication
         # Services
         src/services/GenerationService.h
         src/services/GenerationService.cpp
+
+        # Debug tools (only included in Debug builds but always compiled)
+        src/debug/ValueTreeLogger.h
 )
 
 # === Configuration des Fonts SF Pro ===
@@ -257,6 +275,31 @@ else()
     message(WARNING "Please place your SF Pro .otf files in src/utils/Fonts/")
 endif()
 
+# === Configuration des Assets SVG ===
+set(ASSETS_DIR "${CMAKE_SOURCE_DIR}/src/utils/assets")
+file(GLOB SVG_ASSETS "${ASSETS_DIR}/*.svg")
+
+if(SVG_ASSETS)
+    list(LENGTH SVG_ASSETS ASSET_COUNT)
+    message(STATUS "Found ${ASSET_COUNT} SVG assets")
+    
+    foreach(ASSET ${SVG_ASSETS})
+        get_filename_component(ASSET_NAME ${ASSET} NAME)
+        message(STATUS "  - ${ASSET_NAME}")
+    endforeach()
+    
+    # Créer les ressources binaires pour les icônes SVG
+    juce_add_binary_data(IconResources
+        SOURCES ${SVG_ASSETS}
+        HEADER_NAME "IconBinaryData.h"
+        NAMESPACE "IconData"
+    )
+    
+    message(STATUS "SVG assets successfully added to binary resources")
+else()
+    message(WARNING "No SVG assets found in ${ASSETS_DIR}")
+endif()
+
 target_include_directories(DiatonyDawApplication PRIVATE 
     ${CMAKE_SOURCE_DIR}/src
     ${CMAKE_CURRENT_BINARY_DIR}  # Pour accéder à BinaryData.h généré
@@ -289,6 +332,12 @@ target_link_libraries(DiatonyDawApplication
 if(TARGET FontResources)
     target_link_libraries(DiatonyDawApplication PRIVATE FontResources)
     message(STATUS "FontResources target linked to DiatonyDawApplication")
+endif()
+
+# Link icon resources if they were created
+if(TARGET IconResources)
+    target_link_libraries(DiatonyDawApplication PRIVATE IconResources)
+    message(STATUS "IconResources target linked to DiatonyDawApplication")
 endif()
 
 

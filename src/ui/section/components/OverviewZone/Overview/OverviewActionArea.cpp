@@ -3,47 +3,57 @@
 
 //==============================================================================
 OverviewActionArea::OverviewActionArea() 
-    : ColoredPanel(juce::Colour::fromString("#fffcfcff"))
+    : actionButton("+", 
+                   juce::Colours::grey,
+                   juce::Colours::darkgrey, 
+                   18.0f, 
+                   FontManager::FontWeight::Bold)
 {
-    // Définir l'alpha pour que le composant en dessous soit visible
-    setAlpha(0.85f); 
+    setOpaque(false);
     
-    // Ajouter uniquement l'OverviewArea
-    addAndMakeVisible(overviewArea);
+    // Ajouter les composants enfants
+    addAndMakeVisible(contentArea);
+    addAndMakeVisible(actionButton);
     
-    // Configuration du FlexBox (simplifié, un seul élément centré)
-    flexBox.flexDirection = juce::FlexBox::Direction::row;
-    flexBox.justifyContent = juce::FlexBox::JustifyContent::center;
-    flexBox.alignItems = juce::FlexBox::AlignItems::center;
-    flexBox.flexWrap = juce::FlexBox::Wrap::noWrap;
-    
-    // OverviewArea occupe tout l'espace disponible
-    auto overviewSize = overviewArea.getPreferredSize();
-    flexBox.items.add(juce::FlexItem(overviewArea)
-        .withMinWidth(150.0f)
-        .withHeight(overviewSize.getHeight())
-        .withFlex(1, 1, 200.0f));
+    // Configurer le callback du bouton pour ajouter une section
+    actionButton.onClick = [this]() {
+        contentArea.addSmallPanel();
+    };
 }
 
 void OverviewActionArea::paint(juce::Graphics& g)
 {
-    // Dessiner le fond coloré via ColoredPanel
-    ColoredPanel::paint(g);
+    auto bounds = getLocalBounds().toFloat();
+    
+    // Fond semi-transparent style BaseZone
+    g.setColour(juce::Colours::black.withAlpha(0.3f));
+    g.fillRoundedRectangle(bounds, cornerRadius);
+    
+    // Contour léger
+    g.setColour(juce::Colours::grey.withAlpha(0.4f));
+    g.drawRoundedRectangle(bounds.reduced(0.5f), cornerRadius, static_cast<float>(borderThickness));
 }
 
 void OverviewActionArea::resized()
 {
     auto bounds = getLocalBounds();
     
-    // Marges adaptatives basées sur la taille disponible
-    int horizontalMargin = juce::jmin(8, bounds.getWidth() / 18);
-    int verticalMargin = juce::jmin(4, bounds.getHeight() / 25);
+    // Padding interne
+    auto area = bounds.reduced(contentPadding + 2, contentPadding);
     
-    auto area = bounds.reduced(horizontalMargin, verticalMargin);
-    flexBox.performLayout(area.toFloat());
+    // Bouton "+" à droite avec largeur fixe
+    constexpr int buttonWidth = 50;
+    constexpr int spacing = 8;
+    
+    auto buttonArea = area.removeFromRight(buttonWidth);
+    actionButton.setBounds(buttonArea);
+    
+    // ContentArea prend le reste de l'espace
+    area.removeFromRight(spacing);
+    contentArea.setBounds(area);
 }
 
-OverviewArea& OverviewActionArea::getOverviewArea()
+OverviewContentArea& OverviewActionArea::getContentArea()
 {
-    return overviewArea;
+    return contentArea;
 }

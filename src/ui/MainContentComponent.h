@@ -4,6 +4,7 @@
 #include "header/HeaderPanel.h"
 #include "section/SectionPanel.h"
 #include "footer/FooterPanel.h"
+#include "history/HistoryPanel.h"
 #include "extra/Component/DiatonyAlertWindow.h"
 
 //==============================================================================
@@ -18,7 +19,8 @@
  */
 class MainContentComponent : public juce::Component,
                              public juce::ValueTree::Listener,
-                             public juce::FileDragAndDropTarget
+                             public juce::FileDragAndDropTarget,
+                             public juce::DragAndDropTarget
 {
 public:
     MainContentComponent();
@@ -42,6 +44,7 @@ public:
     FooterPanel& getFooterPanel();
     HeaderPanel& getHeaderPanel();
     SectionPanel& getSectionPanel();
+    HistoryPanel& getHistoryPanel();
 
     // === Callbacks pour que RootAnimator puisse s'y abonner (même pattern que FooterPanel) ===
     
@@ -59,20 +62,28 @@ public:
     void valueTreeParentChanged(juce::ValueTree&) override;
     
     // =================================================================================
-    // FileDragAndDropTarget interface
+    // FileDragAndDropTarget interface (drag de fichiers externes depuis l'OS)
     bool isInterestedInFileDrag(const juce::StringArray& files) override;
     void fileDragEnter(const juce::StringArray& files, int x, int y) override;
     void fileDragExit(const juce::StringArray& files) override;
     void filesDropped(const juce::StringArray& files, int x, int y) override;
     
+    // =================================================================================
+    // DragAndDropTarget interface (drag interne depuis HistoryPanel)
+    bool isInterestedInDragSource(const SourceDetails& dragSourceDetails) override;
+    void itemDragEnter(const SourceDetails& dragSourceDetails) override;
+    void itemDragExit(const SourceDetails& dragSourceDetails) override;
+    void itemDropped(const SourceDetails& dragSourceDetails) override;
+    
 private:
     juce::ValueTree appState;
     juce::ValueTree selectionState;  // Pour écouter les changements de génération
 
-    // 3 Panels principaux
+    // 3 Panels principaux + History Panel latéral
     HeaderPanel headerPanel;
     SectionPanel sectionPanel;
     FooterPanel footerPanel;
+    HistoryPanel historyPanel;
     
     // Valeurs flex pour le layout
     float headerFlex;

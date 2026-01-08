@@ -11,6 +11,18 @@ DiatonyComboBoxLookAndFeel::DiatonyComboBoxLookAndFeel()
     highlightColour = juce::Colour(220, 220, 220);   // Gris très clair pour highlight
 }
 
+juce::String DiatonyComboBoxLookAndFeel::getDisplayText(const juce::ComboBox& comboBox) const
+{
+    if (shortDisplayMode)
+    {
+        int selectedId = comboBox.getSelectedId();
+        auto it = shortTexts.find(selectedId);
+        if (it != shortTexts.end())
+            return it->second;
+    }
+    return comboBox.getText();
+}
+
 void DiatonyComboBoxLookAndFeel::drawComboBox(juce::Graphics& g, int width, int height,
                                              bool isButtonDown, int buttonX, int buttonY,
                                              int buttonW, int buttonH,
@@ -26,15 +38,18 @@ void DiatonyComboBoxLookAndFeel::drawComboBox(juce::Graphics& g, int width, int 
     g.setColour(borderColour);
     g.drawRoundedRectangle(bounds.reduced(0.5f), cornerRadius, 1.0f);
     
-    // Zone de la flèche
-    auto arrowArea = juce::Rectangle<int>(buttonX, buttonY, buttonW, buttonH);
-    
-    // Séparateur vertical léger entre texte et flèche
-    g.setColour(borderColour.withAlpha(0.5f));
-    g.drawVerticalLine(buttonX, 2.0f, height - 2.0f);
-    
-    // Flèche
-    drawArrow(g, arrowArea, arrowColour);
+    // Flèche et séparateur (seulement si visible)
+    if (showArrow)
+    {
+        auto arrowArea = juce::Rectangle<int>(buttonX, buttonY, buttonW, buttonH);
+        
+        // Séparateur vertical léger entre texte et flèche
+        g.setColour(borderColour.withAlpha(0.5f));
+        g.drawVerticalLine(buttonX, 2.0f, height - 2.0f);
+        
+        // Flèche
+        drawArrow(g, arrowArea, arrowColour);
+    }
 }
 
 int DiatonyComboBoxLookAndFeel::getComboBoxTextHeight(juce::ComboBox& comboBox)
@@ -57,6 +72,28 @@ juce::Label* DiatonyComboBoxLookAndFeel::createComboBoxTextBox(juce::ComboBox& c
     label->setBorderSize(juce::BorderSize<int>(textPadding, textPadding, textPadding, textPadding));
     
     return label;
+}
+
+void DiatonyComboBoxLookAndFeel::positionComboBoxText(juce::ComboBox& comboBox, juce::Label& labelToPosition)
+{
+    // Positionner le label normalement
+    auto buttonWidth = showArrow ? (comboBox.getHeight() + 2) : 0;
+    labelToPosition.setBounds(1, 1, comboBox.getWidth() - buttonWidth - 2, comboBox.getHeight() - 2);
+    
+    // Si on est en mode texte court, mettre à jour le texte affiché
+    if (shortDisplayMode)
+    {
+        int selectedId = comboBox.getSelectedId();
+        if (selectedId > 0)
+        {
+            auto it = shortTexts.find(selectedId);
+            if (it != shortTexts.end())
+            {
+                // Mettre à jour le texte du label sans toucher à la sélection du ComboBox
+                labelToPosition.setText(it->second, juce::dontSendNotification);
+            }
+        }
+    }
 }
 
 void DiatonyComboBoxLookAndFeel::drawPopupMenuItem(juce::Graphics& g, const juce::Rectangle<int>& area,
