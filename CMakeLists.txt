@@ -155,22 +155,13 @@ target_sources(DiatonyDawApplication
         src/ui/animation/SlidingPanelAnimator.h
         
         # Fichiers header only (à inclure pour être sûr qu'ils sont pris en compte)
-        src/audio/SimpleSound.h
-        src/audio/SimpleVoice.h
-
         src/utils/DiatonyConstants.h
-        src/utils/Midiprocessor.h
         src/utils/FileUtils.h
-        src/utils/DatabaseManagement.h
         
         # Font Manager
         src/utils/FontManager.cpp
         src/utils/FontManager.h
-        
-        # Color Generator
-        src/utils/ColorGenerator.cpp
-        src/utils/ColorGenerator.h
-        
+
         # UI Components - EditZone
         src/ui/section/components/EditZone/ProgressionArea.h
         src/ui/section/components/EditZone/ProgressionArea.cpp
