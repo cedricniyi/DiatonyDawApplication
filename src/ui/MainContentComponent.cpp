@@ -1,30 +1,22 @@
 #include "MainContentComponent.h"
 #include "header/HeaderPanel.h"
 #include "section/SectionPanel.h"
-#include "footer/FooterPanel.h"
 #include "history/HistoryPanel.h"
 #include "UIStateIdentifiers.h"
 #include "extra/Component/DiatonyAlertWindow.h"
 #include "PluginEditor.h"
 #include "controller/AppController.h"
 
-//==============================================================================
 MainContentComponent::MainContentComponent() 
     : appState(),
       headerPanel(),
       sectionPanel(),
-      footerPanel(),
       historyPanel(),
       headerFlex(7.5f),
-      sectionFlex(10.5f),
-      footerFlex(15.0f)
+      sectionFlex(10.5f)
 {        
     addAndMakeVisible(headerPanel);
     addAndMakeVisible(sectionPanel);
-    // Footer masqué temporairement
-    addChildComponent(footerPanel);
-    
-    // History Panel (visible mais largeur animée)
     addAndMakeVisible(historyPanel);
     
     // Drag & Drop overlay (invisible par défaut)
@@ -40,34 +32,26 @@ MainContentComponent::~MainContentComponent()
     if (selectionState.isValid())
         selectionState.removeListener(this);
     
-    // Fermer le popup actif si encore ouvert
     closePopup();
 }
 
 void MainContentComponent::setAppState(juce::ValueTree& state)
 {
-    // Déconnexion de l'ancien listener
     if (appState.isValid())
         appState.removeListener(this);
         
-    // Connexion au nouveau ValueTree
     appState = state;
     appState.addListener(this);
     
-    // Propagation de l'état aux panels enfants
     headerPanel.setAppState(appState);
-    footerPanel.setAppState(appState);
     historyPanel.setAppState(appState);
-    // sectionPanel.setAppState(appState);  // Si nécessaire plus tard
 }
 
 void MainContentComponent::setSelectionState(juce::ValueTree& state)
 {
-    // Déconnexion de l'ancien listener
     if (selectionState.isValid())
         selectionState.removeListener(this);
         
-    // Connexion au selectionState pour écouter les changements de génération
     selectionState = state;
     selectionState.addListener(this);
 }
@@ -82,12 +66,9 @@ void MainContentComponent::resized()
 {
     auto bounds = getLocalBounds();
     
-    // === LAYOUT HORIZONTAL : Zone principale | History Panel ===
-    // Calculer la largeur du panneau History (animée de 0 à 250px)
     constexpr int HISTORY_PANEL_MAX_WIDTH = 250;
     int historyWidth = static_cast<int>(HISTORY_PANEL_MAX_WIDTH * historyPanel.getWidthFraction());
     
-    // History Panel à droite (largeur animée)
     if (historyWidth > 0)
     {
         auto historyBounds = bounds.removeFromRight(historyWidth);
@@ -100,89 +81,44 @@ void MainContentComponent::resized()
         historyPanel.setVisible(false);
     }
     
-    // Sauvegarder la zone principale pour l'overlay (sans le HistoryPanel)
     auto mainAreaBounds = bounds;
     
-    // === ZONE PRINCIPALE (header + section + footer) ===
     int padding = 8;
     
-    // Header avec hauteur FIXE de 60px (ne se compresse pas)
     constexpr int HEADER_HEIGHT = 60;
     headerPanel.setBounds(bounds.removeFromTop(HEADER_HEIGHT));
     
-    // Le reste avec padding
-    auto content = bounds.reduced(padding, 0);  // Padding horizontal seulement
-    content.removeFromTop(4);  // Petit espace après le header
+    auto content = bounds.reduced(padding, 0);
+    content.removeFromTop(4);
 
-    // Layout vertical avec FlexBox pour le reste
     juce::FlexBox fb;
     fb.flexDirection = juce::FlexBox::Direction::column;
-
-    fb.items = {
-        juce::FlexItem(sectionPanel).withFlex(1.0f)
-        // Footer masqué temporairement
-    };
-
+    fb.items = { juce::FlexItem(sectionPanel).withFlex(1.0f) };
     fb.performLayout(content);
     
-    // Redimensionner l'overlay popup s'il est actif
     if (activePopup != nullptr)
-    {
         activePopup->setBounds(getLocalBounds());
-    }
     
     // Positionner l'overlay de drag & drop UNIQUEMENT sur la zone principale (pas sur HistoryPanel)
     dragOverlay.setBounds(mainAreaBounds);
 }
 
-float& MainContentComponent::getHeaderFlexRef()
-{
-    return headerFlex;
-}
+float& MainContentComponent::getHeaderFlexRef() { return headerFlex; }
+float& MainContentComponent::getSectionFlexRef() { return sectionFlex; }
 
-float& MainContentComponent::getSectionFlexRef()
-{
-    return sectionFlex;
-}
-
-float& MainContentComponent::getFooterFlexRef()
-{
-    return footerFlex;
-}
-
-FooterPanel& MainContentComponent::getFooterPanel()
-{
-    return footerPanel;
-}
-
-HeaderPanel& MainContentComponent::getHeaderPanel()
-{
-    return headerPanel;
-}
-
-SectionPanel& MainContentComponent::getSectionPanel()
-{
-    return sectionPanel;
-}
-
-HistoryPanel& MainContentComponent::getHistoryPanel()
-{
-    return historyPanel;
-}
+HeaderPanel& MainContentComponent::getHeaderPanel() { return headerPanel; }
+SectionPanel& MainContentComponent::getSectionPanel() { return sectionPanel; }
+HistoryPanel& MainContentComponent::getHistoryPanel() { return historyPanel; }
 
 void MainContentComponent::valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged,
                                                    const juce::Identifier& property)
 {
-    // === GÉNÉRATION : Écoute du statut pour afficher les pop-ups (depuis selectionState) ===
     if (treeWhosePropertyHasChanged == selectionState && property == juce::Identifier("generationStatus"))
     {
         auto status = treeWhosePropertyHasChanged.getProperty("generationStatus").toString();
         
         if (status == "generating")
         {
-            // Afficher un popup de chargement (sans bouton, non fermable)
-            DBG("🔄 MainContentComponent: Génération en cours...");
-            
             juce::MessageManager::callAsync([this]() {
                 showPopup(
                     DiatonyAlertWindow::AlertType::Info,
@@ -194,9 +130,6 @@ void MainContentComponent::valueTreePropertyChanged(juce::ValueTree& treeWhosePr
         }
         else if (status == "completed")
         {
-            // ✅ Succès : Fermer le popup de chargement et afficher le succès
-            DBG("✅ MainContentComponent: Génération réussie !");
-            
             juce::MessageManager::callAsync([this]() {
                 showPopup(
                     DiatonyAlertWindow::AlertType::Success,
@@ -208,12 +141,9 @@ void MainContentComponent::valueTreePropertyChanged(juce::ValueTree& treeWhosePr
         }
         else if (status == "error")
         {
-            // ❌ Erreur : Fermer le popup de chargement et afficher l'erreur
             juce::String errorMessage = treeWhosePropertyHasChanged
                                             .getProperty("generationError")
                                             .toString();
-            
-            DBG("❌ MainContentComponent: Erreur de génération - " << errorMessage);
             
             juce::MessageManager::callAsync([this, errorMessage]() {
                 showPopup(
@@ -225,15 +155,6 @@ void MainContentComponent::valueTreePropertyChanged(juce::ValueTree& treeWhosePr
             });
         }
     }
-    
-    // === LAYOUT : Notification du RootAnimator (depuis appState) ===
-    if (treeWhosePropertyHasChanged == appState && property == UIStateIdentifiers::interactivePianoVisible)
-    {
-        if (onLayoutAnimationNeeded)
-        {
-            onLayoutAnimationNeeded();
-        }
-    }
 }
 
 void MainContentComponent::valueTreeChildAdded(juce::ValueTree&, juce::ValueTree&) {}
@@ -241,26 +162,20 @@ void MainContentComponent::valueTreeChildRemoved(juce::ValueTree&, juce::ValueTr
 void MainContentComponent::valueTreeChildOrderChanged(juce::ValueTree&, int, int) {}
 void MainContentComponent::valueTreeParentChanged(juce::ValueTree&) {}
 
-//==============================================================================
-// Méthodes helper pour gérer les popups en overlay
 void MainContentComponent::showPopup(DiatonyAlertWindow::AlertType type,
                                      const juce::String& title,
                                      const juce::String& message,
                                      const juce::String& buttonText)
 {
-    // Fermer l'ancien popup s'il existe
     closePopup();
     
-    // Créer le nouveau popup avec callback de fermeture
     auto alertWindow = std::make_unique<DiatonyAlertWindow>(
         type, title, message, buttonText,
-        [this]() { closePopup(); }  // Callback pour fermer le popup
+        [this]() { closePopup(); }
     );
     
     // Créer l'overlay avec le popup
     activePopup = std::make_unique<DiatonyAlertWindowWithOverlay>(std::move(alertWindow));
-    
-    // Ajouter l'overlay par-dessus tout (z-order max)
     addAndMakeVisible(activePopup.get());
     activePopup->setBounds(getLocalBounds());
     activePopup->toFront(false);  // Mettre au premier plan sans voler le focus
@@ -275,8 +190,6 @@ void MainContentComponent::closePopup()
     }
 }
 
-//==============================================================================
-// Drag & Drop Overlay
 MainContentComponent::DragOverlay::DragOverlay()
 {
     setOpaque(false);
@@ -314,8 +227,6 @@ void MainContentComponent::DragOverlay::paint(juce::Graphics& g)
                centerRect, juce::Justification::centred, true);
 }
 
-//==============================================================================
-// FileDragAndDropTarget callbacks
 bool MainContentComponent::isInterestedInFileDrag(const juce::StringArray& files)
 {
     // Vérifie si au moins un fichier a l'extension .diatony
@@ -330,8 +241,6 @@ bool MainContentComponent::isInterestedInFileDrag(const juce::StringArray& files
 void MainContentComponent::fileDragEnter(const juce::StringArray& files, int x, int y)
 {
     juce::ignoreUnused(files, x, y);
-    
-    DBG("📂 Drag Enter : fichier(s) .diatony détecté(s)");
     dragOverlay.setVisible(true);
     dragOverlay.toFront(false);
 }
@@ -339,19 +248,15 @@ void MainContentComponent::fileDragEnter(const juce::StringArray& files, int x, 
 void MainContentComponent::fileDragExit(const juce::StringArray& files)
 {
     juce::ignoreUnused(files);
-    
-    DBG("📂 Drag Exit");
     dragOverlay.setVisible(false);
 }
 
 void MainContentComponent::filesDropped(const juce::StringArray& files, int x, int y)
 {
     juce::ignoreUnused(x, y);
-    
-    // Cacher l'overlay immédiatement
     dragOverlay.setVisible(false);
     
-    // === 1. VALIDATION DES FICHIERS ===
+    // Valider le fichier
     if (files.isEmpty())
         return;
     
@@ -366,7 +271,7 @@ void MainContentComponent::filesDropped(const juce::StringArray& files, int x, i
         return;
     }
     
-    // === 2. TROUVER LE FICHIER .diatony ===
+    // Trouver le fichier .diatony  
     juce::String diatonyFilePath;
     for (const auto& filePath : files)
     {
@@ -388,11 +293,10 @@ void MainContentComponent::filesDropped(const juce::StringArray& files, int x, i
         return;
     }
     
-    // === 3. OBTENIR L'APPCONTROLLER ===
+    //Récupéré l'appController
     auto* pluginEditor = findParentComponentOfClass<AudioPluginAudioProcessorEditor>();
     if (pluginEditor == nullptr)
     {
-        DBG("❌ Impossible de trouver AudioPluginAudioProcessorEditor");
         showPopup(
             DiatonyAlertWindow::AlertType::Error,
             "Internal Error",
@@ -404,11 +308,11 @@ void MainContentComponent::filesDropped(const juce::StringArray& files, int x, i
     
     auto& appController = pluginEditor->getAppController();
     
-    // === 4. CHARGER LE FICHIER ===
+    // Charger le fichier
     juce::File file(diatonyFilePath);
     bool success = appController.loadProjectFromFile(file);
     
-    // === 5. FEEDBACK UTILISATEUR ===
+    // Feedback utilisateur
     if (success)
     {
         showPopup(
@@ -429,14 +333,8 @@ void MainContentComponent::filesDropped(const juce::StringArray& files, int x, i
     }
 }
 
-//==============================================================================
-// DragAndDropTarget interface (drag interne depuis HistoryPanel)
-//==============================================================================
-
 bool MainContentComponent::isInterestedInDragSource(const SourceDetails& dragSourceDetails)
 {
-    // Accepter uniquement les drags depuis HistoryPanel
-    // La description commence par "HISTORY_ITEM:" suivie du chemin du fichier
     juce::String description = dragSourceDetails.description.toString();
     return description.startsWith("HISTORY_ITEM:");
 }
@@ -444,8 +342,6 @@ bool MainContentComponent::isInterestedInDragSource(const SourceDetails& dragSou
 void MainContentComponent::itemDragEnter(const SourceDetails& dragSourceDetails)
 {
     juce::ignoreUnused(dragSourceDetails);
-    
-    DBG("📂 Drag Enter (interne) : item d'historique");
     dragOverlay.setVisible(true);
     dragOverlay.toFront(false);
 }
@@ -453,35 +349,25 @@ void MainContentComponent::itemDragEnter(const SourceDetails& dragSourceDetails)
 void MainContentComponent::itemDragExit(const SourceDetails& dragSourceDetails)
 {
     juce::ignoreUnused(dragSourceDetails);
-    
-    DBG("📂 Drag Exit (interne)");
     dragOverlay.setVisible(false);
 }
 
 void MainContentComponent::itemDropped(const SourceDetails& dragSourceDetails)
 {
-    // Cacher l'overlay
     dragOverlay.setVisible(false);
     
-    // === 1. EXTRAIRE LE CHEMIN DU FICHIER ===
+    // Extraire le chemin du fichier .diatony
     juce::String description = dragSourceDetails.description.toString();
     
     if (!description.startsWith("HISTORY_ITEM:"))
-    {
-        DBG("❌ Description invalide : " << description);
         return;
-    }
     
-    // Extraire le chemin après le préfixe
     juce::String diatonyFilePath = description.fromFirstOccurrenceOf("HISTORY_ITEM:", false, false);
     
-    DBG("📂 Item dropped depuis historique : " << diatonyFilePath);
-    
-    // === 2. OBTENIR L'APPCONTROLLER ===
+    // Récupéré l'appController
     auto* pluginEditor = findParentComponentOfClass<AudioPluginAudioProcessorEditor>();
     if (pluginEditor == nullptr)
     {
-        DBG("❌ Impossible de trouver AudioPluginAudioProcessorEditor");
         showPopup(
             DiatonyAlertWindow::AlertType::Error,
             "Internal Error",
@@ -493,17 +379,17 @@ void MainContentComponent::itemDropped(const SourceDetails& dragSourceDetails)
     
     auto& appController = pluginEditor->getAppController();
     
-    // === 3. CHARGER LE FICHIER ===
+    // Charger le fichier
     juce::File file(diatonyFilePath);
     bool success = appController.loadProjectFromFile(file);
     
-    // === 4. FEEDBACK UTILISATEUR ===
+    // Feedback utilisateur
     if (success)
     {
         showPopup(
             DiatonyAlertWindow::AlertType::Success,
-            juce::String::fromUTF8("Session Restaurée"),
-            juce::String::fromUTF8("La session « ") + file.getFileNameWithoutExtension() + juce::String::fromUTF8(" » a été restaurée."),
+            juce::String::fromUTF8("Session Restored"),
+            juce::String::fromUTF8("The session \"") + file.getFileNameWithoutExtension() + juce::String::fromUTF8("\" was restored successfully."),
             "OK"
         );
     }
@@ -511,9 +397,9 @@ void MainContentComponent::itemDropped(const SourceDetails& dragSourceDetails)
     {
         showPopup(
             DiatonyAlertWindow::AlertType::Error,
-            "Erreur de chargement",
-            juce::String::fromUTF8("Impossible de charger la session.\n\nLe fichier est peut-être corrompu."),
+            "Loading Error",
+            juce::String::fromUTF8("Unable to load the session.\n\nThe file may be corrupted."),
             "OK"
         );
     }
-} 
+}
