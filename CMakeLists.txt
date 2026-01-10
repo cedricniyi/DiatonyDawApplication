@@ -146,7 +146,6 @@ target_sources(DiatonyDawApplication
         src/ui/animation/SlidingPanelAnimator.h
         
         # Fichiers header only (à inclure pour être sûr qu'ils sont pris en compte)
-        src/utils/DiatonyConstants.h
         src/utils/FileUtils.h
         
         # Font Manager

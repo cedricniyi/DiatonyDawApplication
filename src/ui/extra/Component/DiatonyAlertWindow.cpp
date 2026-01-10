@@ -1,5 +1,4 @@
 #include "DiatonyAlertWindow.h"
-#include "utils/DiatonyConstants.h"
 
 DiatonyAlertWindow::DiatonyAlertWindow(AlertType type,
                                       const juce::String& titleText,
