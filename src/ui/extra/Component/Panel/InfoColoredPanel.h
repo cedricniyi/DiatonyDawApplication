@@ -6,10 +6,6 @@
 #include "utils/FontManager.h"
 #include "IconBinaryData.h"
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// 🎛️ PARAMÈTRES D'AFFICHAGE - Modifie ces valeurs !
-// ═══════════════════════════════════════════════════════════════════════════════
-
 namespace InfoPanelConfig
 {
     // Bande de couleur harmonique en haut
@@ -29,15 +25,8 @@ namespace InfoPanelConfig
     constexpr float CORNER_RADIUS = 8.0f;         // ← Rayon des coins du panel
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-
-//==============================================================================
 /**
- * Panel coloré avec 4 zones empilées verticalement :
- * - Ligne de 3 petits carrés (numéro + 2 indicateurs)
- * - Degré ComboBox
- * - Qualité ComboBox
- * - État ComboBox
+ * @brief Panel coloré avec 4 zones : carrés (numéro/cadenas/suppression) + 3 ComboBox (degré/qualité/état).
  */
 class InfoColoredPanel : public ColoredPanel, 
                          private juce::ComboBox::Listener,
@@ -49,64 +38,51 @@ public:
     
     void paint(juce::Graphics& g) override;
     void resized() override;
-    
     void setColor(juce::Colour color) override;
     
-    // Accès aux ComboBox
     DiatonyComboBox& getDegreeCombo() { return degreeCombo; }
     DiatonyComboBox& getQualityCombo() { return qualityCombo; }
     DiatonyComboBox& getStateCombo() { return stateCombo; }
     
-    // Méthodes pour peupler les ComboBox
     void populateDegreeCombo(const juce::StringArray& items);
     void populateQualityCombo(const juce::StringArray& items);
     void populateStateCombo(const juce::StringArray& items);
     
-    // Surcharges avec textes courts pour affichage compact
     void populateDegreeCombo(const juce::StringArray& items, const juce::StringArray& shortItems);
     void populateQualityCombo(const juce::StringArray& items, const juce::StringArray& shortItems);
     void populateStateCombo(const juce::StringArray& items, const juce::StringArray& shortItems);
     
-    // Gestion de la numérotation
     void setNumber(int number);
     int getNumber() const { return panelNumber; }
     
-    // Carré 2 : Cadenas (verrouillage)
     void setLocked(bool locked);
     bool isLocked() const { return locked; }
-    std::function<void(bool)> onLockToggled;  // Callback quand le cadenas est cliqué
+    std::function<void(bool)> onLockToggled;
     
-    // Carré 3 : Suppression (long press)
-    std::function<void()> onDeleteRequested;  // Callback pour suppression
+    std::function<void()> onDeleteRequested;
     
-    // Interaction souris
     void mouseDown(const juce::MouseEvent& event) override;
     void mouseUp(const juce::MouseEvent& event) override;
 
 private:
-    // 3 ComboBox empilés verticalement
     DiatonyComboBox degreeCombo;
     DiatonyComboBox qualityCombo;
     DiatonyComboBox stateCombo;
     
-    // Numérotation (carré 1)
     juce::Label numberLabel;
     int panelNumber = 0;
     
-    // Cadenas (carré 2)
     bool locked = false;
     juce::Rectangle<int> lockSquareArea;
     std::unique_ptr<juce::Drawable> lockIcon;
     std::unique_ptr<juce::Drawable> unlockIcon;
     
-    // Suppression (carré 3) - Long press avec feedback visuel
     juce::Rectangle<int> deleteSquareArea;
-    static constexpr int LONG_PRESS_DURATION_MS = 2500;  // 2.5 secondes
+    static constexpr int LONG_PRESS_DURATION_MS = 2500;
     juce::uint32 deleteStartTime = 0;
-    float deleteProgress = 0.0f;  // 0 → 1
+    float deleteProgress = 0.0f;
     bool isDeleteHeldDown = false;
     
-    // FontManager
     juce::SharedResourcePointer<FontManager> fontManager;
     
     void setupLabels();
@@ -114,13 +90,10 @@ private:
     void drawLockIcon(juce::Graphics& g, const juce::Rectangle<int>& area, bool isLocked);
     void drawDeleteIcon(juce::Graphics& g, const juce::Rectangle<int>& area);
     
-    // Bande de codage couleur fonctionnelle (Tonique/Sous-Dominante/Dominante)
+    /** @brief Retourne la couleur de la bande selon la fonction tonale (Tonique/Sous-Dominante/Dominante). */
     juce::Colour getFunctionalStripColor() const;
     
-    // Listener pour redessiner la bande quand le degré change
     void comboBoxChanged(juce::ComboBox* comboBoxThatHasChanged) override;
-    
-    // Timer pour le long press progressif
     void timerCallback() override;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(InfoColoredPanel)

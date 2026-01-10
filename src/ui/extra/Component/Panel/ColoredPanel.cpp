@@ -1,6 +1,5 @@
 #include "ColoredPanel.h"
 
-//==============================================================================
 ColoredPanel::ColoredPanel(juce::Colour color) 
     : panelColor(color)
 {
@@ -14,7 +13,6 @@ void ColoredPanel::paint(juce::Graphics& g)
     if (bounds.isEmpty())
         return;
     
-    // Créer le path pour le rectangle (arrondi ou non selon cornerRadius)
     juce::Path panelPath;
     
     if (cornerRadius > 0.0f)
@@ -22,11 +20,9 @@ void ColoredPanel::paint(juce::Graphics& g)
     else
         panelPath.addRectangle(bounds);
 
-    // Dessiner le fond
     g.setColour(panelColor);
     g.fillPath(panelPath);
     
-    // Dessiner le contour si activé (style BaseZone)
     if (showBorder && borderThickness > 0.0f)
     {
         g.setColour(borderColor);
@@ -38,11 +34,7 @@ void ColoredPanel::paint(juce::Graphics& g)
     }
 }
 
-void ColoredPanel::resized()
-{
-}
-
-// === Configuration de base ===
+void ColoredPanel::resized() {}
 
 void ColoredPanel::setAlpha(float alpha)
 {
@@ -56,12 +48,7 @@ void ColoredPanel::setColor(juce::Colour color)
     repaint();
 }
 
-juce::Colour ColoredPanel::getColor() const
-{
-    return panelColor;
-}
-
-// === Configuration des coins arrondis ===
+juce::Colour ColoredPanel::getColor() const { return panelColor; }
 
 void ColoredPanel::setCornerRadius(float radius)
 {
@@ -69,12 +56,7 @@ void ColoredPanel::setCornerRadius(float radius)
     repaint();
 }
 
-float ColoredPanel::getCornerRadius() const
-{
-    return cornerRadius;
-}
-
-// === Configuration du contour ===
+float ColoredPanel::getCornerRadius() const { return cornerRadius; }
 
 void ColoredPanel::setBorderColor(juce::Colour color)
 {
@@ -94,18 +76,13 @@ void ColoredPanel::enableBorder(bool shouldShowBorder)
     repaint();
 }
 
-// === Configuration du padding ===
-
 void ColoredPanel::setInternalPadding(int padding)
 {
     internalPadding = padding;
     repaint();
 }
 
-int ColoredPanel::getInternalPadding() const
-{
-    return internalPadding;
-}
+int ColoredPanel::getInternalPadding() const { return internalPadding; }
 
 juce::Rectangle<int> ColoredPanel::getDrawingBounds() const
 {

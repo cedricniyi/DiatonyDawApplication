@@ -1,6 +1,5 @@
 #include "DiatonyComboBoxLookAndFeel.h"
 
-//==============================================================================
 DiatonyComboBoxLookAndFeel::DiatonyComboBoxLookAndFeel()
 {
     // Couleurs par défaut harmonieuses avec InfoColoredPanel
@@ -30,31 +29,25 @@ void DiatonyComboBoxLookAndFeel::drawComboBox(juce::Graphics& g, int width, int 
 {
     auto bounds = juce::Rectangle<float>(0, 0, width, height);
     
-    // Fond arrondi simple
     g.setColour(backgroundColour);
     g.fillRoundedRectangle(bounds, cornerRadius);
     
-    // Contour subtil
     g.setColour(borderColour);
     g.drawRoundedRectangle(bounds.reduced(0.5f), cornerRadius, 1.0f);
     
-    // Flèche et séparateur (seulement si visible)
     if (showArrow)
     {
         auto arrowArea = juce::Rectangle<int>(buttonX, buttonY, buttonW, buttonH);
         
-        // Séparateur vertical léger entre texte et flèche
         g.setColour(borderColour.withAlpha(0.5f));
         g.drawVerticalLine(buttonX, 2.0f, height - 2.0f);
         
-        // Flèche
         drawArrow(g, arrowArea, arrowColour);
     }
 }
 
 int DiatonyComboBoxLookAndFeel::getComboBoxTextHeight(juce::ComboBox& comboBox)
 {
-    // Utiliser une police standard pour calculer la hauteur
     juce::Font font(juce::FontOptions(14.0f));
     return font.getHeight() + (textPadding * 2);
 }
@@ -62,25 +55,18 @@ int DiatonyComboBoxLookAndFeel::getComboBoxTextHeight(juce::ComboBox& comboBox)
 juce::Label* DiatonyComboBoxLookAndFeel::createComboBoxTextBox(juce::ComboBox& comboBox)
 {
     auto* label = new juce::Label();
-    
-    // Ne PAS définir les couleurs ici - elles seront définies via setColour sur le ComboBox
-    // Le label utilisera automatiquement ComboBox::textColourId du parent
-    
-    // Configuration du style
     label->setFont(juce::Font(juce::FontOptions(14.0f)));
     label->setJustificationType(juce::Justification::centredLeft);
     label->setBorderSize(juce::BorderSize<int>(textPadding, textPadding, textPadding, textPadding));
-    
     return label;
 }
 
 void DiatonyComboBoxLookAndFeel::positionComboBoxText(juce::ComboBox& comboBox, juce::Label& labelToPosition)
 {
-    // Positionner le label normalement
     auto buttonWidth = showArrow ? (comboBox.getHeight() + 2) : 0;
     labelToPosition.setBounds(1, 1, comboBox.getWidth() - buttonWidth - 2, comboBox.getHeight() - 2);
     
-    // Si on est en mode texte court, mettre à jour le texte affiché
+    // Mettre à jour le texte court sans toucher à la sélection
     if (shortDisplayMode)
     {
         int selectedId = comboBox.getSelectedId();
@@ -88,10 +74,7 @@ void DiatonyComboBoxLookAndFeel::positionComboBoxText(juce::ComboBox& comboBox, 
         {
             auto it = shortTexts.find(selectedId);
             if (it != shortTexts.end())
-            {
-                // Mettre à jour le texte du label sans toucher à la sélection du ComboBox
                 labelToPosition.setText(it->second, juce::dontSendNotification);
-            }
         }
     }
 }
@@ -104,7 +87,6 @@ void DiatonyComboBoxLookAndFeel::drawPopupMenuItem(juce::Graphics& g, const juce
 {
     if (isHighlighted)
     {
-        // Couleur de hover : couleur du composant légèrement plus foncée
         g.setColour(backgroundColour.darker(0.1f));
         g.fillRect(area);
     }
@@ -118,34 +100,17 @@ void DiatonyComboBoxLookAndFeel::drawPopupMenuItem(juce::Graphics& g, const juce
 
 void DiatonyComboBoxLookAndFeel::drawPopupMenuBackground(juce::Graphics& g, int width, int height)
 {
-    // Fond simple du menu déroulant - pas d'arrondi
     g.setColour(backgroundColour);
     g.fillRect(0, 0, width, height);
 }
 
-void DiatonyComboBoxLookAndFeel::setBackgroundColour(juce::Colour colour)
-{
-    backgroundColour = colour;
-}
-
-void DiatonyComboBoxLookAndFeel::setBorderColour(juce::Colour colour)
-{
-    borderColour = colour;
-}
-
-void DiatonyComboBoxLookAndFeel::setTextColour(juce::Colour colour)
-{
-    textColour = colour;
-}
-
-void DiatonyComboBoxLookAndFeel::setArrowColour(juce::Colour colour)
-{
-    arrowColour = colour;
-}
+void DiatonyComboBoxLookAndFeel::setBackgroundColour(juce::Colour colour) { backgroundColour = colour; }
+void DiatonyComboBoxLookAndFeel::setBorderColour(juce::Colour colour) { borderColour = colour; }
+void DiatonyComboBoxLookAndFeel::setTextColour(juce::Colour colour) { textColour = colour; }
+void DiatonyComboBoxLookAndFeel::setArrowColour(juce::Colour colour) { arrowColour = colour; }
 
 void DiatonyComboBoxLookAndFeel::drawArrow(juce::Graphics& g, juce::Rectangle<int> arrowArea, juce::Colour colour)
 {
-    // Flèche simple vers le bas
     juce::Path arrow;
     
     auto centerX = arrowArea.getCentreX();

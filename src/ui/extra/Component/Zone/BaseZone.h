@@ -3,13 +3,10 @@
 #include <JuceHeader.h>
 #include "utils/FontManager.h"
 
-//==============================================================================
 /**
- * Classe de base pour les zones de paramètres
- * Fournit un style commun avec en-tête et corps
- * 
+ * @brief Classe de base pour les zones de paramètres avec en-tête et corps.
+ *
  * Le rectangle visuel remplit tout l'espace (le parent gère l'espacement externe).
- * `internalPadding` définit l'espace entre les bords du rectangle et le contenu.
  */
 class BaseZone : public juce::Component
 {
@@ -24,15 +21,14 @@ public:
     {
         auto bounds = getLocalBounds();
         
-        // Séparer en en-tête et corps
         auto titleArea = bounds.withHeight(titleHeight);
         auto bodyArea = bounds.withTrimmedTop(titleHeight);
         
-        // Dessiner le contour global
+        // Contour global
         g.setColour(juce::Colours::grey.withAlpha(0.3f));
         g.drawRoundedRectangle(bounds.toFloat(), cornerSize, borderThickness);
         
-        // Dessiner le corps (coins arrondis en bas seulement)
+        // Corps (coins arrondis en bas)
         g.setColour(juce::Colours::black.withAlpha(0.2f));
         juce::Path bodyPath;
         bodyPath.addRoundedRectangle(
@@ -44,7 +40,7 @@ public:
         );
         g.fillPath(bodyPath);
         
-        // Dessiner l'en-tête (coins arrondis en haut seulement)
+        // En-tête (coins arrondis en haut)
         g.setColour(juce::Colours::darkgrey.withAlpha(0.6f));
         juce::Path headerPath;
         headerPath.addRoundedRectangle(
@@ -56,20 +52,18 @@ public:
         );
         g.fillPath(headerPath);
         
-        // Dessiner le texte du titre
+        // Texte du titre
         g.setColour(juce::Colours::white.withAlpha(0.9f));
         auto titleFont = juce::Font(fontManager->getSFProDisplay(14.0f, FontManager::FontWeight::Semibold));
         g.setFont(titleFont);
         g.drawText(title, titleArea.withTrimmedLeft(10), juce::Justification::left, false);
         
-        // Zone de contenu pour les classes dérivées (avec padding interne)
         auto contentArea = bodyArea.reduced(internalPadding);
         paintContent(g, contentArea);
     }
     
     void resized() override
     {
-        // Zone de contenu = tout l'espace - titre - padding interne
         auto contentBounds = getLocalBounds()
             .withTrimmedTop(titleHeight)
             .reduced(internalPadding);
@@ -78,13 +72,11 @@ public:
     }
     
 protected:
-    // Méthode que les classes dérivées peuvent surcharger pour dessiner leur contenu
     virtual void paintContent(juce::Graphics& g, const juce::Rectangle<int>& contentBounds)
     {
         juce::ignoreUnused(g, contentBounds);
     }
     
-    // Méthode que les classes dérivées peuvent surcharger pour positionner leurs composants
     virtual void resizeContent(const juce::Rectangle<int>& contentBounds)
     {
         juce::ignoreUnused(contentBounds);
@@ -110,4 +102,3 @@ private:
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(BaseZone)
 };
-
