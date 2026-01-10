@@ -2,10 +2,9 @@
 
 #include <JuceHeader.h>
 
-// Forward declarations
 class FontManager;
 
-//==============================================================================
+/** @brief Vue d'accueil affichée quand aucune section n'est sélectionnée. */
 class WelcomeView : public juce::Component
 {
 public:
