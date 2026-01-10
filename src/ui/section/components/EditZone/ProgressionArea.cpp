@@ -3,26 +3,23 @@
 #include "controller/AppController.h"
 #include "ui/PluginEditor.h"
 
-//==============================================================================
 ProgressionArea::ProgressionArea()
 {
     setOpaque(false);
     
-    // Ajouter la vue de bienvenue (visible par défaut)
     addAndMakeVisible(welcomeView);
     
-    // Créer le SectionEditor mais le garder caché au début
+    // SectionEditor créé mais non visible initialement
     sectionEditor = std::make_unique<SectionEditor>();
-    addChildComponent(*sectionEditor); // addChildComponent = invisible par défaut
+    addChildComponent(*sectionEditor);
     
-    // Créer le ModulationEditor mais le garder caché au début
+    // ModulationEditor créé mais non visible initialement
     modulationEditor = std::make_unique<ModulationEditor>();
-    addChildComponent(*modulationEditor); // addChildComponent = invisible par défaut
+    addChildComponent(*modulationEditor);
 }
 
 ProgressionArea::~ProgressionArea()
 {
-    // Nettoyer les listeners du ValueTree
     if (selectionState.isValid())
         selectionState.removeListener(this);
     
@@ -34,15 +31,12 @@ void ProgressionArea::paint(juce::Graphics& g)
 {
     auto bounds = getLocalBounds().toFloat();
     
-    // Créer le path arrondi
     juce::Path panelPath;
     panelPath.addRoundedRectangle(bounds, cornerRadius);
     
-    // Fond semi-transparent (style BaseZone)
     g.setColour(juce::Colours::black.withAlpha(0.3f));
     g.fillPath(panelPath);
     
-    // Contour léger
     g.setColour(juce::Colours::grey.withAlpha(0.4f));
     g.drawRoundedRectangle(bounds.reduced(0.5f), cornerRadius, static_cast<float>(borderThickness));
 }
@@ -52,16 +46,13 @@ void ProgressionArea::resized()
     // Les enfants remplissent tout l'espace (pas de padding)
     auto area = getLocalBounds();
     
-    // Positionner les trois vues dans toute la zone disponible
-    // Seule la vue visible sera affichée
+    // Positionner les composants enfants, seule la vue visible sera affichée
     welcomeView.setBounds(area);
     if (sectionEditor)
         sectionEditor->setBounds(area);
     if (modulationEditor)
         modulationEditor->setBounds(area);
 }
-
-// === DÉCOUVERTE DE SERVICE ===
 
 void ProgressionArea::parentHierarchyChanged()
 {
@@ -71,7 +62,6 @@ void ProgressionArea::parentHierarchyChanged()
 
 void ProgressionArea::findAppController()
 {
-    // Recherche de l'AppController via la hiérarchie des composants
     auto* pluginEditor = findParentComponentOfClass<AudioPluginAudioProcessorEditor>();
     
     if (pluginEditor != nullptr)
@@ -83,22 +73,18 @@ void ProgressionArea::findAppController()
         if (selectionState.isValid())
         {
             selectionState.addListener(this);
-            // Mettre à jour immédiatement le contenu selon l'état actuel
             updateContentBasedOnSelection();
         }
         
         // S'abonner au modèle pour détecter les suppressions de sections
         modelState = appController->getState();
         if (modelState.isValid())
-        {
             modelState.addListener(this);
-        }
     }
     else
     {
         appController = nullptr;
         
-        // Nettoyer les listeners si on perd AppController
         if (selectionState.isValid())
         {
             selectionState.removeListener(this);
@@ -118,30 +104,21 @@ void ProgressionArea::findAppController()
 void ProgressionArea::valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged,
                                               const juce::Identifier& property)
 {
-    // Réagir aux changements de sélection depuis l'état central
     if (property == ContextIdentifiers::selectedElementId && treeWhosePropertyHasChanged == selectionState)
-    {
         updateContentBasedOnSelection();
-    }
 }
 
 void ProgressionArea::valueTreeChildRemoved(juce::ValueTree& parentTree, 
-                                           juce::ValueTree& childWhichHasBeenRemoved, 
-                                           int indexFromWhichChildWasRemoved)
+                                           juce::ValueTree&, 
+                                           int)
 {
-    // Quand une section ou modulation est supprimée du modèle, rafraîchir l'affichage
-    // Cela permet de mettre à jour le titre (ex: "Section 3" → "Section 2" si l'index change)
+    // Rafraîchir le titre quand une section est supprimée (l'index peut changer)
     if (parentTree == modelState)
     {
-        // Rafraîchir l'affichage pour recalculer les titres avec les nouveaux indices
         updateContentBasedOnSelection();
         
-        // Forcer le rafraîchissement du titre même si la sélection n'a pas changé
-        // (l'index de la section peut avoir changé sans que son ID change)
         if (sectionEditor && sectionEditor->isVisible())
-        {
             sectionEditor->refreshTitle();
-        }
     }
 }
 
@@ -161,7 +138,6 @@ void ProgressionArea::updateContentBasedOnSelection()
         modulationEditor->setVisible(false);
         sectionEditor->setSectionToEdit(selectedElementId);
 
-        // ✅ CORRIGÉ: Extraire l'ID et utiliser getSectionById() au lieu de getSection(index)
         int sectionId = selectedElementId.getTrailingIntValue();
         if (appController != nullptr && sectionId >= 0)
         {
@@ -189,10 +165,9 @@ void ProgressionArea::updateContentBasedOnSelection()
         // Afficher ModulationEditor et cacher les autres
         welcomeView.setVisible(false);
         sectionEditor->setVisible(false);
-        sectionEditor->setSectionToEdit(""); // Clear l'éditeur de section
+        sectionEditor->setSectionToEdit("");
         sectionEditor->setSectionState(juce::ValueTree());
         
-        // ✅ CORRIGÉ: Extraire l'ID et utiliser getModulationById() au lieu de getModulation(index)
         modulationEditor->setModulationToEdit(selectedElementId);
         int modulationId = selectedElementId.getTrailingIntValue();
         if (appController != nullptr && modulationId >= 0)
@@ -221,10 +196,10 @@ void ProgressionArea::updateContentBasedOnSelection()
     {
         // Cas par défaut : afficher WelcomeView et cacher les éditeurs
         sectionEditor->setVisible(false);
-        sectionEditor->setSectionToEdit(""); // Clear l'éditeur de section
+        sectionEditor->setSectionToEdit("");
         sectionEditor->setSectionState(juce::ValueTree());
         modulationEditor->setVisible(false);
-        modulationEditor->setModulationToEdit(""); // Clear l'éditeur de modulation
+        modulationEditor->setModulationToEdit("");
         modulationEditor->setModulationState(juce::ValueTree());
         welcomeView.setVisible(true);
     }

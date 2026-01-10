@@ -6,15 +6,10 @@
 #include "ModulationEditor.h"
 #include "controller/ContextIdentifiers.h"
 
-// Forward declarations
 class AppController;
 class AudioPluginAudioProcessorEditor;
 
-//==============================================================================
-/**
- * Zone d'édition de progression
- * Dessin custom style BaseZone (fond semi-transparent + contour arrondi)
- */
+/** @brief Zone d'édition affichant WelcomeView, SectionEditor ou ModulationEditor selon la sélection. */
 class ProgressionArea : public juce::Component, public juce::ValueTree::Listener
 {
 public:
@@ -24,36 +19,31 @@ public:
     void paint(juce::Graphics& g) override;
     void resized() override;
     
-    // === DÉCOUVERTE DE SERVICE ===
+    /** @brief Découvre AppController via la hiérarchie des composants. */
     void parentHierarchyChanged() override;
     
-    // === GESTION DE LA SÉLECTION RÉACTIVE ===
+    // ValueTree::Listener
     void valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged,
                                   const juce::Identifier& property) override;
-    void valueTreeChildAdded(juce::ValueTree& parentTree, juce::ValueTree& childWhichHasBeenAdded) override {}
+    void valueTreeChildAdded(juce::ValueTree&, juce::ValueTree&) override {}
     void valueTreeChildRemoved(juce::ValueTree& parentTree, juce::ValueTree& childWhichHasBeenRemoved, 
                                int indexFromWhichChildWasRemoved) override;
-    void valueTreeChildOrderChanged(juce::ValueTree& parentTreeWhoseChildrenHaveMoved, 
-                                    int oldIndex, int newIndex) override {}
-    void valueTreeParentChanged(juce::ValueTree& treeWhoseParentHasChanged) override {}
+    void valueTreeChildOrderChanged(juce::ValueTree&, int, int) override {}
+    void valueTreeParentChanged(juce::ValueTree&) override {}
 
 private:
-    // Composants UI
     WelcomeView welcomeView;
     std::unique_ptr<SectionEditor> sectionEditor;
     std::unique_ptr<ModulationEditor> modulationEditor;
     
-    // === DÉCOUVERTE DE SERVICE ===
-    AppController* appController = nullptr;  // Trouvé via parentHierarchyChanged()
-    juce::ValueTree selectionState; // État de sélection centralisé
-    juce::ValueTree modelState;     // État du modèle pour détecter les suppressions
+    AppController* appController = nullptr;
+    juce::ValueTree selectionState;
+    juce::ValueTree modelState;
     
-    // Style constants
     static constexpr float cornerRadius = 8.0f;
     static constexpr int borderThickness = 1;
-    static constexpr int contentPadding = 10;  // Espacement interne pour les enfants
+    static constexpr int contentPadding = 10;
     
-    // Méthodes privées
     void findAppController();
     void updateContentBasedOnSelection();
     
