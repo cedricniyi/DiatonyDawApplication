@@ -12,33 +12,23 @@
     #include "debug/ValueTreeLogger.h"
 #endif
 
-// Forward declarations pour éviter les dépendances circulaires
-class RootAnimator;
 class SlidingPanelAnimator;
 class AppController;
 
-// ==============================================================================
-// Classe utilitaire pour logger les changements du ValueTree en temps réel
-//==============================================================================
+/** @brief Éditeur principal du plugin audio, gère l'UI et les animations. */
 class AudioPluginAudioProcessorEditor : public juce::AudioProcessorEditor
 {
 public:
-    AudioPluginAudioProcessorEditor (AudioPluginAudioProcessor&);
+    AudioPluginAudioProcessorEditor(AudioPluginAudioProcessor&);
     ~AudioPluginAudioProcessorEditor() override;
 
-    //==============================================================================
-    void paint (juce::Graphics&) override;
+    void paint(juce::Graphics&) override;
     void resized() override;
     
-    // === DÉCOUVERTE DE SERVICE ===
-    /** 
-     * Permet aux composants enfants de découvrir AppController via findParentComponentOfClass
-     * @return Référence vers l'instance unique d'AppController
-     */
+    /** @brief Permet aux composants enfants de découvrir AppController. */
     AppController& getAppController();
 
 private:
-    // Référence au processeur
     AudioPluginAudioProcessor& audioProcessor;
     
     // État global de l'application (source de vérité unique)
@@ -51,26 +41,18 @@ private:
         ValueTreeLogger selectionStateLogger { "Selection Context State" };
     #endif
     
-    // Contrôleur principal de l'application
     std::unique_ptr<AppController> appController;
     
     // Melatonin Inspector pour déboguer l'interface
     melatonin::Inspector inspector { *this, false };
-
     
-    // Composants de notification
     std::unique_ptr<SimpleToastComponent> toast;
-    
-    // Composant principal qui gère le contenu et le layout
     std::unique_ptr<MainContentComponent> mainContent;
     
-    // Animators pour gérer les animations à différents niveaux
-    std::unique_ptr<RootAnimator> rootAnimator;              // Animations niveau root (flex)
-    std::unique_ptr<SlidingPanelAnimator> footerAnimator;    // Animations niveau footer (grid + fade)
-    std::unique_ptr<SlidingPanelAnimator> historyAnimator;   // Animations niveau history panel (width + fade)
+    std::unique_ptr<SlidingPanelAnimator> historyAnimator;
 
     // Constrainer pour la taille
     std::unique_ptr<juce::ComponentBoundsConstrainer> constrainer;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessorEditor)
-}; 
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioPluginAudioProcessorEditor)
+};
