@@ -1,93 +1,57 @@
 #include "ButtonColoredPanel.h"
 
-//==============================================================================
 ButtonColoredPanel::ButtonColoredPanel(juce::Colour color) 
-    : juce::Button(""),  // Bouton sans texte
+    : juce::Button(""),
       baseColor(color),
       isSelected(false),
-      contentType(PanelContentType::Section),  // Par défaut Section
-      displayText(""),  // Pas de texte par défaut
-      showText(true)  // Affichage du texte activé par défaut (rétrocompatibilité)
+      contentType(PanelContentType::Section),
+      displayText(""),
+      showText(true)
 {
-    // Désactiver le look and feel par défaut du bouton
     setButtonText("");
 }
 
 void ButtonColoredPanel::mouseDown(const juce::MouseEvent& e)
 {
-    // Clic droit : appeler le callback de suppression s'il existe
     if (e.mods.isRightButtonDown())
     {
         if (onRightClick)
-        {
             onRightClick();
-        }
-        return;  // Ne pas propager le clic droit au comportement par défaut du bouton
+        return;
     }
     
-    // Clic gauche : comportement normal du bouton
     juce::Button::mouseDown(e);
 }
 
-void ButtonColoredPanel::paintButton(juce::Graphics& g, bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown)
+void ButtonColoredPanel::paintButton(juce::Graphics& g, bool shouldDrawButtonAsHighlighted, bool)
 {
     auto bounds = getLocalBounds().toFloat();
     
-    // Créer le path pour le rectangle (sans coins arrondis)
-    juce::Path panelPath;
-    panelPath.addRectangle(bounds);
-
-    // Couleur avec effets hover et sélection
-    juce::Colour currentColor;
-    
-    if (isSelected)
-    {
-        // Panel sélectionné : rouge
-        currentColor = juce::Colours::red;
-    }
-    else
-    {
-        // Panel normal : couleur de base
-        currentColor = baseColor;
-    }
-    
+    juce::Colour currentColor = isSelected ? juce::Colours::red /*Sélectionné*/: baseColor/*Normal*/;
     if (shouldDrawButtonAsHighlighted)
-    {
-        // Panel survolé : légèrement plus lumineux (équivalent au hover)
         currentColor = currentColor.brighter(0.15f);
-    }
     
-    // Rendre le panel (sans bordure, identique à ColoredPanel)
     g.setColour(currentColor);
-    g.fillPath(panelPath);
+    g.fillRect(bounds);
     
-    // Afficher le texte s'il y en a un ET si l'affichage est activé
     if (showText && displayText.isNotEmpty())
     {
-        // Couleur du texte : blanc pour contraster avec les couleurs de fond
         g.setColour(juce::Colours::white);
-        
-        // Police adaptée à la taille du panel
         g.setFont(juce::FontOptions(12.0f));
-        
-        // Dessiner le texte centré
         g.drawText(displayText, bounds.toNearestInt(), juce::Justification::centred, true);
     }
 }
 
 void ButtonColoredPanel::setSelected(bool selected)
 {
-    if (isSelected != selected)
+    if (isSelected != selected) 
     {
         isSelected = selected;
         repaint();
     }
 }
 
-bool ButtonColoredPanel::getSelected() const
-{
-    return isSelected;
-}
+bool ButtonColoredPanel::getSelected() const { return isSelected; }
 
 void ButtonColoredPanel::setColor(juce::Colour color)
 {
@@ -95,55 +59,30 @@ void ButtonColoredPanel::setColor(juce::Colour color)
     repaint();
 }
 
-juce::Colour ButtonColoredPanel::getColor() const
-{
-    return baseColor;
-}
-
-void ButtonColoredPanel::setUserData(const juce::var& data)
-{
-    userData = data;
-}
-
-juce::var ButtonColoredPanel::getUserData() const
-{
-    return userData;
-}
-
-void ButtonColoredPanel::setContentType(PanelContentType type)
-{
-    contentType = type;
-}
-
-PanelContentType ButtonColoredPanel::getContentType() const
-{
-    return contentType;
-}
+juce::Colour ButtonColoredPanel::getColor() const { return baseColor; }
+void ButtonColoredPanel::setUserData(const juce::var& data) { userData = data; }
+juce::var ButtonColoredPanel::getUserData() const { return userData; }
+void ButtonColoredPanel::setContentType(PanelContentType type) { contentType = type; }
+PanelContentType ButtonColoredPanel::getContentType() const { return contentType; }
 
 void ButtonColoredPanel::setDisplayText(const juce::String& text)
 {
     if (displayText != text)
     {
         displayText = text;
-        repaint();  // Redessiner pour afficher le nouveau texte
+        repaint();
     }
 }
 
-juce::String ButtonColoredPanel::getDisplayText() const
-{
-    return displayText;
-}
+juce::String ButtonColoredPanel::getDisplayText() const { return displayText; }
 
 void ButtonColoredPanel::setShowText(bool shouldShowText)
 {
     if (showText != shouldShowText)
     {
         showText = shouldShowText;
-        repaint();  // Redessiner pour mettre à jour l'affichage
+        repaint();
     }
 }
 
-bool ButtonColoredPanel::getShowText() const
-{
-    return showText;
-} 
+bool ButtonColoredPanel::getShowText() const { return showText; } 

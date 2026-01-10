@@ -2,11 +2,7 @@
 
 #include "StyledButton.h"
 
-/**
- * Extension de StyledButton avec gestion de sélection similaire à CircularButton
- * Permet d'avoir des couleurs distinctes pour les états normal/sélectionné
- * sans affecter les autres usages de StyledButton dans l'application
- */
+/** @brief StyledButton avec gestion de sélection (couleurs normal/sélectionné). */
 class SelectableStyledButton : public StyledButton
 {
 public:
@@ -18,14 +14,11 @@ public:
     
     ~SelectableStyledButton() override = default;
     
-    // Gestion de la sélection (comme CircularButton)
     void setSelected(bool selected);
     bool getSelected() const;
     
-    // Configuration des couleurs pour les états normal/sélectionné
     void setNormalColour(const juce::Colour& colour);
     void setSelectedColour(const juce::Colour& colour);
-    
     juce::Colour getNormalColour() const;
     juce::Colour getSelectedColour() const;
 

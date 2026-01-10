@@ -10,7 +10,6 @@ SelectableStyledButton::SelectableStyledButton(const juce::String& buttonText,
       normalColour(normalColor),
       selectedColour(selectedColor)
 {
-    // Initialiser avec les couleurs normales
     updateButtonColours();
 }
 
