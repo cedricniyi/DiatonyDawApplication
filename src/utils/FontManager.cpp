@@ -1,15 +1,13 @@
 #include "FontManager.h"
-#include "DiatonyConstants.h"
 #include "BinaryData.h"
 #include <algorithm>
 
 FontManager::FontManager() {
-    // Initialiser automatiquement les fonts au moment de la construction
     initializeFonts();
 }
 
 void FontManager::initializeFonts() {
-    // Pré-charger les fonts les plus utilisées pour améliorer les performances
+    // Pré-charger les fonts les plus utilisées
     getSFProDisplay(16.0f, FontWeight::Regular);
     getSFProDisplay(16.0f, FontWeight::Bold);
     getSFProDisplay(16.0f, FontWeight::Semibold);
@@ -32,26 +30,17 @@ juce::FontOptions FontManager::getSFProRounded(float size, FontWeight weight, Fo
 juce::FontOptions FontManager::getFont(const std::string& family, float size, FontWeight weight, FontStyle style) {
     std::string fontKey = getFontFileName(family, weight, style);
     
-    // Vérifier si la font est déjà en cache
     if (typefaceCache.find(fontKey) == typefaceCache.end()) {
-        // Charger la font depuis BinaryData
         juce::Typeface::Ptr typeface = nullptr;
         
-        // DBG("Trying to load font: " + fontKey);
-        
-        // Créer le nom de ressource pour BinaryData (remplacer les tirets par des underscores)
         std::string resourceName = fontKey;
         std::replace(resourceName.begin(), resourceName.end(), '-', '_');
         resourceName += "_otf";
         
-        // Essayer de charger depuis BinaryData avec l'API JUCE standard
         int resourceSize = 0;
         const char* resourceData = nullptr;
         
-        // JUCE génère des constantes pour chaque ressource. Nous devons les mapper manuellement
-        // ou utiliser une approche de fallback pour l'instant
-        
-        // Mapping des fonts les plus courantes
+        // Mapping des fonts SF Pro vers BinaryData
         if (fontKey == "SF-Pro-Display-Regular") {
             resourceData = BinaryData::SFProDisplayRegular_otf;
             resourceSize = BinaryData::SFProDisplayRegular_otfSize;
@@ -116,26 +105,16 @@ juce::FontOptions FontManager::getFont(const std::string& family, float size, Fo
             resourceData = BinaryData::SFProRoundedMedium_otf;
             resourceSize = BinaryData::SFProRoundedMedium_otfSize;
         }
-        // Ajouter d'autres mappings au besoin...
         
-        if (resourceData != nullptr && resourceSize > 0) {
+        if (resourceData != nullptr && resourceSize > 0)
             typeface = createTypefaceFromBinaryData(resourceData, resourceSize);
-            if (typeface != nullptr) {
-                // DBG("Successfully loaded SF Pro font: " + fontKey);
-            }
-        }
         
-        // Fallback vers la font par défaut si la ressource n'est pas trouvée ou si le chargement a échoué
+        // Fallback vers Arial puis font par défaut JUCE
         if (typeface == nullptr) {
-            // DBG("Font resource not found or loading failed, using default font for: " + fontKey);
-            
-            // Utiliser une font par défaut simple
             juce::Font defaultFont("Arial", size, juce::Font::plain);
             typeface = defaultFont.getTypefacePtr();
             
-            // Si même Arial échoue, utiliser la font par défaut de JUCE
             if (typeface == nullptr) {
-                // DBG("Arial fallback failed, using JUCE default font for: " + fontKey);
                 juce::Font juceDefaultFont;
                 typeface = juceDefaultFont.getTypefacePtr();
             }
@@ -144,26 +123,17 @@ juce::FontOptions FontManager::getFont(const std::string& family, float size, Fo
         typefaceCache[fontKey] = typeface;
     }
     
-    // Vérifier que la typeface mise en cache est valide
     auto cachedTypeface = typefaceCache[fontKey];
     if (cachedTypeface == nullptr) {
-        // DBG("Cached typeface is null for: " + fontKey + ", creating emergency fallback");
-        
-        // Créer une font d'urgence simple
         juce::Font emergencyFont("Arial", size, juce::Font::plain);
         auto emergencyTypeface = emergencyFont.getTypefacePtr();
         
-        // Vérification finale : si même la font d'urgence échoue, retourner une FontOptions basique
-        if (emergencyTypeface == nullptr) {
-            // DBG("Emergency font failed, returning basic FontOptions for: " + fontKey);
+        if (emergencyTypeface == nullptr)
             return juce::FontOptions().withHeight(size);
-        }
         
-        // Utiliser le constructeur direct au lieu de withTypeface() pour éviter l'assertion JUCE 8
         return juce::FontOptions(emergencyTypeface).withHeight(size);
     }
     
-    // Utiliser le constructeur direct au lieu de withTypeface() pour éviter l'assertion JUCE 8
     return juce::FontOptions(cachedTypeface).withHeight(size);
 }
 
@@ -174,7 +144,6 @@ juce::Typeface::Ptr FontManager::createTypefaceFromBinaryData(const char* data, 
 std::string FontManager::getFontFileName(const std::string& family, FontWeight weight, FontStyle style) {
     std::string result = family;
     
-    // Ajouter le poids
     switch (weight) {
         case FontWeight::Thin:
             result += "-Thin";
@@ -205,10 +174,8 @@ std::string FontManager::getFontFileName(const std::string& family, FontWeight w
             break;
     }
     
-    // Ajouter le style
-    if (style == FontStyle::Italic) {
+    if (style == FontStyle::Italic)
         result += "Italic";
-    }
     
     return result;
-} 
+}
