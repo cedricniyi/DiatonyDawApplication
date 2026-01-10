@@ -4,11 +4,7 @@
 #include "ui/extra/Button/StyledButton.h"
 #include "OverviewContentArea.h"
 
-//==============================================================================
-/**
- * Zone d'action de l'Overview - Contient directement le ContentArea et le bouton
- * Dessin custom style BaseZone (fond semi-transparent + contour)
- */
+/** @brief Zone d'action de l'Overview avec ContentArea et bouton d'ajout. */
 class OverviewActionArea : public juce::Component
 {
 public:
@@ -17,7 +13,7 @@ public:
     void paint(juce::Graphics& g) override;
     void resized() override;
     
-    // Accès au composant OverviewContentArea
+    /** @brief Retourne le composant OverviewContentArea. */
     OverviewContentArea& getContentArea();
     
 private:

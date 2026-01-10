@@ -1,7 +1,6 @@
 #include "OverviewActionArea.h"
 #include "utils/FontManager.h"
 
-//==============================================================================
 OverviewActionArea::OverviewActionArea() 
     : actionButton("+", 
                    juce::Colours::grey,
@@ -53,7 +52,4 @@ void OverviewActionArea::resized()
     contentArea.setBounds(area);
 }
 
-OverviewContentArea& OverviewActionArea::getContentArea()
-{
-    return contentArea;
-}
+OverviewContentArea& OverviewActionArea::getContentArea() { return contentArea; }
