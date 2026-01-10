@@ -81,8 +81,8 @@ target_sources(DiatonyDawApplication
         src/ui/PluginEditor.cpp
         src/ui/PluginEditor.h
         src/ui/UIStateIdentifiers.h
-        src/ui/RootAnimator.h
-        src/ui/RootAnimator.cpp
+        # src/ui/RootAnimator.h       # Non utilisé (lié au footer)
+        # src/ui/RootAnimator.cpp     # Non utilisé (lié au footer)
         src/ui/MainContentComponent.h
         src/ui/MainContentComponent.cpp
         src/ui/DiatonyText.h
@@ -116,19 +116,19 @@ target_sources(DiatonyDawApplication
         src/ui/extra/Component/TextPill.h
         src/ui/extra/Component/TextPill.cpp
         
-        # UI Footer Components
-        src/ui/footer/components/InteractivePiano/PianoKey.h
-        src/ui/footer/components/InteractivePiano/PianoKey.cpp
-        src/ui/footer/components/InteractivePiano/InteractivePianoContentArea.h
-        src/ui/footer/components/InteractivePiano/InteractivePianoContentArea.cpp
-        src/ui/footer/components/InteractivePiano/InteractivePiano.h
-        src/ui/footer/components/InteractivePiano/InteractivePiano.cpp
-        src/ui/footer/components/MidiPianoContentArea.h
-        src/ui/footer/components/MidiPianoContentArea.cpp
-        src/ui/footer/components/MidiPianoArea.h
-        src/ui/footer/components/MidiPianoArea.cpp
-        src/ui/footer/FooterPanel.h
-        src/ui/footer/FooterPanel.cpp
+        # UI Footer Components (non utilisé - conservé pour référence future)
+        # src/ui/footer/components/InteractivePiano/PianoKey.h
+        # src/ui/footer/components/InteractivePiano/PianoKey.cpp
+        # src/ui/footer/components/InteractivePiano/InteractivePianoContentArea.h
+        # src/ui/footer/components/InteractivePiano/InteractivePianoContentArea.cpp
+        # src/ui/footer/components/InteractivePiano/InteractivePiano.h
+        # src/ui/footer/components/InteractivePiano/InteractivePiano.cpp
+        # src/ui/footer/components/MidiPianoContentArea.h
+        # src/ui/footer/components/MidiPianoContentArea.cpp
+        # src/ui/footer/components/MidiPianoArea.h
+        # src/ui/footer/components/MidiPianoArea.cpp
+        # src/ui/footer/FooterPanel.h
+        # src/ui/footer/FooterPanel.cpp
         # UI History Panel
         src/ui/history/HistoryPanel.h
         src/ui/history/HistoryPanel.cpp
