@@ -6,15 +6,11 @@ KeySelectorComponent::KeySelectorComponent()
     setupButtons();
 }
 
-KeySelectorComponent::~KeySelectorComponent()
-{
-}
+KeySelectorComponent::~KeySelectorComponent() {}
 
 void KeySelectorComponent::setupKeyInfos()
 {
-    // Mapping des 12 demi-tons avec BaseNote, Alteration et labels
-    // noteIndex 0-11 correspond à C, C#, D, D#, E, F, F#, G, G#, A, A#, B
-    
+    // Mapping des 12 demi-tons : C=0, C#=1, D=2, D#=3, E=4, F=5, F#=6, G=7, G#=8, A=9, A#=10, B=11
     keyInfos[0]  = { 0,  Diatony::BaseNote::C, Diatony::Alteration::Natural, "C",       true  };
     keyInfos[1]  = { 1,  Diatony::BaseNote::C, Diatony::Alteration::Sharp,   "C#/Db",   false };
     keyInfos[2]  = { 2,  Diatony::BaseNote::D, Diatony::Alteration::Natural, "D",       true  };
@@ -43,7 +39,6 @@ void KeySelectorComponent::setupButtons()
             FontManager::FontWeight::Medium
         );
         
-        // Callback de sélection
         keyButtons[i]->onClick = [this, i]() {
             selectKey(i);
         };
@@ -51,13 +46,11 @@ void KeySelectorComponent::setupButtons()
         addAndMakeVisible(*keyButtons[i]);
     }
     
-    // Sélectionner C par défaut
     selectKey(0);
 }
 
 void KeySelectorComponent::paint(juce::Graphics& g)
 {
-    // Fond transparent - pas de dessin
     juce::ignoreUnused(g);
 }
 
@@ -69,7 +62,6 @@ void KeySelectorComponent::resized()
 void KeySelectorComponent::layoutButtons()
 {
     auto bounds = getLocalBounds();
-    
     if (bounds.isEmpty())
         return;
     
@@ -77,18 +69,16 @@ void KeySelectorComponent::layoutButtons()
     constexpr int BUTTON_SPACING = 4;
     constexpr int ROW_SPACING = 6;
     
-    // Calculer la largeur de bouton pour les naturels (7 boutons)
     int availableWidth = bounds.getWidth() - (6 * BUTTON_SPACING);
     int btnWidth = availableWidth / 7;
     
-    // Centrer verticalement les deux lignes
     int totalContentHeight = (BUTTON_HEIGHT * 2) + ROW_SPACING;
     int startY = (bounds.getHeight() - totalContentHeight) / 2;
     
     int topRowY = startY;
     int bottomRowY = startY + BUTTON_HEIGHT + ROW_SPACING;
     
-    // === Ligne du bas : 7 touches naturelles (C D E F G A B) ===
+    // Ligne du bas : 7 touches naturelles (C D E F G A B)
     int x = bounds.getX();
     for (int i = 0; i < 7; ++i)
     {
@@ -97,24 +87,15 @@ void KeySelectorComponent::layoutButtons()
         x += btnWidth + BUTTON_SPACING;
     }
     
-    // === Ligne du haut : 5 touches altérées ===
-    // Même espacement que les naturelles, avec un gap là où il n'y a pas de E#
-    // Layout: [C#][D#]  gap  [F#][G#][A#]
-    //         pos0 pos1      pos3 pos4 pos5 (aligné sur les naturelles)
-    
-    // Décalage horizontal pour centrer la ligne du haut (qui a moins de boutons)
-    // On aligne C# au-dessus de C, D# au-dessus de D, etc.
+    // Ligne du haut : 5 touches altérées, alignées en quinconce
     int sharpStartX = bounds.getX() + (btnWidth + BUTTON_SPACING) / 2;
-    
-    // Positions des altérées : 0=C#, 1=D#, (2=gap), 3=F#, 4=G#, 5=A#
-    std::array<int, 5> sharpSlots = { 0, 1, 3, 4, 5 };
+    std::array<int, 5> sharpSlots = { 0, 1, 3, 4, 5 };  // Gap à la position 2 (pas de E#)
     
     for (int i = 0; i < 5; ++i)
     {
         int noteIdx = sharpIndices[i];
         int slot = sharpSlots[i];
         int sharpX = sharpStartX + slot * (btnWidth + BUTTON_SPACING);
-        
         keyButtons[noteIdx]->setBounds(sharpX, topRowY, btnWidth, BUTTON_HEIGHT);
     }
 }
@@ -126,13 +107,9 @@ void KeySelectorComponent::selectKey(int noteIndex)
     
     selectedNoteIndex = noteIndex;
     
-    // Mettre à jour l'état visuel de tous les boutons
     for (int i = 0; i < 12; ++i)
-    {
         keyButtons[i]->setSelected(i == noteIndex);
-    }
     
-    // Notifier le callback
     if (onKeyChanged)
     {
         const auto& info = keyInfos[noteIndex];
@@ -146,14 +123,10 @@ void KeySelectorComponent::setKey(int noteIndex)
         return;
     
     if (selectedNoteIndex == noteIndex)
-        return;  // Déjà sélectionné
+        return;
     
     selectedNoteIndex = noteIndex;
     
-    // Mettre à jour l'état visuel sans déclencher le callback
     for (int i = 0; i < 12; ++i)
-    {
         keyButtons[i]->setSelected(i == noteIndex);
-    }
 }
-

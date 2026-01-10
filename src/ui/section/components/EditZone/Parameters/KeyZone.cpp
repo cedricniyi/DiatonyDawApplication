@@ -11,19 +11,11 @@ std::function<void(int noteIndex, Diatony::BaseNote base, Diatony::Alteration al
     return keySelector.onKeyChanged;
 }
 
-void KeyZone::setKey(int noteIndex)
-{
-    keySelector.setKey(noteIndex);
-}
+void KeyZone::setKey(int noteIndex) { keySelector.setKey(noteIndex); }
 
-int KeyZone::getSelectedKey() const
-{
-    return keySelector.getSelectedKey();
-}
+int KeyZone::getSelectedKey() const { return keySelector.getSelectedKey(); }
 
 void KeyZone::resizeContent(const juce::Rectangle<int>& contentBounds)
 {
-    // BaseZone gère déjà le padding - on utilise tout l'espace fourni
     keySelector.setBounds(contentBounds);
 }
-

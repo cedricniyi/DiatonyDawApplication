@@ -11,34 +11,27 @@ void ModeZone::setSelectedMode(Diatony::Mode mode)
 {
     selectedMode = mode;
     for (size_t j = 0; j < modeButtons.size(); ++j)
-    {
-        bool isSelected = (modes[j] == selectedMode);
-        modeButtons[j]->setSelected(isSelected);
-    }
+        modeButtons[j]->setSelected(modes[j] == selectedMode);
     repaint();
 }
 
-Diatony::Mode ModeZone::getSelectedMode() const
-{
-    return selectedMode;
-}
+Diatony::Mode ModeZone::getSelectedMode() const { return selectedMode; }
 
 void ModeZone::resizeContent(const juce::Rectangle<int>& contentBounds)
 {
     if (contentBounds.isEmpty())
         return;
     
-    // BaseZone gère le padding - FlexBox remplit l'espace
     juce::FlexBox flexBox;
     flexBox.flexDirection = juce::FlexBox::Direction::column;
     flexBox.justifyContent = juce::FlexBox::JustifyContent::spaceAround;
-    flexBox.alignItems = juce::FlexBox::AlignItems::stretch;  // Boutons prennent toute la largeur
+    flexBox.alignItems = juce::FlexBox::AlignItems::stretch;
     
     for (auto& button : modeButtons)
     {
         flexBox.items.add(juce::FlexItem(*button)
             .withFlex(1.0f)
-            .withMargin(juce::FlexItem::Margin(2.0f)));  // Petit espace entre boutons
+            .withMargin(juce::FlexItem::Margin(2.0f)));
     }
     
     flexBox.performLayout(contentBounds.toFloat());
@@ -62,9 +55,7 @@ void ModeZone::setupButtons()
             selectedMode = modes[i];
             
             for (int j = 0; j < 2; ++j)
-            {
                 modeButtons[j]->setSelected(j == i);
-            }
             
             if (onModeChanged)
                 onModeChanged(selectedMode);
@@ -73,4 +64,3 @@ void ModeZone::setupButtons()
         addAndMakeVisible(*modeButtons[i]);
     }
 }
-
