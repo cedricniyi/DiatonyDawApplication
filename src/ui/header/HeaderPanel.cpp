@@ -7,49 +7,37 @@
 #include "utils/FontManager.h"
 #include "IconBinaryData.h"
 
-//==============================================================================
 HeaderPanel::HeaderPanel()
-    : ColoredPanel (juce::Colour::fromString("#FF333333")),
-      generateButton (juce::String::fromUTF8("Generate"),
-                      juce::Colour::fromString ("#ff22c55e"), // Vert
-                      juce::Colour::fromString ("#ff16a34a"), // Vert plus foncé au survol
-                      14.0f, FontManager::FontWeight::Medium)
+    : ColoredPanel(juce::Colour::fromString("#FF333333")),
+      generateButton(juce::String::fromUTF8("Generate"),
+                     juce::Colour::fromString("#ff22c55e"),  // Vert
+                     juce::Colour::fromString("#ff16a34a"),  // Vert foncé hover
+                     14.0f, FontManager::FontWeight::Medium)
 {
-    // Charger le logo Diatony
     loadLogo();
     
-    // Configuration du label principal
-    mainLabel.setText(juce::String::fromUTF8("DiatonyDAWPlugin"),juce::dontSendNotification);
-    mainLabel.setJustificationType (juce::Justification::centredLeft);
-    mainLabel.setColour (juce::Label::textColourId, juce::Colours::white);
+    mainLabel.setText(juce::String::fromUTF8("DiatonyDAW"), juce::dontSendNotification);
+    mainLabel.setJustificationType(juce::Justification::centredLeft);
+    mainLabel.setColour(juce::Label::textColourId, juce::Colours::white);
     
-    // Application de la police via FontManager
     auto fontOptions = fontManager->getSFProDisplay(24.0f, FontManager::FontWeight::Bold);
     mainLabel.setFont(juce::Font(fontOptions));
-   
-    addAndMakeVisible (mainLabel);
+    addAndMakeVisible(mainLabel);
 
-    // Configuration du bouton Generate
     generateButton.setTooltip(juce::String::fromUTF8("Générer une solution musicale"));
-    addAndMakeVisible (generateButton);
+    addAndMakeVisible(generateButton);
 
-    // Configuration de la zone de drag MIDI
-    addAndMakeVisible (midiDragZone);
+    addAndMakeVisible(midiDragZone);
     
-    // Configuration du bouton History (icône horloge)
     hamburgerButton = std::make_unique<IconStyledButton>(
         "HistoryButton",
         IconData::historysvgrepo_svg,
         IconData::historysvgrepo_svgSize,
-        juce::Colour::fromString("ff808080"),  // Gris
-        juce::Colour::fromString("ff606060"),  // Gris plus foncé au survol
-        juce::Colours::white                    // Couleur de l'icône
+        juce::Colour::fromString("ff808080"),
+        juce::Colour::fromString("ff606060"),
+        juce::Colours::white
     );
-    
     hamburgerButton->setTooltip("Ouvrir/fermer le panneau History");
-    
-    // Le callback sera connecté dans setAppState une fois le ValueTree disponible
-    
     addAndMakeVisible(*hamburgerButton);
 }
 
@@ -67,7 +55,6 @@ void HeaderPanel::setAppState(juce::ValueTree& state)
     appState = state;
     appState.addListener(this);
     
-    // Connecter le bouton hamburger pour toggle le panneau History
     hamburgerButton->onClick = [this]() {
         if (appState.isValid())
         {
@@ -75,11 +62,9 @@ void HeaderPanel::setAppState(juce::ValueTree& state)
                 appState.getProperty(UIStateIdentifiers::historyPanelVisible, false)
             );
             appState.setProperty(UIStateIdentifiers::historyPanelVisible, !currentVisible, nullptr);
-            DBG("🍔 Bouton hamburger cliqué ! History Panel visible: " << (!currentVisible ? "true" : "false"));
         }
     };
     
-    // Synchronisation de l'état initial
     updateDockState();
 }
 
@@ -87,23 +72,16 @@ void HeaderPanel::resized()
 {
     auto bounds = getLocalBounds();
     
-    // Calcul de la largeur exacte du texte pour définir la zone titre
     juce::GlyphArrangement ga;
     ga.addLineOfText(mainLabel.getFont(), mainLabel.getText(), 0, 0);
     auto labelWidth = static_cast<int>(std::ceil(ga.getBoundingBox(0, -1, false).getWidth()));
     
-    // La zone titre = logo + espacement + label + padding minimal
-    titleZoneWidth = LOGO_SIZE + 8 + labelWidth + 40;  // Réduit le padding total
+    titleZoneWidth = LOGO_SIZE + 8 + labelWidth + 40;
     
-    // Zone titre (à gauche)
     auto titleArea = bounds.removeFromLeft(titleZoneWidth).reduced(16, 10);
-    
-    // Le logo est dessiné dans paint(), on réserve juste l'espace
-    titleArea.removeFromLeft(LOGO_SIZE + 8);  // Logo + espacement
-    
+    titleArea.removeFromLeft(LOGO_SIZE + 8);
     mainLabel.setBounds(titleArea);
     
-    // Zone boutons (à droite) - avec padding
     auto buttonArea = bounds.reduced(20, 10);
     auto buttonSize = buttonArea.getHeight();
     
@@ -112,19 +90,16 @@ void HeaderPanel::resized()
     buttonFlex.justifyContent = juce::FlexBox::JustifyContent::flexEnd;
     buttonFlex.alignItems = juce::FlexBox::AlignItems::center;
     
-    // Bouton Generate (rectangulaire, 80px de large)
     buttonFlex.items.add(juce::FlexItem(generateButton)
         .withMinWidth(80.0f)
         .withMinHeight(static_cast<float>(buttonSize))
         .withMargin(juce::FlexItem::Margin(0, 12, 0, 0)));
     
-    // Zone de drag MIDI (entre Generate et hamburger)
     buttonFlex.items.add(juce::FlexItem(midiDragZone)
         .withMinWidth(60.0f)
         .withMinHeight(static_cast<float>(buttonSize))
         .withMargin(juce::FlexItem::Margin(0, 12, 0, 0)));
     
-    // Bouton hamburger (carré)
     buttonFlex.items.add(juce::FlexItem(*hamburgerButton)
         .withMinWidth(static_cast<float>(buttonSize))
         .withMinHeight(static_cast<float>(buttonSize)));
@@ -132,28 +107,28 @@ void HeaderPanel::resized()
     buttonFlex.performLayout(buttonArea);
 }
 
-void HeaderPanel::paint (juce::Graphics& g)
+void HeaderPanel::paint(juce::Graphics& g)
 {
     auto bounds = getLocalBounds();
     
-    // Zone du titre (partie gauche) - couleur un peu plus foncée
+    // Zone titre (gauche) - plus foncée
     auto titleZone = bounds.removeFromLeft(titleZoneWidth);
     g.setColour(juce::Colour(0xFF1E1E1E));
     g.fillRect(titleZone);
     
-    // Zone des boutons (partie droite) - couleur légèrement plus claire
+    // Zone boutons (droite) - plus claire
     g.setColour(juce::Colour(0xFF2A2A2A));
     g.fillRect(bounds);
     
-    // Bordure en bas du header
+    // Bordure bas
     g.setColour(juce::Colour(0xFF444444));
     g.fillRect(0, getHeight() - 1, getWidth(), 1);
     
-    // Séparation verticale entre zone titre et zone boutons
+    // Séparation verticale
     g.setColour(juce::Colour(0xFF444444));
     g.fillRect(titleZoneWidth, 0, 1, getHeight());
     
-    // Dessiner le logo Diatony (blanc, centré verticalement)
+    // Logo Diatony
     if (logoDrawable != nullptr)
     {
         int logoX = 16;
@@ -164,12 +139,9 @@ void HeaderPanel::paint (juce::Graphics& g)
             static_cast<float>(LOGO_SIZE), 
             static_cast<float>(LOGO_SIZE)
         );
-        
         logoDrawable->drawWithin(g, logoBounds, juce::RectanglePlacement::centred, 1.0f);
     }
 }
-
-// === DÉCOUVERTE DE SERVICE ===
 
 void HeaderPanel::parentHierarchyChanged()
 {
@@ -179,60 +151,36 @@ void HeaderPanel::parentHierarchyChanged()
 
 void HeaderPanel::findAppController()
 {
-    // Recherche de l'AppController via la hiérarchie des composants
     auto* pluginEditor = findParentComponentOfClass<AudioPluginAudioProcessorEditor>();
     
     if (pluginEditor != nullptr)
     {
         appController = &pluginEditor->getAppController();
-        DBG("HeaderPanel: AppController trouvé !");
-        
-        // Connecter le bouton de génération une fois AppController trouvé
         connectGenerateButton();
-        
-        // Connecter la zone de drag MIDI au selectionState
         midiDragZone.setSelectionState(appController->getSelectionState());
-        DBG("HeaderPanel: MidiDragZone connectée au selectionState ✓");
     }
     else
     {
         appController = nullptr;
-        DBG("HeaderPanel: AppController NON trouvé");
     }
 }
 
 void HeaderPanel::connectGenerateButton()
 {
     if (!appController)
-    {
-        DBG("HeaderPanel::connectGenerateButton() - Pas de contrôleur disponible");
         return;
-    }
     
-    // Connecter le callback du bouton Generate au contrôleur
     generateButton.onClick = [this]() {
-        DBG("🎵 Bouton Generate cliqué ! Appel du contrôleur...");
-        
         if (appController)
-        {
             appController->startGeneration();
-        }
-        else
-        {
-            DBG("  ❌ Erreur : AppController non disponible");
-        }
     };
-    
-    DBG("HeaderPanel: Bouton Generate connecté au contrôleur ✓");
 }
 
 void HeaderPanel::valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged,
                                           const juce::Identifier& property)
 {
     if (property == UIStateIdentifiers::dockVisible)
-    {
         updateDockState();
-    }
 }
 
 void HeaderPanel::valueTreeChildAdded(juce::ValueTree&, juce::ValueTree&) {}
@@ -240,31 +188,19 @@ void HeaderPanel::valueTreeChildRemoved(juce::ValueTree&, juce::ValueTree&, int)
 void HeaderPanel::valueTreeChildOrderChanged(juce::ValueTree&, int, int) {}
 void HeaderPanel::valueTreeParentChanged(juce::ValueTree&) {}
 
-void HeaderPanel::updateDockState()
-{
-    // Note: Cette méthode est conservée pour une éventuelle utilisation future
-    // avec d'autres états UI via le ValueTree
-}
+void HeaderPanel::updateDockState() {}
 
 void HeaderPanel::loadLogo()
 {
-    // Charger le SVG depuis les ressources binaires
     auto svgString = juce::String::fromUTF8(IconData::diatony_logo_svg, 
                                             IconData::diatony_logo_svgSize);
     auto svgXml = juce::XmlDocument::parse(svgString);
     
     if (svgXml == nullptr)
-    {
-        DBG("HeaderPanel::loadLogo - Échec du parsing du SVG logo");
         return;
-    }
     
     logoDrawable = juce::Drawable::createFromSVG(*svgXml);
     
     if (logoDrawable != nullptr)
-    {
-        // Colorier le logo en blanc
         logoDrawable->replaceColour(juce::Colours::black, juce::Colours::white);
-        DBG("HeaderPanel: Logo Diatony chargé ✓");
-    }
 }
