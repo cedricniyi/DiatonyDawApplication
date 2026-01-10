@@ -138,7 +138,6 @@ target_sources(DiatonyDawApplication
         src/ui/header/MidiDragZone.cpp
         src/ui/section/SectionPanel.h
         src/ui/section/SectionPanel.cpp
-        src/ui/style/DiatonyLookAndFeel.h
         
         # Animation
         src/ui/animation/AnimationManager.cpp
