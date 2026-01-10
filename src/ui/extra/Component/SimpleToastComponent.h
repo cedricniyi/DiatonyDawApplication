@@ -2,6 +2,7 @@
 
 #include <JuceHeader.h>
 
+/** @brief Toast temporaire aligné à droite pour notifications rapides. */
 class SimpleToastComponent : public juce::Component, 
                             private juce::Timer
 {
@@ -22,4 +23,4 @@ private:
     float opacity = 1.0f;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SimpleToastComponent)
-}; 
+};

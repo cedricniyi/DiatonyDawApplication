@@ -4,23 +4,13 @@
 #include "utils/FontManager.h"
 #include "../Button/StyledButton.h"
 
-//==============================================================================
 /**
- * @brief Pop-up modal moderne pour afficher des messages à l'utilisateur
- * 
- * Utilise FontManager pour la typographie et suit le design system de l'application.
- * Supporte différents types d'alertes : succès, erreur, avertissement, info.
+ * @brief Pop-up modal pour afficher des messages (succès, erreur, avertissement, info).
  */
 class DiatonyAlertWindow : public juce::Component
 {
 public:
-    enum class AlertType
-    {
-        Success,    // ✓ Vert
-        Error,      // ✗ Rouge
-        Warning,    // ⚠ Orange
-        Info        // ℹ Bleu
-    };
+    enum class AlertType { Success /*✓ Vert*/, Error /*✗ Rouge*/, Warning /*⚠ Orange*/, Info /*ℹ Bleu*/ };
     
     DiatonyAlertWindow(AlertType type,
                       const juce::String& titleText,
@@ -62,18 +52,12 @@ private:
     void drawIcon(juce::Graphics& g, juce::Rectangle<float> iconArea);
     juce::Colour getAccentColour() const;
     
-    // Composants pour le layout FlexBox
     class IconComponent : public juce::Component
     {
     public:
         IconComponent(AlertType type, const juce::Colour& colour) 
-            : alertType(type), accentColour(colour) 
-        {
-            setOpaque(false);
-        }
-        
+            : alertType(type), accentColour(colour) { setOpaque(false); }
         void paint(juce::Graphics& g) override;
-        
     private:
         AlertType alertType;
         juce::Colour accentColour;
@@ -83,13 +67,8 @@ private:
     class TitleComponent : public juce::Component
     {
     public:
-        TitleComponent(const juce::String& text) : titleText(text)
-        {
-            setOpaque(false);
-        }
-        
+        TitleComponent(const juce::String& text) : titleText(text) { setOpaque(false); }
         void paint(juce::Graphics& g) override;
-        
     private:
         juce::String titleText;
         juce::SharedResourcePointer<FontManager> fontManager;
@@ -98,13 +77,8 @@ private:
     class MessageComponent : public juce::Component
     {
     public:
-        MessageComponent(const juce::String& text) : messageText(text)
-        {
-            setOpaque(false);
-        }
-        
+        MessageComponent(const juce::String& text) : messageText(text) { setOpaque(false); }
         void paint(juce::Graphics& g) override;
-        
     private:
         juce::String messageText;
         juce::SharedResourcePointer<FontManager> fontManager;
@@ -125,30 +99,24 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(DiatonyAlertWindow)
 };
 
-//==============================================================================
-/**
- * @brief Composant wrapper qui affiche un overlay et le pop-up centré
- */
+/** @brief Wrapper qui affiche un overlay semi-transparent et le pop-up centré. */
 class DiatonyAlertWindowWithOverlay : public juce::Component
 {
 public:
     DiatonyAlertWindowWithOverlay(std::unique_ptr<DiatonyAlertWindow> alertWindow)
         : alert(std::move(alertWindow))
     {
-        // ⚠️ IMPORTANT : Ne PAS être opaque pour laisser voir l'app en dessous de l'overlay
-        setOpaque(false);
+        setOpaque(false); // Laisser voir l'app en dessous
         addAndMakeVisible(alert.get());
     }
     
     void paint(juce::Graphics& g) override
     {
-        // Overlay semi-transparent (optimisé : fillAll est rapide)
         g.fillAll(juce::Colours::black.withAlpha(0.4f));
     }
     
     void resized() override
     {
-        // Centrer le pop-up (calcul minimal)
         if (alert)
         {
             auto bounds = getLocalBounds();
