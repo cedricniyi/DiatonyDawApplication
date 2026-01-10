@@ -3,18 +3,13 @@
 #include <JuceHeader.h>
 #include <functional>
 
-// Forward declaration
 class AnimationManager;
 
-//==============================================================================
 /**
- * @brief Animator générique pour les panneaux coulissants avec fade
- * 
- * Remplace les animators spécifiques (FooterAnimator, HistoryPanelAnimator)
- * par une implémentation réutilisable.
- * 
- * Séquence show : expand (0→1) puis fade in
- * Séquence hide : fade out puis collapse (1→0)
+ * @brief Animator générique pour panneaux coulissants avec fade.
+ *
+ * Séquence show : expand (0→1) puis fade in.
+ * Séquence hide : fade out puis collapse (1→0).
  */
 class SlidingPanelAnimator
 {
@@ -36,13 +31,8 @@ public:
     
     ~SlidingPanelAnimator() = default;
     
-    /** Point d'entrée principal - anime vers visible ou caché */
     void setVisible(bool visible);
-    
-    /** Anime vers l'état ouvert (expand + fade in) */
     void show();
-    
-    /** Anime vers l'état fermé (fade out + collapse) */
     void hide();
     
 private:
@@ -56,5 +46,3 @@ private:
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SlidingPanelAnimator)
 };
-
-
