@@ -2,14 +2,6 @@ cmake_minimum_required(VERSION 3.22)
 
 include(FetchContent)
 
-# Dépendance JSON 
-FetchContent_Declare(
-    json
-    URL https://github.com/nlohmann/json/releases/download/v3.12.0/json.tar.xz
-    URL_HASH SHA256=42f6e95cad6ec532fd372391373363b62a14af6d771056dbfc86160e6dfff7aa
-    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
-)
-
 # Dépendance Melatonin Inspector, pour inspecter l'interface de l'application
 FetchContent_Declare(
     melatonin_inspector
@@ -18,19 +10,10 @@ FetchContent_Declare(
     SOURCE_DIR     ${CMAKE_CURRENT_BINARY_DIR}/melatonin_inspector
 )
 
-# Dépendance Melatonin Blur, pour les effets de flou et shadows
-FetchContent_Declare(
-    melatonin_blur
-    GIT_REPOSITORY https://github.com/sudara/melatonin_blur.git
-    GIT_TAG        origin/main
-    SOURCE_DIR     ${CMAKE_CURRENT_BINARY_DIR}/melatonin_blur
-)
-
 # Cette option désactive la compilation des tests
 set(JSON_BuildTests OFF CACHE INTERNAL "")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-FetchContent_MakeAvailable(json)
 
 project(DiatonyDawApplication VERSION 0.0.1)
 
@@ -48,7 +31,6 @@ endif()
 add_subdirectory("${CMAKE_SOURCE_DIR}/modules/JUCE" JUCE)
 
 FetchContent_MakeAvailable(melatonin_inspector)
-FetchContent_MakeAvailable(melatonin_blur)  
 
 juce_add_plugin(DiatonyDawApplication
     COMPANY_NAME "64492300_CN_UCL"              # Specify the name of the plugin's author
@@ -297,11 +279,9 @@ target_link_libraries(DiatonyDawApplication
     PRIVATE
         # AudioPluginData           # If we'd created a binary data target, we'd link to it here
         melatonin_inspector
-        melatonin_blur
         juce::juce_audio_utils
         juce::juce_animation
         juce::juce_data_structures # Ajouté pour support du ValueTree
-        nlohmann_json::nlohmann_json
     PUBLIC
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags
