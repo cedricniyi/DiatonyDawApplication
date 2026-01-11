@@ -4,14 +4,7 @@
 #include "model/ModelIdentifiers.h"
 #include "model/DiatonyTypes.h"
 
-/**
- * Tests unitaires pour la classe Section (wrapper)
- * 
- * Ces tests vérifient que Section est un pur wrapper qui :
- * - Lit correctement les propriétés du ValueTree
- * - Écrit correctement les propriétés dans le ValueTree
- * - Ne génère pas d'IDs (c'est Piece qui le fait)
- */
+/** @brief Tests unitaires pour la classe Section (wrapper ValueTree). */
 class SectionTest : public juce::UnitTest
 {
 public:
@@ -19,9 +12,6 @@ public:
     
     void runTest() override
     {
-        // ═══════════════════════════════════════════════════════════════════
-        // TEST 1: Section créée par Piece a les bonnes propriétés par défaut
-        // ═══════════════════════════════════════════════════════════════════
         beginTest(juce::String::fromUTF8("Propriétés par défaut d'une Section"));
         {
             Piece piece;
@@ -39,9 +29,6 @@ public:
             logMessage(juce::String::fromUTF8("✓ Propriétés par défaut correctes"));
         }
         
-        // ═══════════════════════════════════════════════════════════════════
-        // TEST 2: Les setters modifient le ValueTree
-        // ═══════════════════════════════════════════════════════════════════
         beginTest(juce::String::fromUTF8("Setters modifient le ValueTree"));
         {
             Piece piece;
@@ -49,13 +36,11 @@ public:
             
             auto section = piece.getSection(0);
             
-            // Modifier les propriétés
             section.setName("Modified");
             section.setNote(Diatony::Note::G);
             section.setAlteration(Diatony::Alteration::Sharp);
             section.setIsMajor(false);
             
-            // Vérifier via un nouveau wrapper sur le même ValueTree
             auto sameSection = piece.getSection(0);
             
             expectEquals(sameSection.getName(), juce::String("Modified"), "Nom modifié");
@@ -66,9 +51,6 @@ public:
             logMessage(juce::String::fromUTF8("✓ Setters fonctionnent correctement"));
         }
         
-        // ═══════════════════════════════════════════════════════════════════
-        // TEST 3: Section a une Progression
-        // ═══════════════════════════════════════════════════════════════════
         beginTest(juce::String::fromUTF8("Section contient une Progression"));
         {
             Piece piece;
@@ -86,19 +68,14 @@ public:
             logMessage(juce::String::fromUTF8("✓ Progression accessible"));
         }
         
-        // ═══════════════════════════════════════════════════════════════════
-        // TEST 4: Section invalide
-        // ═══════════════════════════════════════════════════════════════════
         beginTest(juce::String::fromUTF8("Section invalide (wrapper vide)"));
         {
-            // Créer un wrapper sur un ValueTree vide
             juce::ValueTree emptyTree;
             Section invalidSection{emptyTree};
             
             expect(!invalidSection.isValid(), "Section doit être invalide");
             expectEquals(invalidSection.getId(), -1, "ID = -1 pour invalide");
             
-            // Les getters ne doivent pas crasher
             invalidSection.getName();
             invalidSection.getNote();
             invalidSection.getAlteration();
@@ -107,9 +84,6 @@ public:
             logMessage(juce::String::fromUTF8("✓ Section invalide gérée sans crash"));
         }
         
-        // ═══════════════════════════════════════════════════════════════════
-        // TEST 5: L'ID est préservé après modification des propriétés
-        // ═══════════════════════════════════════════════════════════════════
         beginTest(juce::String::fromUTF8("ID préservé après modifications"));
         {
             Piece piece;
@@ -119,20 +93,15 @@ public:
             auto sectionB = piece.getSection(1);
             int originalId = sectionB.getId();
             
-            // Modifier plein de propriétés
             sectionB.setName("Modified B");
             sectionB.setNote(Diatony::Note::F);
             sectionB.setIsMajor(false);
             
-            // L'ID ne doit pas changer
             expectEquals(sectionB.getId(), originalId, "ID inchangé après modifications");
             
             logMessage(juce::String::fromUTF8("✓ ID préservé"));
         }
         
-        // ═══════════════════════════════════════════════════════════════════
-        // TEST 6: toString() fonctionne
-        // ═══════════════════════════════════════════════════════════════════
         beginTest(juce::String::fromUTF8("toString() retourne une description"));
         {
             Piece piece;
@@ -149,6 +118,4 @@ public:
     }
 };
 
-// Enregistrement statique du test
 static SectionTest sectionTest;
-

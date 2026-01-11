@@ -1,7 +1,7 @@
 #include <JuceHeader.h>
 
 /**
- * Point d'entrée pour exécuter les tests unitaires JUCE.
+ * @brief Point d'entrée pour exécuter les tests unitaires JUCE.
  * 
  * Usage:
  *   ./DiatonyTests              - Exécute tous les tests
@@ -10,21 +10,15 @@
  */
 int main(int argc, char* argv[])
 {
-    // Initialiser JUCE (nécessaire pour certaines classes)
     juce::ScopedJuceInitialiser_GUI juceInit;
-    
-    // Créer le runner de tests
     juce::UnitTestRunner runner;
-    
-    // Configuration du runner
-    runner.setAssertOnFailure(false);  // Ne pas crasher sur les échecs, juste les reporter
+    runner.setAssertOnFailure(false);
     
     std::cout << "╔═══════════════════════════════════════════════════════════════╗" << std::endl;
     std::cout << "║           DIATONY DAW - TESTS UNITAIRES                       ║" << std::endl;
     std::cout << "╚═══════════════════════════════════════════════════════════════╝" << std::endl;
     std::cout << std::endl;
     
-    // Vérifier s'il y a un argument de catégorie
     if (argc > 1)
     {
         juce::String category(argv[1]);
@@ -39,7 +33,6 @@ int main(int argc, char* argv[])
         runner.runAllTests();
     }
     
-    // Afficher le résumé
     std::cout << std::endl;
     std::cout << "═══════════════════════════════════════════════════════════════" << std::endl;
     std::cout << "RÉSUMÉ DES TESTS" << std::endl;
@@ -61,11 +54,8 @@ int main(int argc, char* argv[])
                       << " (" << result->passes << "/" << (result->passes + result->failures) << ")"
                       << std::endl;
             
-            // Afficher les messages d'erreur s'il y en a
             for (auto& msg : result->messages)
-            {
                 std::cout << "      ⚠️  " << msg << std::endl;
-            }
         }
     }
     
@@ -73,16 +63,11 @@ int main(int argc, char* argv[])
     std::cout << "═══════════════════════════════════════════════════════════════" << std::endl;
     
     if (failedTests == 0)
-    {
         std::cout << "🎉 TOUS LES TESTS PASSENT! (" << totalTests << " assertions)" << std::endl;
-    }
     else
-    {
         std::cout << "💥 " << failedTests << " TEST(S) ÉCHOUÉ(S) sur " << totalTests << std::endl;
-    }
     
     std::cout << "═══════════════════════════════════════════════════════════════" << std::endl;
     
     return failedTests > 0 ? 1 : 0;
 }
-

@@ -6,14 +6,7 @@
 #include "model/ModelIdentifiers.h"
 #include "model/DiatonyTypes.h"
 
-/**
- * Tests unitaires pour la classe Chord (wrapper)
- * 
- * Ces tests vérifient que Chord est un pur wrapper qui :
- * - Lit correctement les propriétés du ValueTree
- * - Écrit correctement les propriétés dans le ValueTree
- * - Ne génère pas d'IDs (c'est Progression qui le fait)
- */
+/** @brief Tests unitaires pour la classe Chord (wrapper ValueTree). */
 class ChordTest : public juce::UnitTest
 {
 public:
@@ -21,9 +14,6 @@ public:
     
     void runTest() override
     {
-        // ═══════════════════════════════════════════════════════════════════
-        // TEST 1: Chord créé par Progression a les bonnes propriétés
-        // ═══════════════════════════════════════════════════════════════════
         beginTest(juce::String::fromUTF8("Propriétés d'un Chord créé par Progression"));
         {
             Piece piece;
@@ -48,9 +38,6 @@ public:
             logMessage(juce::String::fromUTF8("✓ Propriétés correctes"));
         }
         
-        // ═══════════════════════════════════════════════════════════════════
-        // TEST 2: Les setters modifient le ValueTree
-        // ═══════════════════════════════════════════════════════════════════
         beginTest(juce::String::fromUTF8("Setters modifient le ValueTree"));
         {
             Piece piece;
@@ -60,13 +47,10 @@ public:
             progression.addChord(Diatony::ChordDegree::First);
             
             auto chord = progression.getChord(0);
-            
-            // Modifier les propriétés
             chord.setDegree(Diatony::ChordDegree::Fourth);
             chord.setQuality(Diatony::ChordQuality::Minor);
             chord.setChordState(Diatony::ChordState::SecondInversion);
             
-            // Vérifier via un nouveau wrapper sur le même ValueTree
             auto sameChord = progression.getChord(0);
             
             expectEquals(static_cast<int>(sameChord.getDegree()), 
@@ -79,9 +63,6 @@ public:
             logMessage(juce::String::fromUTF8("✓ Setters fonctionnent correctement"));
         }
         
-        // ═══════════════════════════════════════════════════════════════════
-        // TEST 3: L'ID est préservé après modifications
-        // ═══════════════════════════════════════════════════════════════════
         beginTest(juce::String::fromUTF8("ID préservé après modifications"));
         {
             Piece piece;
@@ -94,20 +75,15 @@ public:
             auto chord = progression.getChord(1);
             int originalId = chord.getId();
             
-            // Modifier toutes les propriétés
             chord.setDegree(Diatony::ChordDegree::Seventh);
             chord.setQuality(Diatony::ChordQuality::Diminished);
             chord.setChordState(Diatony::ChordState::ThirdInversion);
             
-            // L'ID ne doit pas changer
             expectEquals(chord.getId(), originalId, "ID inchangé après modifications");
             
             logMessage(juce::String::fromUTF8("✓ ID préservé"));
         }
         
-        // ═══════════════════════════════════════════════════════════════════
-        // TEST 4: Chord invalide
-        // ═══════════════════════════════════════════════════════════════════
         beginTest(juce::String::fromUTF8("Chord invalide (wrapper vide)"));
         {
             juce::ValueTree emptyTree;
@@ -116,7 +92,6 @@ public:
             expect(!invalidChord.isValid(), "Chord doit être invalide");
             expectEquals(invalidChord.getId(), -1, "ID = -1 pour invalide");
             
-            // Les getters ne doivent pas crasher
             invalidChord.getDegree();
             invalidChord.getQuality();
             invalidChord.getChordState();
@@ -125,22 +100,16 @@ public:
             logMessage(juce::String::fromUTF8("✓ Chord invalide géré sans crash"));
         }
         
-        // ═══════════════════════════════════════════════════════════════════
-        // TEST 5: Valeurs par défaut
-        // ═══════════════════════════════════════════════════════════════════
         beginTest(juce::String::fromUTF8("Valeurs par défaut"));
         {
             Piece piece;
             piece.addSection("Test");
             
             auto progression = piece.getSection(0).getProgression();
-            
-            // Ajouter un accord avec uniquement le degré
             progression.addChord(Diatony::ChordDegree::Second);
             
             auto chord = progression.getChord(0);
             
-            // Vérifier les valeurs par défaut
             expectEquals(static_cast<int>(chord.getDegree()), 
                         static_cast<int>(Diatony::ChordDegree::Second), "Degree = Second");
             expectEquals(static_cast<int>(chord.getQuality()), 
@@ -151,9 +120,6 @@ public:
             logMessage(juce::String::fromUTF8("✓ Valeurs par défaut correctes"));
         }
         
-        // ═══════════════════════════════════════════════════════════════════
-        // TEST 6: toString()
-        // ═══════════════════════════════════════════════════════════════════
         beginTest(juce::String::fromUTF8("toString() retourne une description"));
         {
             Piece piece;
@@ -171,9 +137,6 @@ public:
             logMessage(juce::String::fromUTF8("✓ toString(): ") + str);
         }
         
-        // ═══════════════════════════════════════════════════════════════════
-        // TEST 7: Tous les degrés
-        // ═══════════════════════════════════════════════════════════════════
         beginTest(juce::String::fromUTF8("Tous les degrés peuvent être utilisés"));
         {
             Piece piece;
@@ -181,7 +144,6 @@ public:
             
             auto progression = piece.getSection(0).getProgression();
             
-            // Ajouter tous les degrés
             progression.addChord(Diatony::ChordDegree::First);
             progression.addChord(Diatony::ChordDegree::Second);
             progression.addChord(Diatony::ChordDegree::Third);
@@ -192,7 +154,6 @@ public:
             
             expectEquals(static_cast<int>(progression.size()), 7, "7 degrés");
             
-            // Vérifier chaque degré
             for (int i = 0; i < 7; ++i)
             {
                 auto chord = progression.getChord(static_cast<size_t>(i));
@@ -205,6 +166,4 @@ public:
     }
 };
 
-// Enregistrement statique du test
 static ChordTest chordTest;
-
