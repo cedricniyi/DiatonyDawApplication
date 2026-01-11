@@ -453,7 +453,7 @@ add_custom_command(TARGET DiatonyDawApplication_Standalone POST_BUILD
     COMMAND install_name_tool -change /opt/homebrew/opt/gecode/lib/libgecodesupport.49.dylib @rpath/libgecodesupport.49.dylib "$<TARGET_FILE:DiatonyDawApplication_Standalone>"
     
     # Correction des RPATHs Gecode
-    COMMAND ${CMAKE_SOURCE_DIR}/fix_gecode_rpaths.sh
+    COMMAND ${CMAKE_SOURCE_DIR}/Scripts/fix_gecode_rpaths.sh
         "$<TARGET_FILE_DIR:DiatonyDawApplication_Standalone>/../Frameworks"
     
     # Re-signature du bundle (nécessaire après modification des dylibs)
@@ -502,7 +502,7 @@ if(TARGET DiatonyDawApplication_AU)
         COMMAND install_name_tool -change /opt/homebrew/opt/gecode/lib/libgecodesupport.49.dylib @rpath/libgecodesupport.49.dylib "$ENV{HOME}/Library/Audio/Plug-Ins/Components/DiatonyDawApplication.component/Contents/MacOS/DiatonyDawApplication"
         
         # 3. Correction des RPATHs internes des dylibs Gecode
-        COMMAND ${CMAKE_SOURCE_DIR}/fix_gecode_rpaths.sh
+        COMMAND ${CMAKE_SOURCE_DIR}/Scripts/fix_gecode_rpaths.sh
             "$ENV{HOME}/Library/Audio/Plug-Ins/Components/DiatonyDawApplication.component/Contents/Frameworks"
         
         # 4. Re-signature finale du bundle installé (CRITIQUE pour qu'Ableton le charge)
