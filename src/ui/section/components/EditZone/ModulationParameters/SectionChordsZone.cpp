@@ -8,11 +8,8 @@ SectionChordsZone::SectionChordsZone(DisplayMode mode)
 
 void SectionChordsZone::enablementChanged()
 {
-    // Mettre à jour l'état des chips enfants (non-cliquables si désactivé)
     for (auto& chip : chordChips)
-    {
         chip->setEnabled(isEnabled());
-    }
 }
 
 void SectionChordsZone::setSection(const Section& section, int sectionIndex)
@@ -23,22 +20,18 @@ void SectionChordsZone::setSection(const Section& section, int sectionIndex)
         return;
     }
     
-    // Construire le titre : "P1 (C Maj, 4 acc.)"
+    // Header : "P1 (C Maj, 4 acc.)"
     juce::String headerText = "P" + juce::String(sectionIndex + 1) + " (";
     headerText += DiatonyText::getNoteName(section.getNote(), section.getAlteration());
     headerText += " " + juce::String(section.getIsMajor() ? "Maj" : "Min");
     headerText += ", " + juce::String(section.getProgression().size()) + " acc.)";
     setTitle(headerText);
     
-    // Récupérer la progression
     auto progression = section.getProgression();
     totalChordsInSection = progression.size();
     
-    // Supprimer les anciens chips
     for (auto& chip : chordChips)
-    {
         removeChildComponent(chip.get());
-    }
     chordChips.clear();
     
     if (totalChordsInSection == 0)
@@ -54,20 +47,17 @@ void SectionChordsZone::setSection(const Section& section, int sectionIndex)
     
     if (displayMode == DisplayMode::LastFour)
     {
-        // Derniers 4 accords
         if (totalChordsInSection > 4)
             startIndex = totalChordsInSection - 4;
         chordIndexOffset = static_cast<int>(startIndex);
     }
-    else // FirstFour
+    else
     {
-        // Premiers 4 accords
         if (totalChordsInSection > 4)
             endIndex = 4;
         chordIndexOffset = 0;
     }
     
-    // Créer les chips
     for (size_t i = startIndex; i < endIndex; ++i)
     {
         auto chord = progression.getChord(i);
@@ -87,9 +77,7 @@ void SectionChordsZone::setSection(const Section& section, int sectionIndex)
         chordChips.push_back(std::move(chip));
     }
     
-    // Réinitialiser la sélection
     selectedChordIndex = -1;
-    
     resized();
 }
 
@@ -100,19 +88,14 @@ void SectionChordsZone::setSelectedChordIndex(int index)
     
     selectedChordIndex = index;
     
-    // Mettre à jour l'état visuel des chips
     for (auto& chip : chordChips)
-    {
         chip->setSelected(chip->getChordIndex() == index);
-    }
 }
 
 void SectionChordsZone::clear()
 {
     for (auto& chip : chordChips)
-    {
         removeChildComponent(chip.get());
-    }
     chordChips.clear();
     selectedChordIndex = -1;
     chordIndexOffset = 0;
@@ -135,12 +118,8 @@ void SectionChordsZone::layoutChips(const juce::Rectangle<int>& contentBounds)
     constexpr int CHIP_HEIGHT = 28;
     
     int numChips = static_cast<int>(chordChips.size());
-    
-    // Calculer la largeur de chaque chip
     int availableWidth = contentBounds.getWidth() - ((numChips - 1) * CHIP_SPACING);
     int chipWidth = availableWidth / numChips;
-    
-    // Centrer verticalement
     int startY = contentBounds.getY() + (contentBounds.getHeight() - CHIP_HEIGHT) / 2;
     
     int x = contentBounds.getX();
@@ -150,4 +129,3 @@ void SectionChordsZone::layoutChips(const juce::Rectangle<int>& contentBounds)
         x += chipWidth + CHIP_SPACING;
     }
 }
-

@@ -6,11 +6,10 @@
 #include "utils/FontManager.h"
 #include <functional>
 
-//==============================================================================
 /**
- * ChordChip - Petit composant cliquable représentant un accord
- * Affiche le degré + symbole qualité (I, IVm, V7, IIdim...)
- * Couleur basée sur la fonction tonale (même logique que InfoColoredPanel)
+ * @brief Composant cliquable représentant un accord (I, IVm, V7, IIdim...).
+ *
+ * Couleur basée sur la fonction tonale : Tonique=Bleu, Sous-Dom=Or, Dom=Rouge.
  */
 class ChordChip : public juce::Component
 {
@@ -21,19 +20,15 @@ public:
     void paint(juce::Graphics& g) override;
     void resized() override {}
     
-    // Callback quand le chip est cliqué
     std::function<void(int chordIndex)> onClick;
     
-    // Sélection visuelle
     void setSelected(bool selected);
     bool isSelected() const { return selected; }
     
-    // Getters
     int getChordIndex() const { return chordIndex; }
     Diatony::ChordDegree getDegree() const { return degree; }
     Diatony::ChordQuality getQuality() const { return quality; }
     
-    // Mettre à jour les données de l'accord
     void setChordData(int newIndex, Diatony::ChordDegree newDegree, Diatony::ChordQuality newQuality);
 
 private:
@@ -48,13 +43,10 @@ private:
     juce::String getDisplayText() const;
     
     // Couleur basée sur la fonction tonale
-    // I/III/VI = Bleu (#4A90A4), II/IV = Or (#F1C40F), V/VII = Rouge (#E74C3C), autres = Gris
     juce::Colour getFunctionalColor() const;
     
-    // Gestion du clic
     void mouseDown(const juce::MouseEvent& event) override;
     void mouseUp(const juce::MouseEvent& event) override;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ChordChip)
 };
-

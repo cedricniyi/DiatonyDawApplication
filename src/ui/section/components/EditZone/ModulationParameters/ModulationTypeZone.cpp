@@ -14,7 +14,7 @@ void ModulationTypeZone::setupButtons()
             typeLabels[i],
             normalColour,
             selectedColour,
-            15.0f,  // Taille de police
+            15.0f,
             FontManager::FontWeight::Medium
         );
         
@@ -25,7 +25,6 @@ void ModulationTypeZone::setupButtons()
         addAndMakeVisible(*typeButtons[i]);
     }
     
-    // Sélectionner le premier par défaut
     selectType(0);
 }
 
@@ -37,11 +36,8 @@ void ModulationTypeZone::resizeContent(const juce::Rectangle<int>& contentBounds
     constexpr int BUTTON_SPACING = 4;
     constexpr int BUTTON_HEIGHT = 24;
     
-    // Calculer la largeur de chaque bouton (4 boutons sur une ligne)
     int availableWidth = contentBounds.getWidth() - (3 * BUTTON_SPACING);
     int btnWidth = availableWidth / 4;
-    
-    // Centrer verticalement
     int startY = contentBounds.getY() + (contentBounds.getHeight() - BUTTON_HEIGHT) / 2;
     
     int x = contentBounds.getX();
@@ -59,38 +55,27 @@ void ModulationTypeZone::selectType(int index)
     
     selectedType = modulationTypes[static_cast<size_t>(index)];
     
-    // Mettre à jour l'état visuel de tous les boutons
     for (size_t i = 0; i < 4; ++i)
-    {
         typeButtons[i]->setSelected(static_cast<int>(i) == index);
-    }
     
-    // Notifier le callback
     if (onTypeChanged)
-    {
         onTypeChanged(selectedType);
-    }
 }
 
 void ModulationTypeZone::setSelectedType(Diatony::ModulationType type)
 {
-    // Trouver l'index correspondant
     for (size_t i = 0; i < 4; ++i)
     {
         if (modulationTypes[i] == type)
         {
             if (selectedType == type)
-                return;  // Déjà sélectionné
+                return;
             
             selectedType = type;
             
-            // Mettre à jour l'état visuel sans déclencher le callback
             for (size_t j = 0; j < 4; ++j)
-            {
                 typeButtons[j]->setSelected(j == i);
-            }
             return;
         }
     }
 }
-
