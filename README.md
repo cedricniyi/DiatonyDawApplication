@@ -109,6 +109,8 @@ Après compilation, vous serez en mesure de lancer les tests que j'ai écris pou
 ```bash
 DYLD_LIBRARY_PATH=/opt/homebrew/opt/gecode/lib ./cmake-build-debug/DiatonyTests_artefacts/Debug/DiatonyTests
 ```
+
+Si vous avez une version de Gecode installé via Homebrew le chemin spécifié devrait être bon. Sinon à vous de modifier le PATH vers la bonne destination.
 ## Remarques
 
 Concernant l'UI, actuellement le code du footer est présent mais non-utilisé dans la version compilé et téléchargeable.
