@@ -6,50 +6,42 @@
 #include "ModelIdentifiers.h"
 
 /**
- * Représente une progression harmonique avec une liste d'accords
- * Wrapper autour d'un ValueTree qui gère une collection de nœuds Chord
- * Ne stocke pas de données lui-même mais manipule le ValueTree sous-jacent
+ * @brief Wrapper autour d'un ValueTree représentant une progression harmonique.
+ * 
+ * Gère une collection ordonnée d'accords. Génère les IDs des Chords enfants.
+ * Pattern "vue" : ne stocke aucune donnée, délègue tout au ValueTree.
  */
 class Progression {
 public:
-    // Constructeur avec ValueTree existant (mode wrapper)
     explicit Progression(juce::ValueTree state);
     
-    // Méthode statique pour créer une nouvelle Progression dans un parent
-    static Progression createIn(juce::ValueTree parentTree);
-    
-    // Gestion des accords (manipulent directement le ValueTree)
-    void addChord(const Chord& chord);
-    void addChord(Diatony::ChordDegree degree, Diatony::ChordQuality quality, Diatony::ChordState chordState);
-    void insertChord(size_t index, const Chord& chord);
+    void addChord(Diatony::ChordDegree degree, 
+                  Diatony::ChordQuality quality = Diatony::ChordQuality::Auto, 
+                  Diatony::ChordState chordState = Diatony::ChordState::Fundamental);
+    void insertChord(size_t index, Diatony::ChordDegree degree,
+                     Diatony::ChordQuality quality = Diatony::ChordQuality::Auto,
+                     Diatony::ChordState chordState = Diatony::ChordState::Fundamental);
     void removeChord(size_t index);
-    void setChord(size_t index, const Chord& chord);
+    void clear();
     
-    // Accesseurs (créent des wrappers Chord à la demande)
     Chord getChord(size_t index) const;
     Chord getChord(size_t index);
+    Chord getChordById(int id) const;
+    int getChordIndexById(int id) const;
     
-    // Accès direct aux ValueTree des accords
-    juce::ValueTree getChordState(size_t index) const;
-    
-    // Informations sur la progression
     size_t size() const;
     bool isEmpty() const;
+    int getId() const;
     
-    // Méthodes utilitaires
-    void clear();
-    juce::String toString() const;
-    
-    // Accès au ValueTree sous-jacent
     juce::ValueTree getState() const { return state; }
-    bool isValid() const { return state.isValid(); }
+    bool isValid() const { return state.isValid() && state.hasType(ModelIdentifiers::PROGRESSION); }
     
-    // Création d'un nouveau nœud Progression dans un ValueTree
-    static juce::ValueTree createProgressionNode();
+    juce::String toString() const;
     
 private:
     juce::ValueTree state;
     
-    // Validation des index
+    int generateNextChordId() const;
+    juce::ValueTree createChordNode(Diatony::ChordDegree degree, Diatony::ChordQuality quality, Diatony::ChordState chordState);
     void validateIndex(size_t index) const;
-}; 
+};

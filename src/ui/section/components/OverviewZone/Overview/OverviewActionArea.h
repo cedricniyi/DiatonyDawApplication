@@ -1,18 +1,11 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "ui/extra/Component/Panel/ColoredPanel.h"
-#include "../PlayBack/PlaybackActionArea.h"
-#include "../GenerateAndMore/GenerationButtons.h"
-#include "OverviewArea.h"
+#include "ui/extra/Button/StyledButton.h"
+#include "OverviewContentArea.h"
 
-// Forward declarations  
-class FontManager;
-class AppController;
-class AudioPluginAudioProcessorEditor;
-
-//==============================================================================
-class OverviewActionArea : public ColoredPanel
+/** @brief Zone d'action de l'Overview avec ContentArea et bouton d'ajout. */
+class OverviewActionArea : public juce::Component
 {
 public:
     OverviewActionArea();
@@ -20,25 +13,17 @@ public:
     void paint(juce::Graphics& g) override;
     void resized() override;
     
-    // === DÉCOUVERTE DE SERVICE ===
-    void parentHierarchyChanged() override;
-    
-    // Accès aux composants pour les callbacks
-    GenerationButtons& getGenerationButtons();
-    PlaybackActionArea& getPlaybackActionArea();
-    OverviewArea& getOverviewArea();
+    /** @brief Retourne le composant OverviewContentArea. */
+    OverviewContentArea& getContentArea();
     
 private:
-    juce::SharedResourcePointer<FontManager> fontManager;
-    PlaybackActionArea playbackActionArea;
-    OverviewArea overviewArea;
-    GenerationButtons generationButtons;
-    juce::FlexBox flexBox;
+    OverviewContentArea contentArea;
+    StyledButton actionButton;
     
-    // === DÉCOUVERTE DE SERVICE ===
-    AppController* appController = nullptr;  // Trouvé via parentHierarchyChanged()
-    void findAppController();  // Méthode pour découvrir AppController
-    void connectGenerationButton();  // Méthode pour connecter le bouton au contrôleur
+    // Style constants
+    static constexpr float cornerRadius = 8.0f;
+    static constexpr int borderThickness = 1;
+    static constexpr int contentPadding = 10;  // Espacement interne pour les enfants
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(OverviewActionArea)
-}; 
+};

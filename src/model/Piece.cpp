@@ -1,231 +1,244 @@
 #include "Piece.h"
 
-// Constructeurs
 Piece::Piece()
 {
-    state = createPieceNode("Untitled Piece");
+    state = juce::ValueTree(ModelIdentifiers::PIECE);
+    state.setProperty(ModelIdentifiers::id, 0, nullptr);
+    state.setProperty(ModelIdentifiers::name, "Untitled Piece", nullptr);
 }
 
 Piece::Piece(const juce::String& pieceTitle)
 {
-    state = createPieceNode(pieceTitle);
-}
-
-// Gestion des sections
-void Piece::addSection(const Section& section)
-{
-    // Si ce n'est pas la première section, on doit d'abord ajouter une modulation
-    if (getSectionCount() > 0)
-    {
-        // Ajoute une modulation par défaut entre les sections
-        // Les index -1 indiquent une modulation symbolique à définir ultérieurement
-        addModulation(Diatony::ModulationType::PerfectCadence, -1, -1);
-    }
-    
-    state.appendChild(section.getState().createCopy(), &undoManager);
+    state = juce::ValueTree(ModelIdentifiers::PIECE);
+    state.setProperty(ModelIdentifiers::id, 0, nullptr);
+    state.setProperty(ModelIdentifiers::name, pieceTitle, nullptr);
 }
 
 void Piece::addSection(const juce::String& sectionName)
 {
-    // Si ce n'est pas la première section, on doit d'abord ajouter une modulation
+    auto sectionNode = createSectionNode(sectionName);
+    int newSectionId = sectionNode.getProperty(ModelIdentifiers::id, -1);
+    
+    // Créer une modulation de liaison si ce n'est pas la première section
     if (getSectionCount() > 0)
     {
-        // Ajoute une modulation par défaut entre les sections
-        // Les index -1 indiquent une modulation symbolique à définir ultérieurement
-        addModulation(Diatony::ModulationType::PerfectCadence, -1, -1);
+        auto lastSection = getSection(getSectionCount() - 1);
+        int lastSectionId = lastSection.getState().getProperty(ModelIdentifiers::id, -1);
+        auto modulationNode = createModulationNode(lastSectionId, newSectionId);
+        state.appendChild(modulationNode, &undoManager);
     }
     
-    auto sectionNode = Section::createSectionNode(sectionName);
     state.appendChild(sectionNode, &undoManager);
+    assertInvariants();
 }
 
-Section Piece::createSection(const juce::String& sectionName)
+void Piece::removeSection(int sectionIndex)
 {
-    return Section::createIn(state, sectionName);
+    auto sectionCount = static_cast<int>(getSectionCount());
+    if (sectionIndex < 0 || sectionIndex >= sectionCount)
+        return;
+    
+    auto sectionToRemove = getSection(static_cast<size_t>(sectionIndex));
+    int sectionId = sectionToRemove.getState().getProperty(ModelIdentifiers::id, -1);
+    int sectionVTIndex = findValueTreeIndex(ModelIdentifiers::SECTION, sectionId);
+    
+    // Cas simple : section unique
+    if (sectionCount == 1)
+    {
+        state.removeChild(sectionVTIndex, &undoManager);
+        assertInvariants();
+        return;
+    }
+    
+    // Identifier les sections adjacentes pour la modulation de liaison
+    int prevSectionId = -1, nextSectionId = -1;
+    if (sectionIndex > 0)
+        prevSectionId = getSection(static_cast<size_t>(sectionIndex - 1)).getState().getProperty(ModelIdentifiers::id, -1);
+    if (sectionIndex < sectionCount - 1)
+        nextSectionId = getSection(static_cast<size_t>(sectionIndex + 1)).getState().getProperty(ModelIdentifiers::id, -1);
+    
+    // Collecter indices à supprimer (ordre décroissant pour éviter décalages)
+    std::vector<int> indicesToRemove;
+    for (int i = 0; i < state.getNumChildren(); ++i)
+    {
+        auto child = state.getChild(i);
+        if (child.hasType(ModelIdentifiers::SECTION))
+        {
+            if (static_cast<int>(child.getProperty(ModelIdentifiers::id, -1)) == sectionId)
+                indicesToRemove.push_back(i);
+        }
+        else if (child.hasType(ModelIdentifiers::MODULATION))
+        {
+            int fromId = child.getProperty(ModelIdentifiers::fromSectionId, -1);
+            int toId = child.getProperty(ModelIdentifiers::toSectionId, -1);
+            if (fromId == sectionId || toId == sectionId)
+                indicesToRemove.push_back(i);
+        }
+    }
+    
+    std::sort(indicesToRemove.begin(), indicesToRemove.end(), std::greater<int>());
+    for (int idx : indicesToRemove)
+        state.removeChild(idx, &undoManager);
+    
+    // Section du milieu : créer modulation de liaison
+    if (prevSectionId >= 0 && nextSectionId >= 0)
+    {
+        auto modulationNode = createModulationNode(prevSectionId, nextSectionId);
+        int insertIndex = findValueTreeIndex(ModelIdentifiers::SECTION, prevSectionId) + 1;
+        state.addChild(modulationNode, insertIndex, &undoManager);
+    }
+    
+    assertInvariants();
 }
 
 void Piece::removeLastSection()
 {
-    auto sections = getChildrenOfType(ModelIdentifiers::SECTION);
-    if (!sections.empty())
-    {
-        // Trouve et supprime la dernière section
-        for (int i = state.getNumChildren() - 1; i >= 0; --i)
-        {
-            if (state.getChild(i).hasType(ModelIdentifiers::SECTION))
-            {
-                state.removeChild(i, &undoManager);
-                break;
-            }
-        }
-        
-        // Si on avait plus d'une section, supprimer aussi la dernière modulation
-        auto modulations = getChildrenOfType(ModelIdentifiers::MODULATION);
-        if (sections.size() > 1 && !modulations.empty())
-        {
-            for (int i = state.getNumChildren() - 1; i >= 0; --i)
-            {
-                if (state.getChild(i).hasType(ModelIdentifiers::MODULATION))
-                {
-                    state.removeChild(i, &undoManager);
-                    break;
-                }
-            }
-        }
-    }
-}
-
-void Piece::clearAllElements()
-{
-    state.removeAllChildren(&undoManager);
+    if (getSectionCount() > 0)
+        removeSection(static_cast<int>(getSectionCount()) - 1);
 }
 
 void Piece::clear()
 {
-    clearAllElements();
+    state.removeAllChildren(&undoManager);
+    assertInvariants();
 }
 
-// Gestion des modulations
-void Piece::addModulation(const Modulation& modulation)
+Section Piece::getSection(size_t index) const { return Section(getChildOfType(ModelIdentifiers::SECTION, index)); }
+Modulation Piece::getModulation(size_t index) const { return Modulation(getChildOfType(ModelIdentifiers::MODULATION, index)); }
+
+Section Piece::getSectionById(int id) const
 {
-    state.appendChild(modulation.getState().createCopy(), &undoManager);
+    for (int i = 0; i < state.getNumChildren(); ++i)
+    {
+        auto child = state.getChild(i);
+        if (child.hasType(ModelIdentifiers::SECTION) && static_cast<int>(child.getProperty(ModelIdentifiers::id, -1)) == id)
+            return Section(child);
+    }
+    jassertfalse;
+    return Section(juce::ValueTree(ModelIdentifiers::SECTION));
 }
 
-void Piece::addModulation(Diatony::ModulationType type, int fromChord, int toChord)
+Modulation Piece::getModulationById(int id) const
 {
-    auto modulationNode = Modulation::createModulationNode(type, fromChord, toChord);
-    state.appendChild(modulationNode, &undoManager);
+    for (int i = 0; i < state.getNumChildren(); ++i)
+    {
+        auto child = state.getChild(i);
+        if (child.hasType(ModelIdentifiers::MODULATION) && static_cast<int>(child.getProperty(ModelIdentifiers::id, -1)) == id)
+            return Modulation(child);
+    }
+    jassertfalse;
+    return Modulation(juce::ValueTree(ModelIdentifiers::MODULATION));
 }
 
-Modulation Piece::createModulation(Diatony::ModulationType type, int fromChord, int toChord)
+int Piece::getSectionIndexById(int id) const
 {
-    return Modulation::createIn(state, type, fromChord, toChord);
+    int sectionIndex = 0;
+    for (int i = 0; i < state.getNumChildren(); ++i)
+    {
+        auto child = state.getChild(i);
+        if (child.hasType(ModelIdentifiers::SECTION))
+        {
+            if (static_cast<int>(child.getProperty(ModelIdentifiers::id, -1)) == id)
+                return sectionIndex;
+            sectionIndex++;
+        }
+    }
+    return -1;
 }
 
-// Accès aux éléments par type
+int Piece::getModulationIndexById(int id) const
+{
+    int modulationIndex = 0;
+    for (int i = 0; i < state.getNumChildren(); ++i)
+    {
+        auto child = state.getChild(i);
+        if (child.hasType(ModelIdentifiers::MODULATION))
+        {
+            if (static_cast<int>(child.getProperty(ModelIdentifiers::id, -1)) == id)
+                return modulationIndex;
+            modulationIndex++;
+        }
+    }
+    return -1;
+}
+
 std::vector<Section> Piece::getSections() const
 {
     std::vector<Section> sections;
-    auto sectionNodes = getChildrenOfType(ModelIdentifiers::SECTION);
-    
-    for (const auto& node : sectionNodes)
-    {
+    for (const auto& node : getChildrenOfType(ModelIdentifiers::SECTION))
         sections.emplace_back(node);
-    }
-    
     return sections;
 }
 
 std::vector<Modulation> Piece::getModulations() const
 {
     std::vector<Modulation> modulations;
-    auto modulationNodes = getChildrenOfType(ModelIdentifiers::MODULATION);
-    
-    for (const auto& node : modulationNodes)
-    {
+    for (const auto& node : getChildrenOfType(ModelIdentifiers::MODULATION))
         modulations.emplace_back(node);
-    }
-    
     return modulations;
 }
 
-Section Piece::getSection(size_t index) const
+std::pair<Section, Section> Piece::getAdjacentSections(const Modulation& modulation) const
 {
-    validateSectionIndex(index);
-    return Section(getChildOfType(ModelIdentifiers::SECTION, index));
+    return { getSectionById(modulation.getFromSectionId()), getSectionById(modulation.getToSectionId()) };
 }
 
-Section Piece::getSection(size_t index)
-{
-    validateSectionIndex(index);
-    return Section(getChildOfType(ModelIdentifiers::SECTION, index));
-}
-
-Modulation Piece::getModulation(size_t index) const
-{
-    validateModulationIndex(index);
-    return Modulation(getChildOfType(ModelIdentifiers::MODULATION, index));
-}
-
-Modulation Piece::getModulation(size_t index)
-{
-    validateModulationIndex(index);
-    return Modulation(getChildOfType(ModelIdentifiers::MODULATION, index));
-}
-
-// Informations sur la pièce
-size_t Piece::getSectionCount() const
-{
-    return getChildrenOfType(ModelIdentifiers::SECTION).size();
-}
-
-size_t Piece::getModulationCount() const
-{
-    return getChildrenOfType(ModelIdentifiers::MODULATION).size();
-}
-
-int Piece::getNumElements() const
-{
-    return state.getNumChildren();
-}
-
-bool Piece::isEmpty() const
-{
-    return state.getNumChildren() == 0;
-}
-
-void Piece::setTitle(const juce::String& newTitle)
-{
-    state.setProperty(ModelIdentifiers::name, newTitle, &undoManager);
-}
-
-const juce::String Piece::getTitle() const
-{
-    return state.getProperty(ModelIdentifiers::name, "Untitled Piece").toString();
-}
-
-// Validation
-bool Piece::isComplete() const
-{
-    return !isEmpty() && hasValidStructure();
-}
+size_t Piece::getSectionCount() const { return getChildrenOfType(ModelIdentifiers::SECTION).size(); }
+size_t Piece::getModulationCount() const { return getChildrenOfType(ModelIdentifiers::MODULATION).size(); }
+int Piece::getNumElements() const { return state.getNumChildren(); }
+bool Piece::isEmpty() const { return state.getNumChildren() == 0; }
+void Piece::setTitle(const juce::String& newTitle) { state.setProperty(ModelIdentifiers::name, newTitle, &undoManager); }
+juce::String Piece::getTitle() const { return state.getProperty(ModelIdentifiers::name, "Untitled Piece").toString(); }
 
 bool Piece::hasValidStructure() const
 {
-    // Vérifie l'invariant : modulations.size() == sections.size() - 1
+    auto sectionCount = getSectionCount();
+    auto modulationCount = getModulationCount();
+    if (sectionCount == 0) return modulationCount == 0;
+    return modulationCount == (sectionCount - 1);
+}
+
+bool Piece::isComplete() const { return !isEmpty() && hasValidStructure(); }
+
+void Piece::assertInvariants() const
+{
+#if JUCE_DEBUG
     auto sectionCount = getSectionCount();
     auto modulationCount = getModulationCount();
     
     if (sectionCount == 0)
-        return true; // Pièce vide est valide
-        
-    return modulationCount == (sectionCount - 1);
+        jassert(modulationCount == 0);
+    else
+        jassert(modulationCount == sectionCount - 1);
+    
+    // Vérifier alternance S-M-S-M-S
+    if (sectionCount > 1)
+    {
+        bool expectSection = true;
+        for (int i = 0; i < state.getNumChildren(); ++i)
+        {
+            auto child = state.getChild(i);
+            jassert(expectSection ? child.hasType(ModelIdentifiers::SECTION) : child.hasType(ModelIdentifiers::MODULATION));
+            expectSection = !expectSection;
+        }
+    }
+#endif
 }
 
-// Statistiques
 int Piece::getTotalChordCount() const
 {
-    int totalChords = 0;
-    auto sections = getSections();
-    
-    for (const auto& section : sections)
-    {
-        totalChords += static_cast<int>(section.getProgression().size());
-    }
-    
-    return totalChords;
+    int total = 0;
+    for (const auto& section : getSections())
+        total += static_cast<int>(section.getProgression().size());
+    return total;
 }
 
-// Méthodes utilitaires
 juce::String Piece::toString() const
 {
-    if (isEmpty())
-        return getTitle() + " (Empty)";
-        
-    return getTitle() + " (" + 
-           juce::String(getSectionCount()) + " sections, " +
+    if (isEmpty()) return getTitle() + " (Empty)";
+    return getTitle() + " (" + juce::String(getSectionCount()) + " sections, " +
            juce::String(getModulationCount()) + " modulations, " +
-           juce::String(getTotalChordCount()) + " total chords)";
+           juce::String(getTotalChordCount()) + " chords)";
 }
 
 juce::String Piece::getDetailedSummary() const
@@ -233,87 +246,104 @@ juce::String Piece::getDetailedSummary() const
     juce::String result = "=== " + getTitle() + " ===\n";
     result += "Structure: " + juce::String(getSectionCount()) + " sections, " +
               juce::String(getModulationCount()) + " modulations\n";
-    result += "Total chords: " + juce::String(getTotalChordCount()) + "\n";
-    result += juce::String("Valid structure: ") + (hasValidStructure() ? "Yes" : "No") + "\n\n";
+    result += "Valid: " + juce::String(hasValidStructure() ? "Yes" : "NO!") + "\n\n";
     
     if (!isEmpty())
     {
-        result += "Elements:\n";
-        auto sections = getSections();
-        auto modulations = getModulations();
-        
-        for (size_t i = 0; i < sections.size(); ++i)
+        result += "ValueTree order:\n";
+        for (int i = 0; i < state.getNumChildren(); ++i)
         {
-            result += juce::String(i + 1) + ". " + sections[i].toString() + "\n";
-            
-            if (i < modulations.size())
-            {
-                result += "   -> " + modulations[i].toString() + "\n";
-            }
+            auto child = state.getChild(i);
+            int id = child.getProperty(ModelIdentifiers::id, -1);
+            result += "  [" + juce::String(i) + "] " + child.getType().toString() + " (id=" + juce::String(id) + ")\n";
         }
     }
-    
     return result;
 }
 
-// Création d'un nouveau nœud Piece
-juce::ValueTree Piece::createPieceNode(const juce::String& title)
+int Piece::generateNextSectionId() const
 {
-    juce::ValueTree pieceNode(ModelIdentifiers::PIECE);
-    
-    // Générer un ID unique pour cette pièce (commence à 0 pour correspondre aux index)
-    static int nextId = 0;
-    pieceNode.setProperty(ModelIdentifiers::id, nextId++, nullptr);
-    pieceNode.setProperty(ModelIdentifiers::name, title, nullptr);
-    
-    return pieceNode;
+    int maxId = -1;
+    for (int i = 0; i < state.getNumChildren(); ++i)
+    {
+        auto child = state.getChild(i);
+        if (child.hasType(ModelIdentifiers::SECTION))
+            maxId = std::max(maxId, static_cast<int>(child.getProperty(ModelIdentifiers::id, -1)));
+    }
+    return maxId + 1;
 }
 
-// Helpers pour naviguer dans l'arborescence
+int Piece::generateNextModulationId() const
+{
+    int maxId = -1;
+    for (int i = 0; i < state.getNumChildren(); ++i)
+    {
+        auto child = state.getChild(i);
+        if (child.hasType(ModelIdentifiers::MODULATION))
+            maxId = std::max(maxId, static_cast<int>(child.getProperty(ModelIdentifiers::id, -1)));
+    }
+    return maxId + 1;
+}
+
+juce::ValueTree Piece::createSectionNode(const juce::String& name)
+{
+    juce::ValueTree sectionNode(ModelIdentifiers::SECTION);
+    sectionNode.setProperty(ModelIdentifiers::id, generateNextSectionId(), nullptr);
+    sectionNode.setProperty(ModelIdentifiers::name, name, nullptr);
+    sectionNode.setProperty(ModelIdentifiers::tonalityNote, 0, nullptr);
+    sectionNode.setProperty(ModelIdentifiers::tonalityAlteration, 0, nullptr);
+    sectionNode.setProperty(ModelIdentifiers::isMajor, true, nullptr);
+    
+    juce::ValueTree progressionNode(ModelIdentifiers::PROGRESSION);
+    progressionNode.setProperty(ModelIdentifiers::id, 0, nullptr);
+    sectionNode.appendChild(progressionNode, nullptr);
+    
+    return sectionNode;
+}
+
+juce::ValueTree Piece::createModulationNode(int fromSectionId, int toSectionId)
+{
+    juce::ValueTree modulationNode(ModelIdentifiers::MODULATION);
+    modulationNode.setProperty(ModelIdentifiers::id, generateNextModulationId(), nullptr);
+    modulationNode.setProperty(ModelIdentifiers::modulationType, static_cast<int>(Diatony::ModulationType::PivotChord), nullptr);
+    modulationNode.setProperty(ModelIdentifiers::fromSectionId, fromSectionId, nullptr);
+    modulationNode.setProperty(ModelIdentifiers::toSectionId, toSectionId, nullptr);
+    modulationNode.setProperty(ModelIdentifiers::fromChordIndex, -1, nullptr);
+    modulationNode.setProperty(ModelIdentifiers::toChordIndex, -1, nullptr);
+    modulationNode.setProperty(ModelIdentifiers::name, "Modulation " + juce::String(generateNextModulationId() - 1), nullptr);
+    return modulationNode;
+}
+
+int Piece::findValueTreeIndex(const juce::Identifier& type, int id) const
+{
+    for (int i = 0; i < state.getNumChildren(); ++i)
+    {
+        auto child = state.getChild(i);
+        if (child.hasType(type) && static_cast<int>(child.getProperty(ModelIdentifiers::id, -1)) == id)
+            return i;
+    }
+    return -1;
+}
+
 std::vector<juce::ValueTree> Piece::getChildrenOfType(const juce::Identifier& type) const
 {
     std::vector<juce::ValueTree> children;
-    
     for (int i = 0; i < state.getNumChildren(); ++i)
     {
         auto child = state.getChild(i);
         if (child.hasType(type))
-        {
             children.push_back(child);
-        }
     }
-    
     return children;
 }
 
 juce::ValueTree Piece::getChildOfType(const juce::Identifier& type, size_t index) const
 {
     auto children = getChildrenOfType(type);
-    
     if (index >= children.size())
     {
         jassertfalse;
-        return juce::ValueTree(); // Retourne un ValueTree invalide
+        return juce::ValueTree();
     }
-    
     return children[index];
-}
-
-// Validation des index
-void Piece::validateSectionIndex(size_t index) const
-{
-    if (index >= getSectionCount())
-    {
-        jassertfalse;
-        throw std::out_of_range("Section index out of range");
-    }
-}
-
-void Piece::validateModulationIndex(size_t index) const
-{
-    if (index >= getModulationCount())
-    {
-        jassertfalse;
-        throw std::out_of_range("Modulation index out of range");
-    }
 }

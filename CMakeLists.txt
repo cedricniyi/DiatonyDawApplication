@@ -81,18 +81,18 @@ target_sources(DiatonyDawApplication
         src/ui/PluginEditor.cpp
         src/ui/PluginEditor.h
         src/ui/UIStateIdentifiers.h
-        src/ui/RootAnimator.h
-        src/ui/RootAnimator.cpp
+        # src/ui/RootAnimator.h       # Non utilisé (lié au footer)
+        # src/ui/RootAnimator.cpp     # Non utilisé (lié au footer)
         src/ui/MainContentComponent.h
         src/ui/MainContentComponent.cpp
         src/ui/DiatonyText.h
         # UI Extra Components - Panel
         src/ui/extra/Component/Panel/ColoredPanel.h
         src/ui/extra/Component/Panel/ColoredPanel.cpp
-        src/ui/extra/Component/Panel/ClickableColoredPanel.h
-        src/ui/extra/Component/Panel/ClickableColoredPanel.cpp
         src/ui/extra/Component/Panel/InfoColoredPanel.h
         src/ui/extra/Component/Panel/InfoColoredPanel.cpp
+        # UI Extra Components - Zone (reusable zones like BaseZone)
+        src/ui/extra/Component/Zone/BaseZone.h
         src/ui/extra/Component/ComboBox/DiatonyComboBox.cpp
         src/ui/extra/Component/ComboBox/DiatonyComboBox.h
         src/ui/extra/Component/ComboBox/DiatonyComboBoxLookAndFeel.h
@@ -101,14 +101,12 @@ target_sources(DiatonyDawApplication
         # UI Extra Components - Button  
         src/ui/extra/Button/ButtonColoredPanel.h
         src/ui/extra/Button/ButtonColoredPanel.cpp
-        src/ui/extra/Button/OutlineTextButton.h
-        src/ui/extra/Button/OutlineTextButton.cpp
         src/ui/extra/Button/StyledButton.h
         src/ui/extra/Button/StyledButton.cpp
-        src/ui/extra/Button/CircularButton.h
-        src/ui/extra/Button/CircularButton.cpp
         src/ui/extra/Button/SelectableStyledButton.h
         src/ui/extra/Button/SelectableStyledButton.cpp
+        src/ui/extra/Button/IconStyledButton.h
+        src/ui/extra/Button/IconStyledButton.cpp
         
         # UI Extra Components - Component
         src/ui/extra/Component/DiatonyAlertWindow.h
@@ -117,51 +115,43 @@ target_sources(DiatonyDawApplication
         src/ui/extra/Component/SimpleToastComponent.cpp
         src/ui/extra/Component/TextPill.h
         src/ui/extra/Component/TextPill.cpp
-        src/ui/extra/Component/ToastComponent.h
-        src/ui/extra/Component/ToastComponent.cpp
         
-        # UI Footer Components
-        src/ui/footer/components/InteractivePiano/PianoKey.h
-        src/ui/footer/components/InteractivePiano/PianoKey.cpp
-        src/ui/footer/components/InteractivePiano/InteractivePianoContentArea.h
-        src/ui/footer/components/InteractivePiano/InteractivePianoContentArea.cpp
-        src/ui/footer/components/InteractivePiano/InteractivePiano.h
-        src/ui/footer/components/InteractivePiano/InteractivePiano.cpp
-        src/ui/footer/components/MidiPianoContentArea.h
-        src/ui/footer/components/MidiPianoContentArea.cpp
-        src/ui/footer/components/MidiPianoArea.h
-        src/ui/footer/components/MidiPianoArea.cpp
-        src/ui/footer/animator/FooterAnimator.h
-        src/ui/footer/animator/FooterAnimator.cpp
-        src/ui/footer/FooterPanel.h
-        src/ui/footer/FooterPanel.cpp
+        # UI Footer Components (non utilisé - conservé pour référence future)
+        # src/ui/footer/components/InteractivePiano/PianoKey.h
+        # src/ui/footer/components/InteractivePiano/PianoKey.cpp
+        # src/ui/footer/components/InteractivePiano/InteractivePianoContentArea.h
+        # src/ui/footer/components/InteractivePiano/InteractivePianoContentArea.cpp
+        # src/ui/footer/components/InteractivePiano/InteractivePiano.h
+        # src/ui/footer/components/InteractivePiano/InteractivePiano.cpp
+        # src/ui/footer/components/MidiPianoContentArea.h
+        # src/ui/footer/components/MidiPianoContentArea.cpp
+        # src/ui/footer/components/MidiPianoArea.h
+        # src/ui/footer/components/MidiPianoArea.cpp
+        # src/ui/footer/FooterPanel.h
+        # src/ui/footer/FooterPanel.cpp
+        # UI History Panel
+        src/ui/history/HistoryPanel.h
+        src/ui/history/HistoryPanel.cpp
         src/ui/header/HeaderPanel.h
         src/ui/header/HeaderPanel.cpp
+        src/ui/header/MidiDragZone.h
+        src/ui/header/MidiDragZone.cpp
         src/ui/section/SectionPanel.h
         src/ui/section/SectionPanel.cpp
-        src/ui/style/DiatonyLookAndFeel.h
         
         # Animation
         src/ui/animation/AnimationManager.cpp
         src/ui/animation/AnimationManager.h
+        src/ui/animation/SlidingPanelAnimator.cpp
+        src/ui/animation/SlidingPanelAnimator.h
         
         # Fichiers header only (à inclure pour être sûr qu'ils sont pris en compte)
-        src/audio/SimpleSound.h
-        src/audio/SimpleVoice.h
-
-        src/utils/DiatonyConstants.h
-        src/utils/Midiprocessor.h
         src/utils/FileUtils.h
-        src/utils/DatabaseManagement.h
         
         # Font Manager
         src/utils/FontManager.cpp
         src/utils/FontManager.h
-        
-        # Color Generator
-        src/utils/ColorGenerator.cpp
-        src/utils/ColorGenerator.h
-        
+
         # UI Components - EditZone
         src/ui/section/components/EditZone/ProgressionArea.h
         src/ui/section/components/EditZone/ProgressionArea.cpp
@@ -172,13 +162,21 @@ target_sources(DiatonyDawApplication
         src/ui/section/components/EditZone/ModulationEditor.h
         src/ui/section/components/EditZone/ModulationEditor.cpp
         
+        # UI Components - ModulationParameters (Zone components for ModulationEditor)
+        src/ui/section/components/EditZone/ModulationParameters/ModulationTypeZone.h
+        src/ui/section/components/EditZone/ModulationParameters/ModulationTypeZone.cpp
+        src/ui/section/components/EditZone/ModulationParameters/ChordChip.h
+        src/ui/section/components/EditZone/ModulationParameters/ChordChip.cpp
+        src/ui/section/components/EditZone/ModulationParameters/SectionChordsZone.h
+        src/ui/section/components/EditZone/ModulationParameters/SectionChordsZone.cpp
+        
         # UI Components - Parameters (Zone components for SectionEditor)
-        src/ui/section/components/EditZone/Parameters/Zone1.h
-        src/ui/section/components/EditZone/Parameters/Zone1.cpp
-        src/ui/section/components/EditZone/Parameters/Zone2.h
-        src/ui/section/components/EditZone/Parameters/Zone2.cpp
-        src/ui/section/components/EditZone/Parameters/Zone3.h
-        src/ui/section/components/EditZone/Parameters/Zone3.cpp
+        src/ui/section/components/EditZone/Parameters/KeyZone.h
+        src/ui/section/components/EditZone/Parameters/KeyZone.cpp
+        src/ui/section/components/EditZone/Parameters/ModeZone.h
+        src/ui/section/components/EditZone/Parameters/ModeZone.cpp
+        src/ui/section/components/EditZone/Parameters/KeySelectorComponent.h
+        src/ui/section/components/EditZone/Parameters/KeySelectorComponent.cpp
         src/ui/section/components/EditZone/Parameters/Zone4.h
         src/ui/section/components/EditZone/Parameters/Zone4.cpp
         
@@ -188,21 +186,9 @@ target_sources(DiatonyDawApplication
         src/ui/section/components/EditZone/Parameters/zone4/Zone4ContentArea.h
         src/ui/section/components/EditZone/Parameters/zone4/Zone4ContentArea.cpp
         
-        # UI Components - OverviewZone/PlayBack
-        src/ui/section/components/OverviewZone/PlayBack/PlaybackActionArea.h
-        src/ui/section/components/OverviewZone/PlayBack/PlaybackActionArea.cpp
-        
-        # UI Components - OverviewZone/GenerateAndMore
-        src/ui/section/components/OverviewZone/GenerateAndMore/GenerationButtons.h
-        src/ui/section/components/OverviewZone/GenerateAndMore/GenerationButtons.cpp
-        
-        # UI Components - OverviewZone/Overview
-        src/ui/section/components/OverviewZone/Overview/ScrollableContentPanel.h
-        src/ui/section/components/OverviewZone/Overview/ScrollableContentPanel.cpp
+        # UI Components - OverviewZone/Overview (structure aplatie)
         src/ui/section/components/OverviewZone/Overview/OverviewContentArea.h
         src/ui/section/components/OverviewZone/Overview/OverviewContentArea.cpp
-        src/ui/section/components/OverviewZone/Overview/OverviewArea.h
-        src/ui/section/components/OverviewZone/Overview/OverviewArea.cpp
         src/ui/section/components/OverviewZone/Overview/OverviewActionArea.h
         src/ui/section/components/OverviewZone/Overview/OverviewActionArea.cpp
 
@@ -225,6 +211,9 @@ target_sources(DiatonyDawApplication
         # Services
         src/services/GenerationService.h
         src/services/GenerationService.cpp
+
+        # Debug tools (only included in Debug builds but always compiled)
+        src/debug/ValueTreeLogger.h
 )
 
 # === Configuration des Fonts SF Pro ===
@@ -265,6 +254,31 @@ else()
     message(WARNING "Please place your SF Pro .otf files in src/utils/Fonts/")
 endif()
 
+# === Configuration des Assets SVG ===
+set(ASSETS_DIR "${CMAKE_SOURCE_DIR}/src/utils/assets")
+file(GLOB SVG_ASSETS "${ASSETS_DIR}/*.svg")
+
+if(SVG_ASSETS)
+    list(LENGTH SVG_ASSETS ASSET_COUNT)
+    message(STATUS "Found ${ASSET_COUNT} SVG assets")
+    
+    foreach(ASSET ${SVG_ASSETS})
+        get_filename_component(ASSET_NAME ${ASSET} NAME)
+        message(STATUS "  - ${ASSET_NAME}")
+    endforeach()
+    
+    # Créer les ressources binaires pour les icônes SVG
+    juce_add_binary_data(IconResources
+        SOURCES ${SVG_ASSETS}
+        HEADER_NAME "IconBinaryData.h"
+        NAMESPACE "IconData"
+    )
+    
+    message(STATUS "SVG assets successfully added to binary resources")
+else()
+    message(WARNING "No SVG assets found in ${ASSETS_DIR}")
+endif()
+
 target_include_directories(DiatonyDawApplication PRIVATE 
     ${CMAKE_SOURCE_DIR}/src
     ${CMAKE_CURRENT_BINARY_DIR}  # Pour accéder à BinaryData.h généré
@@ -297,6 +311,12 @@ target_link_libraries(DiatonyDawApplication
 if(TARGET FontResources)
     target_link_libraries(DiatonyDawApplication PRIVATE FontResources)
     message(STATUS "FontResources target linked to DiatonyDawApplication")
+endif()
+
+# Link icon resources if they were created
+if(TARGET IconResources)
+    target_link_libraries(DiatonyDawApplication PRIVATE IconResources)
+    message(STATUS "IconResources target linked to DiatonyDawApplication")
 endif()
 
 
@@ -433,7 +453,7 @@ add_custom_command(TARGET DiatonyDawApplication_Standalone POST_BUILD
     COMMAND install_name_tool -change /opt/homebrew/opt/gecode/lib/libgecodesupport.49.dylib @rpath/libgecodesupport.49.dylib "$<TARGET_FILE:DiatonyDawApplication_Standalone>"
     
     # Correction des RPATHs Gecode
-    COMMAND ${CMAKE_SOURCE_DIR}/fix_gecode_rpaths.sh
+    COMMAND ${CMAKE_SOURCE_DIR}/Scripts/fix_gecode_rpaths.sh
         "$<TARGET_FILE_DIR:DiatonyDawApplication_Standalone>/../Frameworks"
     
     # Re-signature du bundle (nécessaire après modification des dylibs)
@@ -482,7 +502,7 @@ if(TARGET DiatonyDawApplication_AU)
         COMMAND install_name_tool -change /opt/homebrew/opt/gecode/lib/libgecodesupport.49.dylib @rpath/libgecodesupport.49.dylib "$ENV{HOME}/Library/Audio/Plug-Ins/Components/DiatonyDawApplication.component/Contents/MacOS/DiatonyDawApplication"
         
         # 3. Correction des RPATHs internes des dylibs Gecode
-        COMMAND ${CMAKE_SOURCE_DIR}/fix_gecode_rpaths.sh
+        COMMAND ${CMAKE_SOURCE_DIR}/Scripts/fix_gecode_rpaths.sh
             "$ENV{HOME}/Library/Audio/Plug-Ins/Components/DiatonyDawApplication.component/Contents/Frameworks"
         
         # 4. Re-signature finale du bundle installé (CRITIQUE pour qu'Ableton le charge)
@@ -501,6 +521,70 @@ endif()
 
 # Message supplémentaire pour debug
 message("CMAKE_SOURCE_DIR: ${CMAKE_SOURCE_DIR}")
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# CIBLE DE TESTS UNITAIRES
+# ═══════════════════════════════════════════════════════════════════════════════
+# Crée une application console pour exécuter les tests du modèle
+# Usage: cmake --build build --target DiatonyTests && ./build/DiatonyTests_artefacts/DiatonyTests
+
+juce_add_console_app(DiatonyTests
+    PRODUCT_NAME "DiatonyTests"
+    COMPANY_NAME "64492300_CN_UCL"
+)
+
+juce_generate_juce_header(DiatonyTests)
+
+target_sources(DiatonyTests PRIVATE
+    src/tests/TestRunner.cpp
+    src/tests/PieceTest.cpp
+    src/tests/SectionTest.cpp
+    src/tests/ModulationTest.cpp
+    src/tests/ProgressionTest.cpp
+    src/tests/ChordTest.cpp
+    src/tests/AppControllerTest.cpp
+    src/tests/GenerationServiceTest.cpp
+    
+    # Fichiers du modèle à tester
+    src/model/Piece.cpp
+    src/model/Section.cpp
+    src/model/Modulation.cpp
+    src/model/Progression.cpp
+    src/model/Chord.cpp
+    
+    # Fichiers du contrôleur à tester
+    src/controller/AppController.cpp
+    src/services/GenerationService.cpp
+)
+
+target_include_directories(DiatonyTests PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${GECODE_INCLUDE_DIR}
+)
+
+target_compile_definitions(DiatonyTests PRIVATE
+    JUCE_USE_CURL=0
+    JUCE_WEB_BROWSER=0
+)
+
+target_link_libraries(DiatonyTests PRIVATE
+    juce::juce_core
+    juce::juce_data_structures
+    juce::juce_events
+    juce::juce_gui_basics
+    ${GECODE_KERNEL_LIB}
+    ${GECODE_DRIVER_LIB}
+    ${GECODE_FLATZINC_LIB}
+    ${GECODE_FLOAT_LIB}
+    ${GECODE_INT_LIB}
+    ${GECODE_MINIMODEL_LIB}
+    ${GECODE_SEARCH_LIB}
+    ${GECODE_SET_LIB}
+    ${GECODE_SUPPORT_LIB}
+    ${CMAKE_SOURCE_DIR}/Diatony/out/diatony.dylib
+)
+
+message(STATUS "Test target 'DiatonyTests' configured")
 
 # Ajout du nouveau bloc ici
 # Création d'un lien symbolique entre le dossier Solutions de l'application 

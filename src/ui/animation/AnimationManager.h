@@ -5,15 +5,14 @@
 #include <memory>
 
 /**
- * @brief Gestionnaire centralisé des animations utilisant le module juce_animation de JUCE 8
- * 
- * Cette classe utilise ValueAnimatorBuilder et AnimatorUpdater pour créer des animations fluides.
- * Hérite de DeletedAtShutdown pour éviter les problèmes d'ordre de destruction avec le MessageManager.
+ * @brief Gestionnaire centralisé des animations (JUCE 8 juce_animation).
+ *
+ * Singleton utilisant ValueAnimatorBuilder et AnimatorUpdater.
+ * Hérite de DeletedAtShutdown pour l'ordre de destruction.
  */
 class AnimationManager : private juce::Timer, private juce::DeletedAtShutdown
 {
 public:
-    //==============================================================================
     JUCE_DECLARE_SINGLETON(AnimationManager, true)
     
     /** 
@@ -34,9 +33,7 @@ public:
                      std::function<void()> onUpdate = nullptr,
                      std::function<void()> onComplete = nullptr);
     
-    /** 
-     * Version simplifiée pour animer une valeur avec les paramètres par défaut
-     */
+    /** @brief Version simplifiée avec easing par défaut. */
     int animateValueSimple(float& valueToAnimate, 
                           float targetValue, 
                           double durationMs = 300.0,
@@ -60,41 +57,27 @@ public:
                              std::function<void()> onUpdate = nullptr,
                              std::function<void()> onComplete = nullptr);
     
-    /** 
-     * Version simplifiée pour fade in/out d'un composant
-     */
+    /** @brief Fade in/out simplifié. */
     int fadeComponent(juce::Component& component, 
                      bool fadeIn = true, 
                      double durationMs = 300.0,
                      std::function<void()> onComplete = nullptr);
     
-    //==============================================================================
-    /** Arrête une animation spécifique par son ID */
     void stopAnimation(int animationId);
-    
-    /** Arrête toutes les animations en cours */
     void stopAllAnimations();
-    
-    /** Vérifie si une animation est en cours */
     bool isAnimating(int animationId) const;
-    
-    /** Retourne le nombre d'animations actives */
     int getActiveAnimationCount() const;
 
 private:
-    //==============================================================================
     AnimationManager();
     ~AnimationManager();
     
-    // Timer callback pour mettre à jour l'AnimatorUpdater
     void timerCallback() override;
     
-    //==============================================================================
     std::unique_ptr<juce::AnimatorUpdater> animatorUpdater;
     std::unordered_map<int, std::unique_ptr<juce::Animator>> activeAnimators;
     int nextAnimationId = 1;
     
-    // Fonction d'easing par défaut (ease-in-out quadratic)
     std::function<double(double)> getDefaultEasing();
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AnimationManager)

@@ -1,134 +1,55 @@
 #include "OverviewActionArea.h"
 #include "utils/FontManager.h"
-#include "controller/AppController.h"
-#include "ui/PluginEditor.h"
 
-//==============================================================================
 OverviewActionArea::OverviewActionArea() 
-    : ColoredPanel(juce::Colour::fromString("#fffcfcff"))
+    : actionButton("+", 
+                   juce::Colours::grey,
+                   juce::Colours::darkgrey, 
+                   18.0f, 
+                   FontManager::FontWeight::Bold)
 {
-    // Définir l'alpha pour que le composant en dessous soit visible
-    setAlpha(0.85f); 
+    setOpaque(false);
     
-    // Ajouter les composants
-    addAndMakeVisible(playbackActionArea);
-    addAndMakeVisible(overviewArea);
-    addAndMakeVisible(generationButtons);
+    // Ajouter les composants enfants
+    addAndMakeVisible(contentArea);
+    addAndMakeVisible(actionButton);
     
-    // Configuration du FlexBox
-    flexBox.flexDirection = juce::FlexBox::Direction::row;
-    flexBox.justifyContent = juce::FlexBox::JustifyContent::spaceBetween;
-    flexBox.alignItems = juce::FlexBox::AlignItems::center;
-    flexBox.flexWrap = juce::FlexBox::Wrap::noWrap;
-    
-    // Ajouter les éléments au FlexBox
-    // PlaybackActionArea à gauche (taille fixe)
-    auto playbackSize = playbackActionArea.getPreferredSize();
-    flexBox.items.add(juce::FlexItem(playbackActionArea)
-        .withWidth(playbackSize.getWidth())
-        .withHeight(playbackSize.getHeight())
-        .withFlex(0, 0, playbackSize.getWidth())
-        .withMargin(juce::FlexItem::Margin(0, 10, 0, 0)));
-    
-    // OverviewArea au centre (responsive en largeur)
-    auto overviewSize = overviewArea.getPreferredSize();
-    flexBox.items.add(juce::FlexItem(overviewArea)
-        .withMinWidth(150.0f)
-        .withHeight(overviewSize.getHeight())
-        .withFlex(1, 1, 200.0f) // Flexible en largeur
-        .withMargin(juce::FlexItem::Margin(0, 10, 0, 10)));
-    
-    // GenerationButtons à droite (taille fixe)
-    auto generationSize = generationButtons.getPreferredSize();
-    flexBox.items.add(juce::FlexItem(generationButtons)
-        .withWidth(generationSize.getWidth())
-        .withHeight(generationSize.getHeight())
-        .withFlex(0, 0, generationSize.getWidth())
-        .withMargin(juce::FlexItem::Margin(0, 0, 0, 10)));
+    // Configurer le callback du bouton pour ajouter une section
+    actionButton.onClick = [this]() {
+        contentArea.addSmallPanel();
+    };
 }
 
 void OverviewActionArea::paint(juce::Graphics& g)
 {
-    // Dessiner le fond coloré via ColoredPanel
-    ColoredPanel::paint(g);
+    auto bounds = getLocalBounds().toFloat();
+    
+    // Fond semi-transparent style BaseZone
+    g.setColour(juce::Colours::black.withAlpha(0.3f));
+    g.fillRoundedRectangle(bounds, cornerRadius);
+    
+    // Contour léger
+    g.setColour(juce::Colours::grey.withAlpha(0.4f));
+    g.drawRoundedRectangle(bounds.reduced(0.5f), cornerRadius, static_cast<float>(borderThickness));
 }
 
 void OverviewActionArea::resized()
 {
     auto bounds = getLocalBounds();
     
-    // Marges adaptatives basées sur la taille disponible (réduites pour plus d'espace)
-    int horizontalMargin = juce::jmin(8, bounds.getWidth() / 18);
-    int verticalMargin = juce::jmin(4, bounds.getHeight() / 25);
+    // Padding interne
+    auto area = bounds.reduced(contentPadding + 2, contentPadding);
     
-    auto area = bounds.reduced(horizontalMargin, verticalMargin);
-    flexBox.performLayout(area.toFloat());
-}
-
-GenerationButtons& OverviewActionArea::getGenerationButtons()
-{
-    return generationButtons;
-}
-
-PlaybackActionArea& OverviewActionArea::getPlaybackActionArea()
-{
-    return playbackActionArea;
-}
-
-OverviewArea& OverviewActionArea::getOverviewArea()
-{
-    return overviewArea;
-}
-
-// === DÉCOUVERTE DE SERVICE ===
-
-void OverviewActionArea::parentHierarchyChanged()
-{
-    ColoredPanel::parentHierarchyChanged();
-    findAppController();
-}
-
-void OverviewActionArea::findAppController()
-{
-    // Recherche de l'AppController via la hiérarchie des composants
-    auto* pluginEditor = findParentComponentOfClass<AudioPluginAudioProcessorEditor>();
+    // Bouton "+" à droite avec largeur fixe
+    constexpr int buttonWidth = 50;
+    constexpr int spacing = 8;
     
-    if (pluginEditor != nullptr)
-    {
-        appController = &pluginEditor->getAppController();
-        DBG("OverviewActionArea: AppController trouvé !");
-        
-        // Connecter le bouton de génération une fois AppController trouvé
-        connectGenerationButton();
-    }
-    else
-    {
-        appController = nullptr;
-        DBG("OverviewActionArea: AppController NON trouvé");
-    }
+    auto buttonArea = area.removeFromRight(buttonWidth);
+    actionButton.setBounds(buttonArea);
+    
+    // ContentArea prend le reste de l'espace
+    area.removeFromRight(spacing);
+    contentArea.setBounds(area);
 }
 
-void OverviewActionArea::connectGenerationButton()
-{
-    if (!appController)
-    {
-        DBG("OverviewActionArea::connectGenerationButton() - Pas de contrôleur disponible");
-        return;
-    }
-    
-    // Connecter le callback du bouton Generate au contrôleur
-    generationButtons.onGenerateClicked = [this]() {
-        DBG("🎵 Bouton Generate cliqué ! Appel du contrôleur...");
-        
-        if (appController)
-        {
-            appController->startGeneration();
-        }
-        else
-        {
-            DBG("  ❌ Erreur : AppController non disponible");
-        }
-    };
-    
-    DBG("OverviewActionArea: Bouton Generate connecté au contrôleur ✓");
-} 
+OverviewContentArea& OverviewActionArea::getContentArea() { return contentArea; }

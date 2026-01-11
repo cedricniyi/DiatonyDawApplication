@@ -3,18 +3,26 @@
 #include <JuceHeader.h>
 #include "DiatonyComboBoxLookAndFeel.h"
 
-//==============================================================================
-// ComboBox personnalisé avec design harmonieux avec InfoColoredPanel
+/** @brief ComboBox personnalisé avec design harmonieux pour InfoColoredPanel. */
 class DiatonyComboBox : public juce::ComboBox
 {
 public:
     DiatonyComboBox();
     ~DiatonyComboBox() override;
     
-    // Configuration des couleurs pour s'harmoniser avec le contexte
+    /** @brief Adapte les couleurs selon le fond. */
     void adaptToBackgroundColour(juce::Colour backgroundColour);
     
-    // Accès au LookAndFeel pour personnalisation avancée
+    void setArrowVisible(bool visible) { diatonyLookAndFeel.setArrowVisible(visible); repaint(); }
+    bool isArrowVisible() const { return diatonyLookAndFeel.isArrowVisible(); }
+    
+    /** @brief Définit un texte court pour un item (affiché une fois sélectionné). */
+    void setShortTextForItem(int itemId, const juce::String& shortText);
+    void enableShortDisplayMode(bool enabled);
+    bool isShortDisplayModeEnabled() const { return diatonyLookAndFeel.isArrowVisible(); }
+    
+    void refreshDisplayedText();
+    
     DiatonyComboBoxLookAndFeel& getDiatonyLookAndFeel() { return diatonyLookAndFeel; }
     
 private:

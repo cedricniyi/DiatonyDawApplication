@@ -1,338 +1,389 @@
 #include "InfoColoredPanel.h"
 
-//==============================================================================
 InfoColoredPanel::InfoColoredPanel(juce::Colour color)
-    : ColoredPanel(color), panelColor(color)
+    : ColoredPanel(color)
 {
-    setupZones(color);
-    setupMainGrid();
-    setupBottomGrid();
-    setupNumberLabel();
+    degreeCombo.adaptToBackgroundColour(color);
+    qualityCombo.adaptToBackgroundColour(color);
+    stateCombo.adaptToBackgroundColour(color);
+    
+    degreeCombo.setArrowVisible(false);
+    qualityCombo.setArrowVisible(false);
+    stateCombo.setArrowVisible(false);
+    
+    addAndMakeVisible(degreeCombo);
+    addAndMakeVisible(qualityCombo);
+    addAndMakeVisible(stateCombo);
+    
+    degreeCombo.addListener(this);
+    
+    lockIcon = juce::Drawable::createFromImageData(IconData::lock1svgrepocom_svg, 
+                                                    IconData::lock1svgrepocom_svgSize);
+    unlockIcon = juce::Drawable::createFromImageData(IconData::unlocksvgrepocom_svg, 
+                                                      IconData::unlocksvgrepocom_svgSize);
+    
+    setupLabels();
 }
 
 InfoColoredPanel::~InfoColoredPanel()
 {
+    degreeCombo.removeListener(this);
+}
+
+void InfoColoredPanel::comboBoxChanged(juce::ComboBox* comboBoxThatHasChanged)
+{
+    if (comboBoxThatHasChanged == &degreeCombo)
+        repaint();
 }
 
 void InfoColoredPanel::paint(juce::Graphics& g)
 {
+    using namespace InfoPanelConfig;
+    
     auto bounds = getLocalBounds().toFloat();
     
-    // Dessiner le fond avec la couleur du panel (comme ColoredPanel)
     juce::Path panelPath;
-    panelPath.addRoundedRectangle(bounds, 10.0f);
+    panelPath.addRoundedRectangle(bounds, CORNER_RADIUS);
     g.setColour(getColor());
     g.fillPath(panelPath);
     
-    // Dessiner les lignes de séparation seulement si la partie basse est visible
-    if (bottomZoneVisible && topZone && bottomZone)
+    // Bande de codage couleur harmonique en haut
+    auto stripArea = bounds.removeFromTop(STRIP_HEIGHT);
+    g.saveState();
+    g.reduceClipRegion(panelPath);
+    g.setColour(getFunctionalStripColor());
+    g.fillRect(stripArea);
+    g.restoreState();
+    
+    int totalTopHeight = static_cast<int>(STRIP_HEIGHT) + TOP_PADDING + TOP_ROW_HEIGHT;
+    float comboZoneHeight = (getLocalBounds().toFloat().getHeight() - totalTopHeight) / 3.0f;
+    
+    // Lignes de séparation
+    g.saveState();
+    g.reduceClipRegion(panelPath);
+    g.setColour(getColor().contrasting(0.15f));
+    
+    g.drawLine(0.0f, totalTopHeight, getLocalBounds().toFloat().getWidth(), totalTopHeight, 1.0f);
+    g.drawLine(0.0f, totalTopHeight + comboZoneHeight, getLocalBounds().toFloat().getWidth(), totalTopHeight + comboZoneHeight, 1.0f);
+    g.drawLine(0.0f, totalTopHeight + comboZoneHeight * 2.0f, getLocalBounds().toFloat().getWidth(), totalTopHeight + comboZoneHeight * 2.0f, 1.0f);
+    g.restoreState();
+    
+    auto topArea = getLocalBounds()
+        .withTrimmedTop(static_cast<int>(STRIP_HEIGHT) + TOP_PADDING)
+        .removeFromTop(TOP_ROW_HEIGHT);
+    drawTopSquares(g, topArea);
+}
+
+void InfoColoredPanel::drawTopSquares(juce::Graphics& g, const juce::Rectangle<int>& topArea)
+{
+    using namespace InfoPanelConfig;
+    
+    int totalWidth = SQUARE_SIZE * 3 + SQUARE_SPACING * 2;
+    int startX = (topArea.getWidth() - totalWidth) / 2;
+    int y = topArea.getY() + (topArea.getHeight() - SQUARE_SIZE) / 2;
+    
+    auto squareColor = getColor().contrasting(0.25f);
+    auto textColor = getColor().contrasting(0.8f);
+    
+    // Carré 1 : Numéro
+    juce::Rectangle<int> square1(startX, y, SQUARE_SIZE, SQUARE_SIZE);
+    g.setColour(squareColor);
+    g.fillRoundedRectangle(square1.toFloat(), 4.0f);
+    
+    if (panelNumber > 0)
     {
-        // Appliquer le clipping arrondi pour les lignes de séparation
-        g.saveState();
-        g.reduceClipRegion(panelPath);
-        
-        // Dessiner les lignes de séparation
-        g.setColour(getColor().contrasting(0.15f)); // Couleur légèrement contrastée
-        
-        // Ligne horizontale séparant haut et bas
-        float separatorY = static_cast<float>(topZone->getBottom());
-        g.drawLine(0.0f, separatorY, bounds.getWidth(), separatorY, 1.0f);
-        
-        // Ligne verticale au milieu de la zone basse (séparation état/qualité)
-        if (bottomLeftZone && bottomRightZone)
-        {
-            // Position à 60% de la largeur (3/5 = 0.6)
-            float separatorX = bounds.getWidth() * 0.6f;
-            float startY = separatorY;
-            g.drawLine(separatorX, startY, separatorX, bounds.getHeight(), 1.0f);
-        }
-        
-        g.restoreState();
+        g.setColour(textColor);
+        auto font = juce::Font(fontManager->getSFProDisplay(11.0f, FontManager::FontWeight::Bold));
+        g.setFont(font);
+        g.drawText(juce::String(panelNumber), square1, juce::Justification::centred);
     }
     
-    // Dessiner l'arrière-plan du numéro si visible
-    if (panelNumber > 0 && numberLabel.isVisible())
+    // Carré 2 : Cadenas
+    lockSquareArea = juce::Rectangle<int>(startX + SQUARE_SIZE + SQUARE_SPACING, y, SQUARE_SIZE, SQUARE_SIZE);
+    g.setColour(locked 
+        ? juce::Colour(0xFFD4A017).withAlpha(0.7f)  // Or si verrouillé
+        : squareColor.withAlpha(0.5f));
+    g.fillRoundedRectangle(lockSquareArea.toFloat(), 4.0f);
+    drawLockIcon(g, lockSquareArea, locked);
+    
+    // Carré 3 : Suppression (long press)
+    deleteSquareArea = juce::Rectangle<int>(startX + (SQUARE_SIZE + SQUARE_SPACING) * 2, y, SQUARE_SIZE, SQUARE_SIZE);
+    g.setColour(squareColor.withAlpha(0.5f));
+    g.fillRoundedRectangle(deleteSquareArea.toFloat(), 4.0f);
+    drawDeleteIcon(g, deleteSquareArea);
+}
+
+void InfoColoredPanel::drawLockIcon(juce::Graphics& g, const juce::Rectangle<int>& area, bool isLocked)
+{
+    auto* iconToDraw = isLocked ? lockIcon.get() : unlockIcon.get();
+    
+    if (iconToDraw == nullptr)
+        return;
+    
+    auto iconCopy = iconToDraw->createCopy();
+    auto iconColor = getColor().contrasting(0.8f);
+    iconCopy->replaceColour(juce::Colours::black, iconColor);
+    
+    auto iconBounds = area.toFloat().reduced(3.0f);
+    iconCopy->drawWithin(g, iconBounds, juce::RectanglePlacement::centred, 1.0f);
+}
+
+void InfoColoredPanel::drawDeleteIcon(juce::Graphics& g, const juce::Rectangle<int>& area)
+{
+    auto areaFloat = area.toFloat();
+    
+    // Fond avec progression rouge
+    if (deleteProgress > 0.0f)
     {
-        auto numberBounds = numberLabel.getBounds().toFloat();
-        juce::Path numberPath;
-        numberPath.addRoundedRectangle(numberBounds.reduced(1.0f), 6.0f);
+        auto progressColor = juce::Colours::darkgrey.interpolatedWith(
+            juce::Colours::darkred, deleteProgress
+        ).withAlpha(0.5f + 0.5f * deleteProgress);
         
-        // Fond semi-transparent contrastant
-        g.setColour(getColor().contrasting(0.3f).withAlpha(0.8f));
-        g.fillPath(numberPath);
+        g.setColour(progressColor);
+        g.fillRoundedRectangle(areaFloat, 4.0f);
     }
+    
+    // Croix (X)
+    auto textColor = getColor().contrasting(0.8f);
+    g.setColour(textColor);
+    
+    auto center = area.getCentre().toFloat();
+    float crossSize = area.getWidth() * 0.25f;
+    
+    g.drawLine(center.x - crossSize, center.y - crossSize,
+               center.x + crossSize, center.y + crossSize, 1.5f);
+    g.drawLine(center.x + crossSize, center.y - crossSize,
+               center.x - crossSize, center.y + crossSize, 1.5f);
+}
+
+void InfoColoredPanel::setLocked(bool newLocked)
+{
+    if (locked != newLocked)
+    {
+        locked = newLocked;
+        repaint();
+    }
+}
+
+void InfoColoredPanel::mouseDown(const juce::MouseEvent& event)
+{
+    if (deleteSquareArea.contains(event.getPosition()))
+    {
+        isDeleteHeldDown = true;
+        deleteProgress = 0.0f;
+        deleteStartTime = juce::Time::getMillisecondCounter();
+        startTimerHz(60);
+        repaint();
+    }
+    
+    ColoredPanel::mouseDown(event);
+}
+
+void InfoColoredPanel::mouseUp(const juce::MouseEvent& event)
+{
+    if (lockSquareArea.contains(event.getPosition()))
+    {
+        locked = !locked;
+        repaint();
+        
+        if (onLockToggled)
+            onLockToggled(locked);
+    }
+    
+    if (isDeleteHeldDown)
+    {
+        isDeleteHeldDown = false;
+        stopTimer();
+        deleteProgress = 0.0f;
+        repaint();
+    }
+    
+    ColoredPanel::mouseUp(event);
+}
+
+void InfoColoredPanel::timerCallback()
+{
+    if (!isDeleteHeldDown)
+    {
+        stopTimer();
+        deleteProgress = 0.0f;
+        repaint();
+        return;
+    }
+    
+    auto now = juce::Time::getMillisecondCounter();
+    auto elapsed = static_cast<int>(now - deleteStartTime);
+    deleteProgress = juce::jlimit(0.0f, 1.0f, 
+                                   static_cast<float>(elapsed) / static_cast<float>(LONG_PRESS_DURATION_MS));
+    
+    if (deleteProgress >= 1.0f)
+    {
+        stopTimer();
+        isDeleteHeldDown = false;
+        deleteProgress = 0.0f;
+        
+        // Différer la suppression pour éviter use-after-free
+        if (onDeleteRequested)
+            onDeleteRequested();
+        
+        // Reset visuel après l'action
+        juce::Timer::callAfterDelay(150, [this]
+        {
+            deleteProgress = 0.0f;
+            repaint();
+        });
+    }
+    
+    repaint();
 }
 
 void InfoColoredPanel::resized()
 {
-    // Utilisation du système Grid principal pour positionner les zones haut/bas
-    mainGrid.performLayout(getLocalBounds());
+    using namespace InfoPanelConfig;
     
-    // Utilisation du Grid pour la zone basse (2 ComboBox)
-    if (bottomZone && bottomZoneVisible)
-    {
-        bottomGrid.performLayout(bottomZone->getLocalBounds());
-    }
+    auto bounds = getLocalBounds();
     
-    // Positionner les composants à l'intérieur de chaque zone
-    if (topZone)
-    {
-        // ComboBox degré dans la zone haute avec padding
-        auto topBounds = topZone->getLocalBounds();
-        auto comboHeight = 20;
-        auto topComboY = (topBounds.getHeight() - comboHeight) / 2;
-        
-        // Si la partie basse est masquée et qu'il y a une numérotation, laisser plus d'espace à gauche
-        int leftPadding = 5;
-        if (!bottomZoneVisible && panelNumber > 0)
-        {
-            leftPadding = 32; // Espace pour le numéro (24px) + marge (8px)
-        }
-        else if (panelNumber > 0)
-        {
-            leftPadding = 32; // Toujours laisser de l'espace pour la numérotation
-        }
-        
-        degreeCombo.setBounds(topBounds.withTrimmedLeft(leftPadding)
-                                      .withTrimmedRight(5)
-                                      .withTop(topComboY)
-                                      .withHeight(comboHeight));
-    }
+    int totalTopHeight = static_cast<int>(STRIP_HEIGHT) + TOP_PADDING + TOP_ROW_HEIGHT;
+    bounds.removeFromTop(totalTopHeight);
     
-    if (bottomLeftZone && bottomRightZone && bottomZoneVisible)
-    {
-        auto comboHeight = 20;
-        
-        // ComboBox état dans la zone basse gauche
-        auto bottomLeftBounds = bottomLeftZone->getLocalBounds();
-        auto leftComboY = (bottomLeftBounds.getHeight() - comboHeight) / 2;
-        stateCombo.setBounds(bottomLeftBounds.withTrimmedLeft(5)
-                                            .withTrimmedRight(5)
-                                            .withTop(leftComboY)
-                                            .withHeight(comboHeight));
-        
-        // ComboBox qualité dans la zone basse droite
-        auto bottomRightBounds = bottomRightZone->getLocalBounds();
-        auto rightComboY = (bottomRightBounds.getHeight() - comboHeight) / 2;
-        qualityCombo.setBounds(bottomRightBounds.withTrimmedLeft(5)
-                                               .withTrimmedRight(5)
-                                               .withTop(rightComboY)
-                                               .withHeight(comboHeight));
-    }
+    int comboZoneHeight = bounds.getHeight() / 3;
     
-    // Positionner le label de numérotation dans le coin supérieur gauche
-    // Centré verticalement dans la zone haute
-    if (panelNumber > 0 && topZone)
-    {
-        int numberSize = 24;
-        int yPos = topZone->getY() + (topZone->getHeight() - numberSize) / 2;
-        
-        numberLabel.setBounds(6, yPos, numberSize, numberSize);
-    }
-}
-
-void InfoColoredPanel::setupMainGrid()
-{
-    // Configuration initiale du grid principal
-    reconfigureMainGrid();
-}
-
-void InfoColoredPanel::setupBottomGrid()
-{
-    // Configuration du grid pour la zone basse (2 ComboBox côte à côte)
-    // Division 60% / 40% pour un meilleur équilibre visuel
-    bottomGrid.templateColumns = { juce::Grid::TrackInfo(juce::Grid::Fr(3)), 
-                                   juce::Grid::TrackInfo(juce::Grid::Fr(2)) };
+    auto zone1 = bounds.removeFromTop(comboZoneHeight);
+    int y1 = (zone1.getHeight() - COMBO_HEIGHT) / 2;
+    degreeCombo.setBounds(zone1.withTrimmedLeft(HORIZONTAL_PADDING)
+                              .withTrimmedRight(HORIZONTAL_PADDING)
+                              .withTop(zone1.getY() + y1)
+                              .withHeight(COMBO_HEIGHT));
     
-    bottomGrid.templateRows = { juce::Grid::TrackInfo(juce::Grid::Fr(1)) };
+    auto zone2 = bounds.removeFromTop(comboZoneHeight);
+    int y2 = (zone2.getHeight() - COMBO_HEIGHT) / 2;
+    qualityCombo.setBounds(zone2.withTrimmedLeft(HORIZONTAL_PADDING)
+                               .withTrimmedRight(HORIZONTAL_PADDING)
+                               .withTop(zone2.getY() + y2)
+                               .withHeight(COMBO_HEIGHT));
     
-    // Espacement entre les 2 ComboBox
-    bottomGrid.setGap(juce::Grid::Px(2));
-    
-    // Zone basse gauche (état) - 60%
-    bottomGrid.items.add(juce::GridItem(bottomLeftZone.get()).withArea(1, 1));
-    
-    // Zone basse droite (qualité) - 40%
-    bottomGrid.items.add(juce::GridItem(bottomRightZone.get()).withArea(1, 2));
-}
-
-void InfoColoredPanel::reconfigureMainGrid()
-{
-    // Nettoyer les items existants
-    mainGrid.items.clear();
-    
-    if (bottomZoneVisible)
-    {
-        // Configuration normale : 2 rangées (haut + bas)
-        // Division 50% / 50% en hauteur pour un équilibre visuel
-        
-        mainGrid.templateRows = { juce::Grid::TrackInfo(juce::Grid::Fr(1)), 
-                                  juce::Grid::TrackInfo(juce::Grid::Fr(1)) };
-        
-        mainGrid.templateColumns = { juce::Grid::TrackInfo(juce::Grid::Fr(1)) };
-        
-        // Espacement entre les zones pour créer la séparation
-        mainGrid.setGap(juce::Grid::Px(2));
-        
-        // Zone haute : première rangée - 50%
-        mainGrid.items.add(juce::GridItem(topZone.get()).withArea(1, 1));
-        
-        // Zone basse : deuxième rangée - 50%
-        mainGrid.items.add(juce::GridItem(bottomZone.get()).withArea(2, 1));
-    }
-    else
-    {
-        // Configuration avec partie basse masquée : 1 rangée
-        // La zone haute occupe tout l'espace
-        
-        mainGrid.templateRows = { juce::Grid::TrackInfo(juce::Grid::Fr(1)) };
-        mainGrid.templateColumns = { juce::Grid::TrackInfo(juce::Grid::Fr(1)) };
-        
-        // Pas d'espacement car une seule zone
-        mainGrid.setGap(juce::Grid::Px(0));
-        
-        // Zone haute : occupe toute la grille
-        mainGrid.items.add(juce::GridItem(topZone.get()).withArea(1, 1));
-    }
+    auto zone3 = bounds;
+    int y3 = (zone3.getHeight() - COMBO_HEIGHT) / 2;
+    stateCombo.setBounds(zone3.withTrimmedLeft(HORIZONTAL_PADDING)
+                              .withTrimmedRight(HORIZONTAL_PADDING)
+                              .withTop(zone3.getY() + y3)
+                              .withHeight(COMBO_HEIGHT));
 }
 
 void InfoColoredPanel::setColor(juce::Colour color)
 {
-    // Appeler la méthode parent pour maintenir la cohérence
     ColoredPanel::setColor(color);
     
-    // Sauvegarder la couleur
-    panelColor = color;
-    
-    // Adapter tous les ComboBox à la nouvelle couleur
     degreeCombo.adaptToBackgroundColour(color);
-    stateCombo.adaptToBackgroundColour(color);
     qualityCombo.adaptToBackgroundColour(color);
+    stateCombo.adaptToBackgroundColour(color);
     
-    // Repaint pour mettre à jour les lignes de séparation
     repaint();
-}
-
-void InfoColoredPanel::setupZones(juce::Colour baseColor)
-{
-    // Création des zones principales
-    topZone = std::make_unique<juce::Component>();
-    bottomZone = std::make_unique<juce::Component>();
-    
-    // Création des sous-zones pour la partie basse
-    bottomLeftZone = std::make_unique<juce::Component>();
-    bottomRightZone = std::make_unique<juce::Component>();
-    
-    // Les zones seront simplement des conteneurs, la couleur est gérée par le parent
-    topZone->setOpaque(false);
-    bottomZone->setOpaque(false);
-    bottomLeftZone->setOpaque(false);
-    bottomRightZone->setOpaque(false);
-    
-    // Configuration des ComboBox (vides au départ, à peupler depuis l'extérieur)
-    degreeCombo.adaptToBackgroundColour(baseColor);
-    topZone->addAndMakeVisible(degreeCombo);
-    
-    stateCombo.adaptToBackgroundColour(baseColor);
-    bottomLeftZone->addAndMakeVisible(stateCombo);
-    
-    qualityCombo.adaptToBackgroundColour(baseColor);
-    bottomRightZone->addAndMakeVisible(qualityCombo);
-    
-    // Ajout des sous-zones à la zone basse
-    bottomZone->addAndMakeVisible(bottomLeftZone.get());
-    bottomZone->addAndMakeVisible(bottomRightZone.get());
-    
-    // Ajout des zones principales comme composants enfants
-    addAndMakeVisible(topZone.get());
-    addAndMakeVisible(bottomZone.get());
 }
 
 void InfoColoredPanel::populateDegreeCombo(const juce::StringArray& items)
 {
     degreeCombo.clear();
     for (int i = 0; i < items.size(); ++i)
-    {
         degreeCombo.addItem(items[i], i + 1);
-    }
     if (items.size() > 0)
-        degreeCombo.setSelectedId(1);
-}
-
-void InfoColoredPanel::populateStateCombo(const juce::StringArray& items)
-{
-    stateCombo.clear();
-    for (int i = 0; i < items.size(); ++i)
-    {
-        stateCombo.addItem(items[i], i + 1);
-    }
-    if (items.size() > 0)
-        stateCombo.setSelectedId(1);
+        degreeCombo.setSelectedId(1, juce::dontSendNotification);
 }
 
 void InfoColoredPanel::populateQualityCombo(const juce::StringArray& items)
 {
     qualityCombo.clear();
     for (int i = 0; i < items.size(); ++i)
+        qualityCombo.addItem(items[i], i + 1);
+    if (items.size() > 0)
+        qualityCombo.setSelectedId(1, juce::dontSendNotification);
+}
+
+void InfoColoredPanel::populateStateCombo(const juce::StringArray& items)
+{
+    stateCombo.clear();
+    for (int i = 0; i < items.size(); ++i)
+        stateCombo.addItem(items[i], i + 1);
+    if (items.size() > 0)
+        stateCombo.setSelectedId(1, juce::dontSendNotification);
+}
+
+void InfoColoredPanel::populateDegreeCombo(const juce::StringArray& items, const juce::StringArray& shortItems)
+{
+    degreeCombo.clear();
+    for (int i = 0; i < items.size(); ++i)
+    {
+        degreeCombo.addItem(items[i], i + 1);
+        if (i < shortItems.size())
+            degreeCombo.setShortTextForItem(i + 1, shortItems[i]);
+    }
+    degreeCombo.enableShortDisplayMode(true);
+    if (items.size() > 0)
+        degreeCombo.setSelectedId(1, juce::dontSendNotification);
+}
+
+void InfoColoredPanel::populateQualityCombo(const juce::StringArray& items, const juce::StringArray& shortItems)
+{
+    qualityCombo.clear();
+    for (int i = 0; i < items.size(); ++i)
     {
         qualityCombo.addItem(items[i], i + 1);
+        if (i < shortItems.size())
+            qualityCombo.setShortTextForItem(i + 1, shortItems[i]);
     }
+    qualityCombo.enableShortDisplayMode(true);
     if (items.size() > 0)
-        qualityCombo.setSelectedId(1);
+        qualityCombo.setSelectedId(1, juce::dontSendNotification);
 }
 
-void InfoColoredPanel::showBottomZone(bool show)
+void InfoColoredPanel::populateStateCombo(const juce::StringArray& items, const juce::StringArray& shortItems)
 {
-    if (bottomZoneVisible != show)
+    stateCombo.clear();
+    for (int i = 0; i < items.size(); ++i)
     {
-        bottomZoneVisible = show;
-        
-        // Contrôler la visibilité de la zone basse
-        bottomZone->setVisible(show);
-        
-        // Reconfigurer le grid avec la nouvelle disposition
-        reconfigureMainGrid();
-        
-        // Forcer le repositionnement
-        resized();
-        
-        // Repaint pour mettre à jour les lignes de séparation
-        repaint();
+        stateCombo.addItem(items[i], i + 1);
+        if (i < shortItems.size())
+            stateCombo.setShortTextForItem(i + 1, shortItems[i]);
     }
+    stateCombo.enableShortDisplayMode(true);
+    if (items.size() > 0)
+        stateCombo.setSelectedId(1, juce::dontSendNotification);
 }
 
-void InfoColoredPanel::setupNumberLabel()
+void InfoColoredPanel::setupLabels()
 {
-    // Configuration du label de numérotation
     numberLabel.setJustificationType(juce::Justification::centred);
-    
-    // Application de la police via FontManager
-    auto numberFont = juce::Font(fontManager->getSFProDisplay(12.0f, FontManager::FontWeight::Bold));
+    auto numberFont = juce::Font(fontManager->getSFProDisplay(11.0f, FontManager::FontWeight::Bold));
     numberLabel.setFont(numberFont);
-    
-    numberLabel.setVisible(false); // Invisible par défaut jusqu'à ce qu'un numéro soit défini
-    addAndMakeVisible(numberLabel);
 }
 
 void InfoColoredPanel::setNumber(int number)
 {
     panelNumber = number;
-    
-    if (number > 0)
-    {
-        numberLabel.setText(juce::String(number), juce::dontSendNotification);
-        numberLabel.setVisible(true);
-        
-        // Adapter la couleur du texte en fonction du fond
-        auto bgColor = getColor();
-        auto textColor = bgColor.contrasting(0.8f);
-        numberLabel.setColour(juce::Label::textColourId, textColor);
-    }
-    else
-    {
-        numberLabel.setVisible(false);
-    }
-    
-    resized();
     repaint();
+}
+
+juce::Colour InfoColoredPanel::getFunctionalStripColor() const
+{
+    int selectedId = degreeCombo.getSelectedId();
+    
+    // Couleur selon fonction tonale : T (I/III/VI), SD (II/IV), D (V/VII)
+    switch (selectedId)
+    {
+        case 1:  // I
+        case 3:  // III
+        case 6:  // VI
+            return juce::Colour(0xFF4A90A4);  // Bleu - Tonique
+            
+        case 2:  // II
+        case 4:  // IV
+            return juce::Colour(0xFFF1C40F);  // Or - Sous-Dominante
+            
+        case 5:  // V
+        case 7:  // VII
+            return juce::Colour(0xFFE74C3C);  // Rouge - Dominante
+            
+        default:
+            return juce::Colours::lightgrey;
+    }
 }

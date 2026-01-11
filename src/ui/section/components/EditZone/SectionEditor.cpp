@@ -1,14 +1,14 @@
 #include "SectionEditor.h"
+#include "ui/PluginEditor.h"
 
 SectionEditor::SectionEditor()
-    : ColoredPanel(juce::Colours::lightblue.withAlpha(0.25f)) // Bleu clair plus visible
 {
+    setOpaque(false);
+    
     setupSectionNameLabel();
     
-    // Ajouter les composants des 4 zones
-    addAndMakeVisible(zone1Component);
-    addAndMakeVisible(zone2Component);
-    addAndMakeVisible(zone3Component);
+    addAndMakeVisible(keyZone);
+    addAndMakeVisible(modeZone);
     addAndMakeVisible(zone4Component);
     
     bindZonesToModel();
@@ -26,31 +26,22 @@ SectionEditor::~SectionEditor()
 
 void SectionEditor::paint(juce::Graphics& g)
 {
-    // Dessiner le fond coloré via ColoredPanel
-    ColoredPanel::paint(g);
-    
-    // Dessiner la bordure sophistiquée
-    drawBorder(g);
-    
-    // Dessiner le trait de séparation
-    drawSeparatorLine(g);
+    // Dessiner l'encoche centrée en haut
+    drawNotch(g);
 }
 
 void SectionEditor::resized()
 {
-    auto bounds = getLocalBounds().reduced(20);
+    auto bounds = getLocalBounds();
     
-    // Zone du header : titre + espacement pour le trait
-    headerArea = bounds.removeFromTop(60); // Hauteur augmentée pour inclure le trait
+    constexpr int NOTCH_HEIGHT = 24;
+    constexpr int NOTCH_WIDTH = 100;
     
-    // Zone du contenu : le reste de l'espace
-    contentArea = bounds; // Garde tout le reste pour le contenu futur
+    int notchX = (bounds.getWidth() - NOTCH_WIDTH) / 2;
+    notchArea = juce::Rectangle<int>(notchX, 0, NOTCH_WIDTH, NOTCH_HEIGHT);
+    sectionNameLabel.setBounds(notchArea);
     
-    // Positionner le titre dans la zone header (avec un peu de marge)
-    auto titleBounds = headerArea.reduced(0, 5).removeFromTop(40);
-    sectionNameLabel.setBounds(titleBounds);
-    
-    // Calculer et définir les 4 zones de contenu avec Grid
+    contentArea = bounds.withTrimmedTop(NOTCH_HEIGHT + 4).reduced(10);
     calculateContentZones();
 }
 
@@ -60,9 +51,6 @@ void SectionEditor::setSectionToEdit(const juce::String& sectionId)
     {
         currentSectionId = sectionId;
         updateContent();
-        // NOTE: Ne pas appeler syncZonesFromModel() ici car currentSectionState
-        // n'est pas encore initialisé. setSectionState() sera appelé juste après
-        // par le code appelant et fera le sync au bon moment.
         repaint();
     }
 }
@@ -72,7 +60,6 @@ void SectionEditor::setSectionState(juce::ValueTree sectionState)
     if (currentSectionState == sectionState)
         return;
 
-    // Détacher les anciens listeners
     if (currentSectionState.isValid())
         currentSectionState.removeListener(this);
     
@@ -90,31 +77,40 @@ void SectionEditor::setSectionState(juce::ValueTree sectionState)
         Section section(currentSectionState);
         currentProgressionState = section.getProgression().getState();
         if (currentProgressionState.isValid())
-        {
             currentProgressionState.addListener(this);
-        }
         
-        // Synchroniser les zones seulement si on a un ValueTree valide
         syncZonesFromModel();
+        updateContent();
     }
     else
     {
-        // Invalide : clear
         currentProgressionState = juce::ValueTree();
     }
 }
 
+void SectionEditor::refreshTitle() { updateContent(); }
+
 void SectionEditor::setupSectionNameLabel()
 {
-    // Configuration du label de nom de section
     sectionNameLabel.setJustificationType(juce::Justification::centred);
-    sectionNameLabel.setColour(juce::Label::textColourId, juce::Colours::darkblue);
+    sectionNameLabel.setColour(juce::Label::textColourId, juce::Colours::white.withAlpha(0.9f));
     
-    // Application de la police via FontManager - taille légèrement plus grande
-    auto sectionNameFontOptions = fontManager->getSFProDisplay(28.0f, FontManager::FontWeight::Bold);
+    auto sectionNameFontOptions = fontManager->getSFProDisplay(13.0f, FontManager::FontWeight::Medium);
     sectionNameLabel.setFont(juce::Font(sectionNameFontOptions));
     
     addAndMakeVisible(sectionNameLabel);
+}
+
+void SectionEditor::parentHierarchyChanged()
+{
+    juce::Component::parentHierarchyChanged();
+    findAppController();
+}
+
+void SectionEditor::findAppController()
+{
+    auto* pluginEditor = findParentComponentOfClass<AudioPluginAudioProcessorEditor>();
+    appController = (pluginEditor != nullptr) ? &pluginEditor->getAppController() : nullptr;
 }
 
 void SectionEditor::updateContent()
@@ -125,12 +121,24 @@ void SectionEditor::updateContent()
     }
     else
     {
-        // Extraire l'index de la section depuis l'ID (ex: "Section_0" -> "Section 1")
+        if (appController == nullptr)
+            findAppController();
+        
         juce::String displayName = "Section";
-        if (currentSectionId.startsWith("Section_"))
+        
+        if (currentSectionState.isValid() && appController)
         {
-            int index = currentSectionId.getTrailingIntValue();
-            displayName = "Section " + juce::String(index + 1);
+            int sectionId = currentSectionState.getProperty(ModelIdentifiers::id, -1);
+            auto& piece = appController->getPiece();
+            int sectionIndex = piece.getSectionIndexById(sectionId);
+            
+            if (sectionIndex >= 0)
+                displayName = "Progression " + juce::String(sectionIndex + 1);
+        }
+        else if (currentSectionId.startsWith("Section_"))
+        {
+            int id = currentSectionId.getTrailingIntValue();
+            displayName = "Section (ID=" + juce::String(id) + ")";
         }
         
         sectionNameLabel.setText(displayName, juce::dontSendNotification);
@@ -139,23 +147,14 @@ void SectionEditor::updateContent()
 
 void SectionEditor::drawBorder(juce::Graphics& g)
 {
-    // Logique inspirée de OutlineTextButton::drawButtonBackground
     auto bounds = getLocalBounds().toFloat().reduced(borderThickness * 0.5f);
     
     juce::Colour currentBorderColour = borderColour;
     
-    // Gestion des états comme dans OutlineTextButton
-    // Pour un éditeur, on peut simuler un état "actif" quand une section est sélectionnée
     if (isEditingSection())
-    {
-        // État actif : bordure plus vive
         currentBorderColour = currentBorderColour.brighter(0.3f);
-    }
     else
-    {
-        // État inactif : bordure plus discrète
         currentBorderColour = currentBorderColour.withAlpha(0.6f);
-    }
     
     g.setColour(currentBorderColour);
     g.drawRoundedRectangle(bounds, cornerRadius, borderThickness);
@@ -163,13 +162,31 @@ void SectionEditor::drawBorder(juce::Graphics& g)
 
 void SectionEditor::drawSeparatorLine(juce::Graphics& g)
 {
-    // Dessiner un trait de séparation entre le header et le contenu
-    auto separatorY = headerArea.getBottom(); // 10px de décalage depuis le header
-    auto separatorStart = headerArea.getX();
-    auto separatorEnd = headerArea.getRight();
+    juce::ignoreUnused(g);
+}
+
+void SectionEditor::drawNotch(juce::Graphics& g)
+{
+    if (notchArea.isEmpty())
+        return;
     
-    g.setColour(juce::Colours::darkblue.withAlpha(0.15f));
-    g.drawHorizontalLine(separatorY, static_cast<float>(separatorStart), static_cast<float>(separatorEnd));
+    // Dessiner l'encoche avec coins arrondis en bas seulement
+    auto notchBounds = notchArea.toFloat();
+    
+    juce::Path notchPath;
+    notchPath.addRoundedRectangle(
+        notchBounds.getX(), notchBounds.getY(),
+        notchBounds.getWidth(), notchBounds.getHeight(),
+        6.0f, 6.0f,    // cornerSize
+        false, false,  // Pas de coins arrondis en haut
+        true, true     // Coins arrondis en bas
+    );
+    
+    g.setColour(juce::Colours::black.withAlpha(0.4f));
+    g.fillPath(notchPath);
+    
+    g.setColour(juce::Colours::grey.withAlpha(0.3f));
+    g.strokePath(notchPath, juce::PathStrokeType(1.0f));
 }
 
 void SectionEditor::calculateContentZones()
@@ -177,89 +194,79 @@ void SectionEditor::calculateContentZones()
     if (contentArea.isEmpty())
         return;
     
-    // Utiliser juce::Grid pour diviser la zone de contenu en 4 zones
-    juce::Grid grid;
+    // Proportions verticales
+    constexpr float TOP_ROW_FLEX = 0.35f;
+    constexpr float ZONE4_FLEX = 0.65f;
+    constexpr int ROW_SPACING = 10;
     
-    using Track = juce::Grid::TrackInfo;
-    using Fr = juce::Grid::Fr;
-    using Px = juce::Grid::Px;
+    // Proportions horizontales (ligne 1)
+    constexpr float KEY_ZONE_FLEX = 75.0f;
+    constexpr float MODE_ZONE_FLEX = 25.0f;
+    constexpr int COLUMN_SPACING = 10;
     
-    // Définir les lignes : 40% pour la première ligne, 60% pour la seconde
-    grid.templateRows = { 
-        Track(Fr(40)), 
-        Track(Fr(60)) 
-    };
+    // FlexBox principal : 2 lignes verticales
+    juce::FlexBox mainFlex;
+    mainFlex.flexDirection = juce::FlexBox::Direction::column;
+    mainFlex.justifyContent = juce::FlexBox::JustifyContent::flexStart;
+    mainFlex.alignItems = juce::FlexBox::AlignItems::stretch;
     
-    // Définir les colonnes : 3 colonnes égales pour la première ligne
-    grid.templateColumns = { 
-        Track(Fr(1)), 
-        Track(Fr(1)), 
-        Track(Fr(1))
-    };
+    mainFlex.items.add(juce::FlexItem()
+        .withFlex(TOP_ROW_FLEX)
+        .withMargin(juce::FlexItem::Margin(0, 0, ROW_SPACING / 2, 0)));
     
-    // Espacement entre les zones
-    grid.columnGap = Px(10);
-    grid.rowGap = Px(10);
+    mainFlex.items.add(juce::FlexItem(zone4Component)
+        .withFlex(ZONE4_FLEX)
+        .withMargin(juce::FlexItem::Margin(ROW_SPACING / 2, 0, 0, 0)));
     
-    // Ajouter les composants réels à la grille
-    grid.items.add(juce::GridItem(zone1Component).withArea(1, 1));  // Zone 1: ligne 1, colonne 1
-    grid.items.add(juce::GridItem(zone2Component).withArea(1, 2));  // Zone 2: ligne 1, colonne 2
-    grid.items.add(juce::GridItem(zone3Component).withArea(1, 3));  // Zone 3: ligne 1, colonne 3
-    grid.items.add(juce::GridItem(zone4Component).withArea(2, 1, 3, 4)); // Zone 4: ligne 2, colonnes 1-3
+    mainFlex.performLayout(contentArea.toFloat());
     
-    // Appliquer le layout
-    grid.performLayout(contentArea);
+    topRowArea = juce::Rectangle<int>(
+        contentArea.getX(),
+        contentArea.getY(),
+        contentArea.getWidth(),
+        static_cast<int>(contentArea.getHeight() * TOP_ROW_FLEX) - ROW_SPACING / 2
+    );
     
-    // Stocker les bounds calculés pour référence (optionnel, pour debugging)
-    zone1Area = zone1Component.getBounds();
-    zone2Area = zone2Component.getBounds();
-    zone3Area = zone3Component.getBounds();
-    zone4Area = zone4Component.getBounds();
+    // FlexBox ligne 1 : KeyZone + ModeZone horizontalement
+    juce::FlexBox topRowFlex;
+    topRowFlex.flexDirection = juce::FlexBox::Direction::row;
+    topRowFlex.justifyContent = juce::FlexBox::JustifyContent::spaceBetween;
+    topRowFlex.alignItems = juce::FlexBox::AlignItems::stretch;
+    
+    topRowFlex.items.add(juce::FlexItem(keyZone)
+        .withFlex(KEY_ZONE_FLEX)
+        .withMargin(juce::FlexItem::Margin(0, COLUMN_SPACING / 2, 0, 0)));
+    
+    topRowFlex.items.add(juce::FlexItem(modeZone)
+        .withFlex(MODE_ZONE_FLEX)
+        .withMargin(juce::FlexItem::Margin(0, 0, 0, COLUMN_SPACING / 2)));
+    
+    topRowFlex.performLayout(topRowArea.toFloat());
 } 
 
 void SectionEditor::bindZonesToModel()
 {
-    // Zone1: Base note
-    zone1Component.onBaseNoteChanged = [this](Diatony::BaseNote base)
+    keyZone.getOnKeyChanged() = [this](int noteIndex, Diatony::BaseNote base, Diatony::Alteration alt)
     {
+        juce::ignoreUnused(base);
         if (!currentSectionState.isValid()) return;
         Section section(currentSectionState);
-        auto alt = section.getAlteration();
-        auto note = Diatony::toDiatonyNote(base, alt);
-        section.setNote(note);
-    };
-
-    // Zone2: Alteration
-    zone2Component.onAlterationChanged = [this](Diatony::Alteration alt)
-    {
-        if (!currentSectionState.isValid()) return;
-        Section section(currentSectionState);
-        // Conserver la lettre (BaseNote) courante: la déduire avec l'ancienne altération
-        auto oldAlt = section.getAlteration();
-        auto note = section.getNote();
-        auto base = Diatony::toBaseNote(note, oldAlt);
-
-        // Appliquer la nouvelle altération et recalculer la note chromatique
         section.setAlteration(alt);
-        section.setNote(Diatony::toDiatonyNote(base, alt));
+        section.setNote(static_cast<Diatony::Note>(noteIndex));
     };
 
-    // Zone3: Mode
-    zone3Component.onModeChanged = [this](Diatony::Mode mode)
+    modeZone.onModeChanged = [this](Diatony::Mode mode)
     {
         if (!currentSectionState.isValid()) return;
         Section section(currentSectionState);
         section.setIsMajor(mode == Diatony::Mode::Major);
     };
     
-    // Zone4: Ajout d'accord
     zone4Component.onChordAdded = [this](Diatony::ChordDegree degree, 
                                          Diatony::ChordQuality quality, 
                                          Diatony::ChordState state)
     {
         if (!currentSectionState.isValid()) return;
-        
-        // Obtenir la progression de la section et ajouter l'accord
         Section section(currentSectionState);
         auto progression = section.getProgression();
         progression.addChord(degree, quality, state);
@@ -269,53 +276,56 @@ void SectionEditor::bindZonesToModel()
 void SectionEditor::syncZonesFromModel()
 {
     if (!currentSectionState.isValid())
-    {
-        DBG("[SectionEditor] syncZones: currentSectionState INVALIDE");
         return;
-    }
 
     Section section(currentSectionState);
 
     auto note = section.getNote();
-    auto alt = section.getAlteration();
     auto isMajor = section.getIsMajor();
 
-    // Déduire BaseNote depuis Note + Altération
-    auto base = Diatony::toBaseNote(note, alt);
-
-    zone1Component.setSelectedBaseNote(base);
-    zone2Component.setSelectedAlteration(alt);
-    zone3Component.setSelectedMode(isMajor ? Diatony::Mode::Major : Diatony::Mode::Minor);
+    keyZone.setKey(static_cast<int>(note));
+    modeZone.setSelectedMode(isMajor ? Diatony::Mode::Major : Diatony::Mode::Minor);
     
-    // Synchroniser Zone4 avec la progression d'accords (avec les valeurs réelles)
     auto progression = section.getProgression();
     std::vector<juce::ValueTree> chords;
     for (size_t i = 0; i < progression.size(); ++i)
-    {
-        chords.push_back(progression.getChordState(i));
-    }
+        chords.push_back(progression.getChord(i).getState());
     zone4Component.syncWithProgression(chords);
-    
-    // Log concis: afficher seulement si vraiment nécessaire (commenter pour réduire encore)
-    // DBG("[SectionEditor] Zones synced: note=" << static_cast<int>(note) 
-    //     << " alt=" << static_cast<int>(alt) << " mode=" << (isMajor ? "Maj" : "Min"));
 }
 
 void SectionEditor::valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged,
                                              const juce::Identifier& property)
 {
     if (!currentSectionState.isValid()) return;
-    if (treeWhosePropertyHasChanged != currentSectionState) return;
-
-    // Resynchroniser l'UI quand la section change (quelqu'un d'autre ou nous)
-    syncZonesFromModel();
+    
+    if (treeWhosePropertyHasChanged == currentSectionState)
+    {
+        syncZonesFromModel();
+        return;
+    }
+    
+    if (treeWhosePropertyHasChanged.hasType(ModelIdentifiers::CHORD))
+    {
+        auto parent = treeWhosePropertyHasChanged.getParent();
+        if (currentProgressionState.isValid() && parent == currentProgressionState)
+        {
+            Section section(currentSectionState);
+            auto progression = section.getProgression();
+            std::vector<juce::ValueTree> chords;
+            for (size_t i = 0; i < progression.size(); ++i)
+                chords.push_back(progression.getChord(i).getState());
+            zone4Component.syncWithProgression(chords);
+            return;
+        }
+    }
+    
+    juce::ignoreUnused(property);
 }
 
 void SectionEditor::valueTreeChildAdded(juce::ValueTree& parentTree, juce::ValueTree& childWhichHasBeenAdded)
 {
     if (!currentProgressionState.isValid()) return;
     
-    // Si un CHORD a été ajouté dans notre PROGRESSION, resynchroniser Zone4
     if (parentTree == currentProgressionState && 
         childWhichHasBeenAdded.hasType(ModelIdentifiers::CHORD))
     {
@@ -323,18 +333,15 @@ void SectionEditor::valueTreeChildAdded(juce::ValueTree& parentTree, juce::Value
         auto progression = section.getProgression();
         std::vector<juce::ValueTree> chords;
         for (size_t i = 0; i < progression.size(); ++i)
-        {
-            chords.push_back(progression.getChordState(i));
-        }
+            chords.push_back(progression.getChord(i).getState());
         zone4Component.syncWithProgression(chords);
     }
 }
 
-void SectionEditor::valueTreeChildRemoved(juce::ValueTree& parentTree, juce::ValueTree& childWhichHasBeenRemoved, int index)
+void SectionEditor::valueTreeChildRemoved(juce::ValueTree& parentTree, juce::ValueTree& childWhichHasBeenRemoved, int)
 {
     if (!currentProgressionState.isValid()) return;
     
-    // Si un CHORD a été supprimé de notre PROGRESSION, resynchroniser Zone4
     if (parentTree == currentProgressionState && 
         childWhichHasBeenRemoved.hasType(ModelIdentifiers::CHORD))
     {
@@ -342,9 +349,7 @@ void SectionEditor::valueTreeChildRemoved(juce::ValueTree& parentTree, juce::Val
         auto progression = section.getProgression();
         std::vector<juce::ValueTree> chords;
         for (size_t i = 0; i < progression.size(); ++i)
-        {
-            chords.push_back(progression.getChordState(i));
-        }
+            chords.push_back(progression.getChord(i).getState());
         zone4Component.syncWithProgression(chords);
     }
 }

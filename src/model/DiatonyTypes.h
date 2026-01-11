@@ -60,6 +60,7 @@ namespace Diatony {
      * Correspond à l'enum 'chordTypes' de Utilities.hpp
      */
     enum class ChordQuality : int {
+        Auto = -1,              // Mode automatique (détection via tonalité)
         Major = 0,              // MAJOR_CHORD
         Minor = 1,              // MINOR_CHORD
         Diminished = 2,         // DIMINISHED_CHORD
@@ -123,4 +124,4 @@ namespace Diatony {
         Sharp = 1       // Dièse
     };
 
-} // namespace Diatony 
+} 

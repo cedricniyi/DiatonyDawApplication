@@ -7,77 +7,66 @@
 #include "ModelIdentifiers.h"
 
 /**
- * Représente une pièce musicale complète avec ses sections tonales et modulations
- * Propriétaire du ValueTree racine et de l'UndoManager
- * Maintient l'invariant : modulations.size() == sections.size() - 1
- * Architecture ValueTree : les éléments sont stockés dans l'ordre chronologique
+ * @brief Pièce musicale complète : sections tonales reliées par des modulations.
+ * 
+ * Propriétaire du ValueTree racine. Gère les IDs et garantit l'invariant :
+ * modulations.count == sections.count - 1, avec alternance S-M-S-M-S.
  */
 class Piece {
 public:
     Piece();
     explicit Piece(const juce::String& pieceTitle);
     
-    // Gestion des sections
-    void addSection(const Section& section);           // Ajoute automatiquement une modulation si nécessaire
-    void addSection(const juce::String& sectionName);  // Ajoute automatiquement une modulation si nécessaire
-    Section createSection(const juce::String& sectionName);
-    void removeLastSection();  // Supprime section et modulation associée
-    void clearAllElements();   // Vide toute la pièce
-    void clear();             // Alias pour compatibilité
+    /** @brief Ajoute une section (+ modulation automatique si pas la première) */
+    void addSection(const juce::String& sectionName = "Section");
     
-    // Gestion des modulations
-    void addModulation(const Modulation& modulation);
-    void addModulation(Diatony::ModulationType type, int fromChord, int toChord);
-    Modulation createModulation(Diatony::ModulationType type, int fromChord, int toChord);
-    
-    // Accès aux éléments par type
-    std::vector<Section> getSections() const;
-    std::vector<Modulation> getModulations() const;
+    /** @brief Supprime une section et gère les modulations adjacentes */
+    void removeSection(int sectionIndex);
+    void removeLastSection();
+    void clear();
     
     Section getSection(size_t index) const;
-    Section getSection(size_t index);
-    
     Modulation getModulation(size_t index) const;
-    Modulation getModulation(size_t index);
+    Section getSectionById(int id) const;
+    Modulation getModulationById(int id) const;
+    int getSectionIndexById(int id) const;
+    int getModulationIndexById(int id) const;
     
-    // Informations sur la pièce
+    std::vector<Section> getSections() const;
+    std::vector<Modulation> getModulations() const;
+    std::pair<Section, Section> getAdjacentSections(const Modulation& modulation) const;
+    
     size_t getSectionCount() const;
     size_t getModulationCount() const;
-    int getNumElements() const; // Nombre total d'éléments (sections + modulations)
+    int getNumElements() const;
     bool isEmpty() const;
     
     void setTitle(const juce::String& newTitle);
-    const juce::String getTitle() const;
+    juce::String getTitle() const;
     
-    // Validation
+    bool hasValidStructure() const;
     bool isComplete() const;
-    bool hasValidStructure() const;  // Vérifie l'invariant des modulations
     
-    // Statistiques
     int getTotalChordCount() const;
-    
-    // Méthodes utilitaires
     juce::String toString() const;
     juce::String getDetailedSummary() const;
     
-    // Accès au ValueTree et UndoManager
     juce::ValueTree getState() const { return state; }
     juce::ValueTree& getState() { return state; }
     juce::UndoManager& getUndoManager() { return undoManager; }
     const juce::UndoManager& getUndoManager() const { return undoManager; }
     
-    // Création d'un nouveau nœud Piece
-    static juce::ValueTree createPieceNode(const juce::String& title);
-    
 private:
-    juce::ValueTree state;           // ValueTree racine contenant toute la pièce
-    juce::UndoManager undoManager;   // Gestionnaire Undo/Redo
+    juce::ValueTree state;
+    juce::UndoManager undoManager;
     
-    // Helpers pour naviguer dans l'arborescence
+    int generateNextSectionId() const;
+    int generateNextModulationId() const;
+    
+    juce::ValueTree createSectionNode(const juce::String& name);
+    juce::ValueTree createModulationNode(int fromSectionId, int toSectionId);
+    int findValueTreeIndex(const juce::Identifier& type, int id) const;
     std::vector<juce::ValueTree> getChildrenOfType(const juce::Identifier& type) const;
     juce::ValueTree getChildOfType(const juce::Identifier& type, size_t index) const;
-    
-    // Validation des index
-    void validateSectionIndex(size_t index) const;
-    void validateModulationIndex(size_t index) const;
-}; 
+    void assertInvariants() const;
+};

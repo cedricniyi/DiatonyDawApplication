@@ -1,6 +1,5 @@
 #include "ColoredPanel.h"
 
-//==============================================================================
 ColoredPanel::ColoredPanel(juce::Colour color) 
     : panelColor(color)
 {
@@ -9,20 +8,33 @@ ColoredPanel::ColoredPanel(juce::Colour color)
 
 void ColoredPanel::paint(juce::Graphics& g)
 {
-    auto bounds = getLocalBounds().toFloat();
+    auto bounds = getDrawingBounds().toFloat();
     
-    // Créer le path pour le rectangle arrondi
+    if (bounds.isEmpty())
+        return;
+    
     juce::Path panelPath;
-    panelPath.addRoundedRectangle(bounds, 10.0f);
+    
+    if (cornerRadius > 0.0f)
+        panelPath.addRoundedRectangle(bounds, cornerRadius);
+    else
+        panelPath.addRectangle(bounds);
 
-    // Rendre le panel
     g.setColour(panelColor);
     g.fillPath(panelPath);
+    
+    if (showBorder && borderThickness > 0.0f)
+    {
+        g.setColour(borderColor);
+        
+        if (cornerRadius > 0.0f)
+            g.drawRoundedRectangle(bounds, cornerRadius, borderThickness);
+        else
+            g.drawRect(bounds, borderThickness);
+    }
 }
 
-void ColoredPanel::resized()
-{
-}
+void ColoredPanel::resized() {}
 
 void ColoredPanel::setAlpha(float alpha)
 {
@@ -36,7 +48,43 @@ void ColoredPanel::setColor(juce::Colour color)
     repaint();
 }
 
-juce::Colour ColoredPanel::getColor() const
+juce::Colour ColoredPanel::getColor() const { return panelColor; }
+
+void ColoredPanel::setCornerRadius(float radius)
 {
-    return panelColor;
-} 
+    cornerRadius = radius;
+    repaint();
+}
+
+float ColoredPanel::getCornerRadius() const { return cornerRadius; }
+
+void ColoredPanel::setBorderColor(juce::Colour color)
+{
+    borderColor = color;
+    repaint();
+}
+
+void ColoredPanel::setBorderThickness(float thickness)
+{
+    borderThickness = thickness;
+    repaint();
+}
+
+void ColoredPanel::enableBorder(bool shouldShowBorder)
+{
+    showBorder = shouldShowBorder;
+    repaint();
+}
+
+void ColoredPanel::setInternalPadding(int padding)
+{
+    internalPadding = padding;
+    repaint();
+}
+
+int ColoredPanel::getInternalPadding() const { return internalPadding; }
+
+juce::Rectangle<int> ColoredPanel::getDrawingBounds() const
+{
+    return getLocalBounds().reduced(internalPadding);
+}
