@@ -73,7 +73,15 @@
         "cacheVariables": {
             "ENABLE_ASAN": "ON"
         }
-    }
+      },
+      {
+        "name": "release",
+        "inherits": "debug",
+        "binaryDir": "${sourceDir}/cmake-build-release",
+        "cacheVariables": {
+          "CMAKE_BUILD_TYPE": "Release"
+        }
+      }
     ],
     "buildPresets": [
       {
@@ -85,7 +93,12 @@
         "name": "debug-asan",
         "configurePreset": "debug-asan",
         "jobs": 6
-    }
+      },
+      {
+        "name": "release",
+        "configurePreset": "release",
+        "jobs": 6
+      }
     ]
   }
   
