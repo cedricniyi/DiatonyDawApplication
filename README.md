@@ -1,4 +1,4 @@
-# DiatonyDaw : a DAW plugin using Diatony, a model of tonal harmony voicing
+# DiatonyDaw : un plugin pour DAW utilisant Diatony, un model d'harmonie tonale
 
 Ce repository contient le code source d'un plugin Audio Unit (AU) permettant d'utilisé le modèle [Diatony](https://github.com/sprockeelsd/Diatony) directement dans un Digital Audio Workstation tel que Ableton Live, Logic Pro ou GarageBand.
 Ce plugin fournit une interface graphique permettant de générer des progressions harmoniques à quatre voix en respectant les règles de la musique tonale.
@@ -36,31 +36,31 @@ Classes utilitaires permettant de gérér la sauvegarde de fichiers et les polic
 
 ### Autres fichiers
 
-- [**Papers/**](https://github.com/cedricniyi/DiatonyDawApplication/tree/develop-v1-clean/Papers) :
+- [**Papers/**](https://github.com/cedricniyi/DiatonyDawApplication/tree/main/Papers) :
 Ce dossier contient l'ensemble des papiers scientifique m'ayant guidé durant le développement et l'écriture de ma thèse.
 
-- [**modules/**](https://github.com/cedricniyi/DiatonyDawApplication/tree/develop-v1-clean/modules) :
+- [**modules/**](https://github.com/cedricniyi/DiatonyDawApplication/tree/main/modules) :
 Contient l'ensemble des sources JUCE nécessaires au projet
 
-- [**CMakeLists.txt**](https://github.com/cedricniyi/DiatonyDawApplication/tree/develop-v1-clean/CMakeLists.txt) :
+- [**CMakeLists.txt**](https://github.com/cedricniyi/DiatonyDawApplication/tree/main/CMakeLists.txt) :
 Fichier principal de configuration CMake définissant les cibles, dépendances et options de compilation du plugin.
 
-- [**CMakePresets.json**](https://github.com/cedricniyi/DiatonyDawApplication/tree/develop-v1-clean/CMakePresets.json) :
+- [**CMakePresets.json**](https://github.com/cedricniyi/DiatonyDawApplication/tree/main/CMakePresets.json) :
 Presets de build pré-configurés pour macOS ARM (debug, release) utilisant Ninja comme générateur.
 
 
-- [**TestDiatonyDawApp Project/**](https://github.com/cedricniyi/DiatonyDawApplication/tree/develop-v1-clean/TestDiatonyDawApp%20Project) :
+- [**TestDiatonyDawApp Project/**](https://github.com/cedricniyi/DiatonyDawApplication/tree/main/TestDiatonyDawApp%20Project) :
 Projet d'expérimentation personnel (Ableton Live 11)
 
-## Prérequis
+## Prérequis (dévellopement)
 
 Pour développer ce projet j'ai utilisé MacOS (Apple Silicon / ARM64) comme système d'exploitation.
 
 ### Outils de compilation nécessaires
 
-- CMake (>=3.22 pour ma part j'ai utilisé Homebrew pour installé la dépendance. Version utilisée dernièrement **3.30.5**)
+- **CMake** (>=3.22 pour ma part j'ai utilisé Homebrew pour installé la dépendance. Version utilisée dernièrement **3.30.5**)
 
-- Ninja
+- **Ninja**, système de build rapide utilisé par CMake pour la compilation 
 
 ### Dépendances externes
 
@@ -70,9 +70,45 @@ Pour développer ce projet j'ai utilisé MacOS (Apple Silicon / ARM64) comme sys
 
 - [Diatony](https://github.com/cedricniyi/Diatony), module conçus par Damien Sprockeels inclus comme sous-module Git au projet.
 
+### Installation des dépendances
+```
+brew install cmake ninja gecode
+```
+
 ### Assets
 - San Francisco Pro, police d'écriture conçus par Apple (Plus d'information: [*Fonts for Apple platforms*](https://developer.apple.com/fonts/))
 
+## Compilation
+
+### Cloner le repository avec sous-modules
+
+```bash
+git clone --recursive https://github.com/cedricniyi/DiatonyDawApplication.git
+cd DiatonyDawApplication
+```
+
+Si vous avez cloné sans récursivement prendre en compte les sous modules, utilisez cette commande:
+```bash
+git submodule update --init --recursive
+```
+
+### Compiler toutes les cibles définies
+
+```
+cmake --build cmake-build-debug
+```
+
+Cette commandes produits 2 exécutables du plugin:
+- la version **Standalone**, `DiatonyDawApplication.app`, utilise pour le dévelopment rapide de l'interface
+- la version **Audio Unit**, `DiatonyDawApplication.component`, version utilisable dans un DAW
+
+**_Remarque_**: Pour le moments ces 2 versions nécessitent que vous ayez une machine sour macOS ARM (Puce M1 ou plus récente)
+
+Après compilation, vous serez en mesure de lancer les tests que j'ai écris pour checker ma couche Model, Controller ainsi que mon service de génération:
+
+```bash
+DYLD_LIBRARY_PATH=/opt/homebrew/opt/gecode/lib ./cmake-build-debug/DiatonyTests_artefacts/Debug/DiatonyTests
+```
 ## Remarques
 
 Concernant l'UI, actuellement le code du footer est présent mais non-utilisé dans la version compilé et téléchargeable.
