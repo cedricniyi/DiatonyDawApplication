@@ -54,7 +54,7 @@ Projet d'expérimentation personnel (Ableton Live 11)
 
 ## Prérequis
 
-Pour développer ce projet j'ai utilisé MacOS ((Apple Silicon / ARM64)) comme système d'exploitation.
+Pour développer ce projet j'ai utilisé MacOS (Apple Silicon / ARM64) comme système d'exploitation.
 
 ### Outils de compilation nécessaires
 
@@ -66,9 +66,9 @@ Pour développer ce projet j'ai utilisé MacOS ((Apple Silicon / ARM64)) comme s
 
 - [Gecode](https://formulae.brew.sh/formula/gecode), installé à l'aide de Homebrew (`brew install gecode`) car les sources disponible via le site de gecode cible une architecture Intel de MacOS. Gecode est la librairie utilisé par le modèle Diatony (Plus d'information conçernant: [*Gecode Documentation*](https://www.gecode.dev/documentation.html))
 
-- [JUCE] **>= 8.0.3**, la version 8.0.3 est celle inclus comme sous-module Git au projet.
+- [JUCE](https://github.com/juce-framework/JUCE/tree/51a8a6d7aeae7326956d747737ccf1575e61e209) **>= 8.0.3**, la version 8.0.3 est celle inclus comme sous-module Git au projet.
 
-- [Diatony], module conçus par Damien Sprockeels inclus comme sous-module Git au projet.
+- [Diatony](https://github.com/cedricniyi/Diatony), module conçus par Damien Sprockeels inclus comme sous-module Git au projet.
 
 ### Assets
 - San Francisco Pro, police d'écriture conçus par Apple (Plus d'information: [*Fonts for Apple platforms*](https://developer.apple.com/fonts/))
