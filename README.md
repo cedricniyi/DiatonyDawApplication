@@ -12,6 +12,7 @@ Le projet contient : le code sources de l'interface, les dépendances nécessair
 
 Actuellement le plugin est seulement fonctionnel sous MacOS ARM (version MacOS intel disponible bientôt) et sous la version Audio Unit (et Standalone), la version VST3 n'est pas encore disponible dû à des défauts de compilation.
 
+
 ### Code Source
 
 Le dossier [**src**](https://github.com/cedricniyi/DiatonyDawApplication/tree/main/src) contient le code source du plugin.
@@ -51,3 +52,27 @@ Presets de build pré-configurés pour macOS ARM (debug, release) utilisant Ninj
 - [**TestDiatonyDawApp Project/**](https://github.com/cedricniyi/DiatonyDawApplication/tree/develop-v1-clean/TestDiatonyDawApp%20Project) :
 Projet d'expérimentation personnel (Ableton Live 11)
 
+## Prérequis
+
+Pour développer ce projet j'ai utilisé MacOS ((Apple Silicon / ARM64)) comme système d'exploitation.
+
+### Outils de compilation nécessaires
+
+- CMake (>=3.22 pour ma part j'ai utilisé Homebrew pour installé la dépendance. Version utilisée dernièrement **3.30.5**)
+
+- Ninja
+
+### Dépendances externes
+
+- [Gecode](https://formulae.brew.sh/formula/gecode), installé à l'aide de Homebrew (`brew install gecode`) car les sources disponible via le site de gecode cible une architecture Intel de MacOS. Gecode est la librairie utilisé par le modèle Diatony (Plus d'information conçernant: [*Gecode Documentation*](https://www.gecode.dev/documentation.html))
+
+- [JUCE] **>= 8.0.3**, la version 8.0.3 est celle inclus comme sous-module Git au projet.
+
+- [Diatony], module conçus par Damien Sprockeels inclus comme sous-module Git au projet.
+
+### Assets
+- San Francisco Pro, police d'écriture conçus par Apple (Plus d'information: [*Fonts for Apple platforms*](https://developer.apple.com/fonts/))
+
+## Remarques
+
+Concernant l'UI, actuellement le code du footer est présent mais non-utilisé dans la version compilé et téléchargeable.
