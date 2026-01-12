@@ -151,6 +151,23 @@ bool GenerationService::generateMidiFromPiece(const Piece& piece, const juce::St
         return false;
     }
     
+    // Validation : chaque section doit avoir au moins 2 accords
+    // Justification : les contraintes harmoniques de Diatony (cadences V-I, voice leading)
+    // nécessitent des transitions entre accords, donc minimum 2 par section.
+    for (size_t i = 0; i < piece.getSectionCount(); ++i)
+    {
+        auto section = piece.getSection(static_cast<int>(i));
+        int chordCount = static_cast<int>(section.getProgression().size());
+        
+        if (chordCount < 2)
+        {
+            lastError = juce::String("Section ") + juce::String(i + 1) 
+                + " has " + juce::String(chordCount) 
+                + " chord(s). Minimum 2 chords required per section for harmonic constraints.";
+            return false;
+        }
+    }
+    
     try {
         vector<TonalProgressionParameters*> sectionParamsList;
         int cumulativeChordIndex = 0;
