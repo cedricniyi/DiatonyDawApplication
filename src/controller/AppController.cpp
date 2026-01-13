@@ -146,11 +146,15 @@ void AppController::setPieceTitle(const juce::String& title)
 
 void AppController::startGeneration()
 {
+    // Reset le status pour garantir que le listener soit notifié même si le résultat est identique
+    selectionState.setProperty("generationStatus", "idle", nullptr);
+    
     if (piece.isEmpty())
     {
-        selectionState.setProperty("generationStatus", "error", nullptr);
+        // Définir le message AVANT le status (le listener lit le message quand le status change)
         selectionState.setProperty("generationError", 
-            juce::String::fromUTF8("La pièce est vide. Veuillez ajouter au moins une section."), nullptr);
+            juce::String::fromUTF8("The piece is empty.\n\nPlease add at least one progression with chords."), nullptr);
+        selectionState.setProperty("generationStatus", "warning", nullptr);
         return;
     }
     
@@ -161,8 +165,10 @@ void AppController::startGeneration()
     
     if (!launched)
     {
-        selectionState.setProperty("generationStatus", "error", nullptr);
+        // Définir le message AVANT le status (le listener lit le message quand le status change)
         selectionState.setProperty("generationError", generationService.getLastError(), nullptr);
+        juce::String status = generationService.isInputValidationError() ? "warning" : "error";
+        selectionState.setProperty("generationStatus", status, nullptr);
     }
 }
 
@@ -212,8 +218,10 @@ void AppController::handleAsyncUpdate()
     }
     else
     {
-        selectionState.setProperty("generationStatus", "error", nullptr);
+        // Définir le message AVANT le status (le listener lit le message quand le status change)
         selectionState.setProperty("generationError", generationService.getLastError(), nullptr);
+        juce::String status = generationService.isInputValidationError() ? "warning" : "error";
+        selectionState.setProperty("generationStatus", status, nullptr);
     }
 }
 
