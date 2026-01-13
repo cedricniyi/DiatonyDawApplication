@@ -24,6 +24,7 @@ public:
     bool isGenerating() const;
     bool isReady() const;
     juce::String getLastError() const;
+    bool isInputValidationError() const;  // true si l'erreur est une validation d'input (warning)
     void reset();
     
     /** @brief Log console de la pièce (debug). */
@@ -60,6 +61,7 @@ private:
     bool generateMidiFromPiece(const Piece& piece, const juce::String& outputPath);
     
     mutable juce::String lastError;
+    mutable bool inputValidationError = false;  // Distingue warning (validation) vs error (solveur)
     bool ready;
     
     AppController* appController = nullptr;
