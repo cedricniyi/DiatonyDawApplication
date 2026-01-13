@@ -139,6 +139,21 @@ void MainContentComponent::valueTreePropertyChanged(juce::ValueTree& treeWhosePr
                 );
             });
         }
+        else if (status == "warning")
+        {
+            juce::String warningMessage = treeWhosePropertyHasChanged
+                                            .getProperty("generationError")
+                                            .toString();
+            
+            juce::MessageManager::callAsync([this, warningMessage]() {
+                showPopup(
+                    DiatonyAlertWindow::AlertType::Warning,
+                    juce::String::fromUTF8("Warning"),
+                    warningMessage,
+                    "OK"
+                );
+            });
+        }
         else if (status == "error")
         {
             juce::String errorMessage = treeWhosePropertyHasChanged
@@ -149,7 +164,7 @@ void MainContentComponent::valueTreePropertyChanged(juce::ValueTree& treeWhosePr
                 showPopup(
                     DiatonyAlertWindow::AlertType::Error,
                     juce::String::fromUTF8("Generation Failed"),
-                    juce::String::fromUTF8("The solver could not find a solution:\n\n") + errorMessage,
+                    juce::String::fromUTF8("The solver could not find a solution") + errorMessage,
                     "OK"
                 );
             });
