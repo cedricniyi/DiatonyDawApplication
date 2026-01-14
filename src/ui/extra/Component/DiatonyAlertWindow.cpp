@@ -31,9 +31,17 @@ DiatonyAlertWindow::DiatonyAlertWindow(AlertType type,
     );
     
     okButton->onClick = [this]() {
-        if (onClose) onClose();
-        if (auto* parent = findParentComponentOfClass<juce::DialogWindow>())
-            parent->exitModalState(0);
+        // Récupérer le parent AVANT d'appeler onClose, car celui-ci peut détruire this
+        auto* parent = findParentComponentOfClass<juce::DialogWindow>();
+        juce::Component::SafePointer<juce::DialogWindow> safeParent(parent);
+        
+        // Copier le callback car this peut être détruit après onClose
+        auto callback = onClose;
+        if (callback) callback();
+        
+        // Vérifier que le parent existe toujours avant d'appeler exitModalState
+        if (safeParent != nullptr)
+            safeParent->exitModalState(0);
     };
     
     if (buttonText.isEmpty())
