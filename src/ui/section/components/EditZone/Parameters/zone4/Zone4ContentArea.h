@@ -24,6 +24,9 @@ public:
     void clearAllRectangles();
     bool hasContent() const;
     
+    /** @brief Callback appelé quand un accord doit être supprimé (index de l'accord). */
+    std::function<void(int)> onChordRemoved;
+    
     juce::Rectangle<int> getPreferredSize() const;
     
 private:

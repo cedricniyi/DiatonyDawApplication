@@ -89,11 +89,17 @@ void Zone4ContentArea::addRectangle(juce::ValueTree chordState)
             chordState.setProperty(ModelIdentifiers::quality, newQuality, nullptr);
         };
         
-        newRectangle->onDeleteRequested = [chordState]() mutable {
-            if (chordState.isValid()) {
+        // On capture chordState pour trouver dynamiquement son index au moment de la suppression
+        newRectangle->onDeleteRequested = [this, chordState]() mutable {
+            if (onChordRemoved && chordState.isValid())
+            {
                 auto parent = chordState.getParent();
                 if (parent.isValid())
-                    parent.removeChild(chordState, nullptr);
+                {
+                    int chordIndex = parent.indexOf(chordState);
+                    if (chordIndex >= 0)
+                        onChordRemoved(chordIndex);
+                }
             }
         };
     }
@@ -226,3 +232,4 @@ void Zone4ContentArea::populateInfoColoredPanel(InfoColoredPanel* panel)
     }
     panel->populateStateCombo(stateNames, stateShortNames);
 }
+

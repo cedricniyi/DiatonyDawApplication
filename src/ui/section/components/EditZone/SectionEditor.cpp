@@ -271,6 +271,17 @@ void SectionEditor::bindZonesToModel()
         auto progression = section.getProgression();
         progression.addChord(degree, quality, state);
     };
+    
+    zone4Component.onChordRemoved = [this](int chordIndex)
+    {
+        if (!currentSectionState.isValid() || appController == nullptr) return;
+        
+        int sectionId = currentSectionState.getProperty(ModelIdentifiers::id, -1);
+        int sectionIndex = appController->getPiece().getSectionIndexById(sectionId);
+        
+        if (sectionIndex >= 0)
+            appController->removeChordFromSection(sectionIndex, chordIndex);
+    };
 }
 
 void SectionEditor::syncZonesFromModel()

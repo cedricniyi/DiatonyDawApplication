@@ -19,6 +19,13 @@ Zone4::Zone4()
             );
         }
     };
+    
+    // Propager le callback de suppression depuis Zone4ContentArea
+    contentAreaComponent.onChordRemoved = [this](int chordIndex) {
+        if (onChordRemoved)
+            onChordRemoved(chordIndex);
+    };
+    
     addAndMakeVisible(addButton);
     addAndMakeVisible(contentAreaComponent);
 }
@@ -48,3 +55,4 @@ void Zone4::syncWithProgression(const std::vector<juce::ValueTree>& chords)
     for (const auto& chordState : chords)
         contentAreaComponent.addRectangle(chordState);
 }
+

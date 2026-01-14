@@ -13,7 +13,11 @@ public:
     Zone4();
     ~Zone4() override = default;
     
+    /** @brief Callback appelé quand un accord est ajouté. */
     std::function<void(Diatony::ChordDegree, Diatony::ChordQuality, Diatony::ChordState)> onChordAdded;
+    
+    /** @brief Callback appelé quand un accord doit être supprimé (index de l'accord). */
+    std::function<void(int)> onChordRemoved;
     
     /** @brief Synchronise l'affichage avec les accords du modèle. */
     void syncWithProgression(const std::vector<juce::ValueTree>& chords);

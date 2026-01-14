@@ -31,9 +31,14 @@ DiatonyAlertWindow::DiatonyAlertWindow(AlertType type,
     );
     
     okButton->onClick = [this]() {
-        if (onClose) onClose();
-        if (auto* parent = findParentComponentOfClass<juce::DialogWindow>())
-            parent->exitModalState(0);
+        auto* parent = findParentComponentOfClass<juce::DialogWindow>();
+        juce::Component::SafePointer<juce::DialogWindow> safeParent(parent);
+        
+        auto callback = onClose;
+        if (callback) callback();
+        
+        if (safeParent != nullptr)
+            safeParent->exitModalState(0);
     };
     
     if (buttonText.isEmpty())
