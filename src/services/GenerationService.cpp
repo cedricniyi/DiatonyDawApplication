@@ -136,19 +136,39 @@ bool GenerationService::getLastGenerationSuccess() const { return generationSucc
 juce::String GenerationService::getLastGeneratedMidiPath() const { return lastGeneratedMidiPath; }
 
 bool GenerationService::generateMidiFromPiece(const Piece& piece, const juce::String& outputPath) {
+    inputValidationError = false;  // Reset à chaque génération
+    
     if (!ready) {
         lastError = "Service not ready";
         return false;
     }
     
     if (piece.isEmpty()) {
-        lastError = "Piece is empty";
+        inputValidationError = true;
+        lastError = "The piece is empty.\n\nPlease add at least one progression with chords.";
         return false;
     }
     
     if (piece.getSectionCount() == 0) {
-        lastError = "Piece has no sections";
+        inputValidationError = true;
+        lastError = "No progressions defined.\n\nPlease add at least one progression.";
         return false;
+    }
+    
+    // Validation : chaque progression doit avoir au moins 2 accords
+    // Justification : les contraintes harmoniques de Diatony (cadences V-I, voice leading)
+    // nécessitent des transitions entre accords, donc minimum 2 par progression.
+    for (size_t i = 0; i < piece.getSectionCount(); ++i)
+    {
+        auto section = piece.getSection(static_cast<int>(i));
+        int chordCount = static_cast<int>(section.getProgression().size());
+        
+        if (chordCount < 2)
+        {
+            inputValidationError = true;
+            lastError = "One of the progressions in the piece is invalid.\n\nEach progression requires at least 2 chords for harmonic constraints to apply.";
+            return false;
+        }
     }
     
     try {
@@ -340,6 +360,7 @@ bool GenerationService::generateMidiFromPiece(const Piece& piece, const juce::St
 
 bool GenerationService::isReady() const { return ready && pImpl && pImpl->initialized; }
 juce::String GenerationService::getLastError() const { return lastError; }
+bool GenerationService::isInputValidationError() const { return inputValidationError; }
 
 void GenerationService::reset()
 {
