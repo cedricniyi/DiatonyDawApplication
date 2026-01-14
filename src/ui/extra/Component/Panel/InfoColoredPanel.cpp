@@ -27,6 +27,8 @@ InfoColoredPanel::InfoColoredPanel(juce::Colour color)
 
 InfoColoredPanel::~InfoColoredPanel()
 {
+    // Arrêter le timer pour éviter use-after-free si un long press est en cours
+    stopTimer();
     degreeCombo.removeListener(this);
 }
 
@@ -222,16 +224,13 @@ void InfoColoredPanel::timerCallback()
         isDeleteHeldDown = false;
         deleteProgress = 0.0f;
         
-        // Différer la suppression pour éviter use-after-free
         if (onDeleteRequested)
             onDeleteRequested();
         
-        // Reset visuel après l'action
-        juce::Timer::callAfterDelay(150, [this]
-        {
-            deleteProgress = 0.0f;
-            repaint();
-        });
+        // IMPORTANT: Retourner immédiatement !
+        // onDeleteRequested() peut détruire ce panel (via syncWithProgression)
+        // Tout code après ce point serait un use-after-free
+        return;
     }
     
     repaint();
