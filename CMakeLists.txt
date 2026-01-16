@@ -15,7 +15,7 @@ set(JSON_BuildTests OFF CACHE INTERNAL "")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 
-project(DiatonyDawApplication VERSION 0.0.1)
+project(DiatonyDawApplication VERSION 1.0.1)
 
 add_compile_definitions(APPLICATION_SUPPORT_PATH="Library/Application Support")
 
