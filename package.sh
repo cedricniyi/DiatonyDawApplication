@@ -109,28 +109,52 @@ DiatonyDawApplication - Audio Unit Plugin
 Version: v1.0.1
 Platform: macOS ARM64 (M1/M2/M3)
 
-INSTALLATION
-------------
+PREMIÈRE INSTALLATION
+----------------------------
 
 1. Copier DiatonyDawApplication.component vers :
-   /Library/Audio/Plug-Ins/Components/
+   ~/Library/Audio/Plug-Ins/Components/
 
    Commande Terminal :
-   sudo cp -r DiatonyDawApplication.component /Library/Audio/Plug-Ins/Components/
+   sudo cp -r DiatonyDawApplication.component ~/Library/Audio/Plug-Ins/Components/
 
 2. Redémarrer votre DAW (Ableton Live, Logic Pro, GarageBand, etc.)
 
-3. Rescanner les plugins dans votre DAW
+3. Rescanner les plugins dans votre DAW (si vous n'apercevez pas le plugin)
 
 4. Le plugin devrait apparaître dans la liste des Audio Units
    sous le nom "DiatonyDawApplication"
+
+MISE À JOUR / RÉINSTALLATION
+----------------------------
+
+1. Fermer votre DAW complètement
+
+2. Supprimer l'ancienne version :
+   sudo rm -rf ~/Library/Audio/Plug-Ins/Components/DiatonyDawApplication.component
+
+3. (Optionnel) Vider le cache Audio Unit de macOS :
+   sudo rm -rf ~/Library/Caches/AudioUnitCache/
+
+4. Copier la nouvelle version :
+   cp -r DiatonyDawApplication.component ~/Library/Audio/Plug-Ins/Components/
+
+5. Redémarrer votre DAW
+
+DÉPANNAGE
+---------
+
+Si le plugin n'apparaît pas ou si vous voyez une ancienne version :
+- Vérifiez qu'il n'y a qu'UNE seule copie du plugin installée
+- Supprimez le cache : rm -rf ~/Library/Caches/AudioUnitCache/
+- Redémarrez votre DAW
 
 SUPPORT
 -------
 https://github.com/cedricniyi/DiatonyDawApplication
 
 INFORMATIONS
--------
+------------
 Développé dans le cadre d'un TFE à l'UCLouvain (2026)
 EOF
 
