@@ -1,6 +1,8 @@
 #include "PluginEditor.h"
 #include <juce_gui_basics/juce_gui_basics.h>
-#include "melatonin_inspector/melatonin_inspector.h"
+#if DEBUG
+    #include "melatonin_inspector/melatonin_inspector.h"
+#endif
 #include "utils/FontManager.h"
 #include "ui/animation/AnimationManager.h"
 #include "ui/animation/SlidingPanelAnimator.h"

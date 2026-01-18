@@ -6,7 +6,9 @@
 #include "extra/Component/DiatonyAlertWindow.h"
 #include "MainContentComponent.h"
 #include "UIStateIdentifiers.h"
-#include "melatonin_inspector/melatonin_inspector.h"
+#if DEBUG
+    #include "melatonin_inspector/melatonin_inspector.h"
+#endif
 
 #if DEBUG
     #include "debug/ValueTreeLogger.h"
@@ -43,8 +45,10 @@ private:
     
     std::unique_ptr<AppController> appController;
     
-    // Melatonin Inspector pour déboguer l'interface
-    melatonin::Inspector inspector { *this, false };
+    #if DEBUG
+        // Melatonin Inspector pour déboguer l'interface
+        melatonin::Inspector inspector { *this, false };
+    #endif
     
     std::unique_ptr<SimpleToastComponent> toast;
     std::unique_ptr<MainContentComponent> mainContent;
