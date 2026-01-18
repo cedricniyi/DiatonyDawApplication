@@ -40,6 +40,9 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(AudioPluginAudi
     constrainer->setMaximumHeight(500);
     setConstrainer(constrainer.get());
     
+    // Activer le redimensionnement (nécessaire pour les plugins AU/VST)
+    setResizable(true, true);
+    
     setSize(1200, 500);
     
     // HistoryAnimator - anime le panneau History latéral
