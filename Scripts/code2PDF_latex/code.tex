@@ -1,0 +1,472 @@
+\chapter*{Code source}
+\addcontentsline{toc}{chapter}{Code source}
+Cette annexe présente le code source de l'application DiatonyDAW. Les fichiers sont organisés en quatre parties : les fichiers d'en-tête (headers), les fichiers d'implémentation (sources), les fichiers de configuration et de compilation, et une sélection de tests unitaires.\\
+
+Les \textbf{instructions d'installation}, le \textbf{tutoriel d'utilisation} ainsi que d'autres informations techniques sont disponibles via le fichier README.md de mon dépôt GitHub sur la branche main : \url{https://github.com/cedricniyi/DiatonyDawApplication}
+
+% ############################################################################
+% CHAPITRE 1 : HEADERS (.h)
+% ############################################################################
+\chapter{Fichiers d'en-tête (\texttt{.h})}
+
+% ============================================================================
+% MODEL
+% ============================================================================
+\section{Model (\texttt{src/model/})}
+
+\subsection{DiatonyTypes.h}
+\lstinputlisting[style=mystyle, language=C++]{src/model/DiatonyTypes.h}
+
+\subsection{ModelIdentifiers.h}
+\lstinputlisting[style=mystyle, language=C++]{src/model/ModelIdentifiers.h}
+
+\subsection{NoteConverter.h}
+\lstinputlisting[style=mystyle, language=C++]{src/model/NoteConverter.h}
+
+\subsection{Chord.h}
+\lstinputlisting[style=mystyle, language=C++]{src/model/Chord.h}
+
+\subsection{Progression.h}
+\lstinputlisting[style=mystyle, language=C++]{src/model/Progression.h}
+
+\subsection{Modulation.h}
+\lstinputlisting[style=mystyle, language=C++]{src/model/Modulation.h}
+
+\subsection{Section.h}
+\lstinputlisting[style=mystyle, language=C++]{src/model/Section.h}
+
+\subsection{Piece.h}
+\lstinputlisting[style=mystyle, language=C++]{src/model/Piece.h}
+
+% ============================================================================
+% CONTROLLER
+% ============================================================================
+\newpage
+\section{Controller (\texttt{src/controller/})}
+
+\subsection{ContextIdentifiers.h}
+\lstinputlisting[style=mystyle, language=C++]{src/controller/ContextIdentifiers.h}
+
+\subsection{AppController.h}
+\lstinputlisting[style=mystyle, language=C++]{src/controller/AppController.h}
+
+\subsection{PluginProcessor.h}
+\lstinputlisting[style=mystyle, language=C++]{src/controller/core/PluginProcessor.h}
+
+% ============================================================================
+% SERVICES
+% ============================================================================
+\newpage
+\section{Services (\texttt{src/services/})}
+
+\subsection{GenerationService.h}
+\lstinputlisting[style=mystyle, language=C++]{src/services/GenerationService.h}
+
+% ============================================================================
+% UI - Interface utilisateur
+% ============================================================================
+\newpage
+\section{Interface utilisateur (\texttt{src/ui/})}
+
+\subsection{UIStateIdentifiers.h}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/UIStateIdentifiers.h}
+
+\subsection{PluginEditor.h}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/PluginEditor.h}
+
+\subsection{MainContentComponent.h}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/MainContentComponent.h}
+
+\subsection{DiatonyText.h}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/DiatonyText.h}
+
+% --- Panels ---
+\subsection{HeaderPanel.h}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/header/HeaderPanel.h}
+
+\subsection{MidiDragZone.h}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/header/MidiDragZone.h}
+
+\subsection{SectionPanel.h}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/section/SectionPanel.h}
+
+\subsection{HistoryPanel.h}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/history/HistoryPanel.h}
+
+% --- Overview ---
+\subsection{OverviewContentArea.h}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/section/components/OverviewZone/Overview/OverviewContentArea.h}
+
+\subsection{OverviewActionArea.h}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/section/components/OverviewZone/Overview/OverviewActionArea.h}
+
+% --- Éditeurs ---
+\subsection{WelcomeView.h}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/section/components/EditZone/WelcomeView.h}
+
+\subsection{SectionEditor.h}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/section/components/EditZone/SectionEditor.h}
+
+\subsection{ModulationEditor.h}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/section/components/EditZone/ModulationEditor.h}
+
+\subsection{ProgressionArea.h}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/section/components/EditZone/ProgressionArea.h}
+
+% --- Paramètres de modulation ---
+\subsection{ModulationTypeZone.h}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/section/components/EditZone/ModulationParameters/ModulationTypeZone.h}
+
+\subsection{ChordChip.h}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/section/components/EditZone/ModulationParameters/ChordChip.h}
+
+\subsection{SectionChordsZone.h}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/section/components/EditZone/ModulationParameters/SectionChordsZone.h}
+
+% --- Paramètres ---
+\subsection{KeyZone.h}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/section/components/EditZone/Parameters/KeyZone.h}
+
+\subsection{KeySelectorComponent.h}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/section/components/EditZone/Parameters/KeySelectorComponent.h}
+
+\subsection{ModeZone.h}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/section/components/EditZone/Parameters/ModeZone.h}
+
+\subsection{Zone4.h}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/section/components/EditZone/Parameters/Zone4.h}
+
+\subsection{Zone4ScrollablePanel.h}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/section/components/EditZone/Parameters/zone4/Zone4ScrollablePanel.h}
+
+\subsection{Zone4ContentArea.h}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/section/components/EditZone/Parameters/zone4/Zone4ContentArea.h}
+
+% --- Animations ---
+\subsection{AnimationManager.h}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/animation/AnimationManager.h}
+
+\subsection{SlidingPanelAnimator.h}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/animation/SlidingPanelAnimator.h}
+
+% --- Composants réutilisables - Boutons ---
+\subsection{StyledButton.h}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/extra/Button/StyledButton.h}
+
+\subsection{SelectableStyledButton.h}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/extra/Button/SelectableStyledButton.h}
+
+\subsection{IconStyledButton.h}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/extra/Button/IconStyledButton.h}
+
+\subsection{ButtonColoredPanel.h}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/extra/Button/ButtonColoredPanel.h}
+
+% --- Composants réutilisables - Panels ---
+\subsection{ColoredPanel.h}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/extra/Component/Panel/ColoredPanel.h}
+
+\subsection{InfoColoredPanel.h}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/extra/Component/Panel/InfoColoredPanel.h}
+
+% --- Composants réutilisables - Zones ---
+\subsection{BaseZone.h}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/extra/Component/Zone/BaseZone.h}
+
+% --- Composants réutilisables - ComboBox ---
+\subsection{DiatonyComboBox.h}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/extra/Component/ComboBox/DiatonyComboBox.h}
+
+\subsection{DiatonyComboBoxLookAndFeel.h}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/extra/Component/ComboBox/DiatonyComboBoxLookAndFeel.h}
+
+% --- Composants réutilisables - Autres ---
+\subsection{DiatonyAlertWindow.h}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/extra/Component/DiatonyAlertWindow.h}
+
+\subsection{SimpleToastComponent.h}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/extra/Component/SimpleToastComponent.h}
+
+\subsection{TextPill.h}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/extra/Component/TextPill.h}
+
+% ============================================================================
+% UTILS
+% ============================================================================
+\newpage
+\section{Utilitaires (\texttt{src/utils/})}
+
+\subsection{FontManager.h}
+\lstinputlisting[style=mystyle, language=C++]{src/utils/FontManager.h}
+
+\subsection{FileUtils.h}
+\lstinputlisting[style=mystyle, language=C++]{src/utils/FileUtils.h}
+
+% ============================================================================
+% DEBUG
+% ============================================================================
+\newpage
+\section{Debug (\texttt{src/debug/})}
+
+\subsection{ValueTreeLogger.h}
+\lstinputlisting[style=mystyle, language=C++]{src/debug/ValueTreeLogger.h}
+
+
+% ############################################################################
+% CHAPITRE 2 : SOURCES (.cpp)
+% ############################################################################
+\chapter{Fichiers d'implémentation (\texttt{.cpp})}
+
+% ============================================================================
+% MODEL
+% ============================================================================
+\section{Model (\texttt{src/model/})}
+
+\subsection{Chord.cpp}
+\lstinputlisting[style=mystyle, language=C++]{src/model/Chord.cpp}
+
+\subsection{Progression.cpp}
+\lstinputlisting[style=mystyle, language=C++]{src/model/Progression.cpp}
+
+\subsection{Modulation.cpp}
+\lstinputlisting[style=mystyle, language=C++]{src/model/Modulation.cpp}
+
+\subsection{Section.cpp}
+\lstinputlisting[style=mystyle, language=C++]{src/model/Section.cpp}
+
+\subsection{Piece.cpp}
+\lstinputlisting[style=mystyle, language=C++]{src/model/Piece.cpp}
+
+% ============================================================================
+% CONTROLLER
+% ============================================================================
+\newpage
+\section{Controller (\texttt{src/controller/})}
+
+\subsection{AppController.cpp}
+\lstinputlisting[style=mystyle, language=C++]{src/controller/AppController.cpp}
+
+\subsection{PluginProcessor.cpp}
+\lstinputlisting[style=mystyle, language=C++]{src/controller/core/PluginProcessor.cpp}
+
+% ============================================================================
+% SERVICES
+% ============================================================================
+\newpage
+\section{Services (\texttt{src/services/})}
+
+\subsection{GenerationService.cpp}
+\lstinputlisting[style=mystyle, language=C++]{src/services/GenerationService.cpp}
+
+% ============================================================================
+% UI - Interface utilisateur
+% ============================================================================
+\newpage
+\section{Interface utilisateur (\texttt{src/ui/})}
+
+\subsection{PluginEditor.cpp}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/PluginEditor.cpp}
+
+\subsection{MainContentComponent.cpp}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/MainContentComponent.cpp}
+
+% --- Panels ---
+\subsection{HeaderPanel.cpp}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/header/HeaderPanel.cpp}
+
+\subsection{MidiDragZone.cpp}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/header/MidiDragZone.cpp}
+
+\subsection{SectionPanel.cpp}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/section/SectionPanel.cpp}
+
+\subsection{HistoryPanel.cpp}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/history/HistoryPanel.cpp}
+
+% --- Overview ---
+\subsection{OverviewContentArea.cpp}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/section/components/OverviewZone/Overview/OverviewContentArea.cpp}
+
+\subsection{OverviewActionArea.cpp}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/section/components/OverviewZone/Overview/OverviewActionArea.cpp}
+
+% --- Éditeurs ---
+\subsection{WelcomeView.cpp}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/section/components/EditZone/WelcomeView.cpp}
+
+\subsection{SectionEditor.cpp}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/section/components/EditZone/SectionEditor.cpp}
+
+\subsection{ModulationEditor.cpp}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/section/components/EditZone/ModulationEditor.cpp}
+
+\subsection{ProgressionArea.cpp}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/section/components/EditZone/ProgressionArea.cpp}
+
+% --- Paramètres de modulation ---
+\subsection{ModulationTypeZone.cpp}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/section/components/EditZone/ModulationParameters/ModulationTypeZone.cpp}
+
+\subsection{ChordChip.cpp}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/section/components/EditZone/ModulationParameters/ChordChip.cpp}
+
+\subsection{SectionChordsZone.cpp}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/section/components/EditZone/ModulationParameters/SectionChordsZone.cpp}
+
+% --- Paramètres ---
+\subsection{KeyZone.cpp}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/section/components/EditZone/Parameters/KeyZone.cpp}
+
+\subsection{KeySelectorComponent.cpp}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/section/components/EditZone/Parameters/KeySelectorComponent.cpp}
+
+\subsection{ModeZone.cpp}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/section/components/EditZone/Parameters/ModeZone.cpp}
+
+\subsection{Zone4.cpp}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/section/components/EditZone/Parameters/Zone4.cpp}
+
+\subsection{Zone4ScrollablePanel.cpp}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/section/components/EditZone/Parameters/zone4/Zone4ScrollablePanel.cpp}
+
+\subsection{Zone4ContentArea.cpp}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/section/components/EditZone/Parameters/zone4/Zone4ContentArea.cpp}
+
+% --- Animations ---
+\subsection{AnimationManager.cpp}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/animation/AnimationManager.cpp}
+
+\subsection{SlidingPanelAnimator.cpp}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/animation/SlidingPanelAnimator.cpp}
+
+% --- Composants réutilisables - Boutons ---
+\subsection{StyledButton.cpp}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/extra/Button/StyledButton.cpp}
+
+\subsection{SelectableStyledButton.cpp}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/extra/Button/SelectableStyledButton.cpp}
+
+\subsection{IconStyledButton.cpp}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/extra/Button/IconStyledButton.cpp}
+
+\subsection{ButtonColoredPanel.cpp}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/extra/Button/ButtonColoredPanel.cpp}
+
+% --- Composants réutilisables - Panels ---
+\subsection{ColoredPanel.cpp}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/extra/Component/Panel/ColoredPanel.cpp}
+
+\subsection{InfoColoredPanel.cpp}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/extra/Component/Panel/InfoColoredPanel.cpp}
+
+% --- Composants réutilisables - ComboBox ---
+\subsection{DiatonyComboBox.cpp}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/extra/Component/ComboBox/DiatonyComboBox.cpp}
+
+\subsection{DiatonyComboBoxLookAndFeel.cpp}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/extra/Component/ComboBox/DiatonyComboBoxLookAndFeel.cpp}
+
+% --- Composants réutilisables - Autres ---
+\subsection{DiatonyAlertWindow.cpp}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/extra/Component/DiatonyAlertWindow.cpp}
+
+\subsection{SimpleToastComponent.cpp}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/extra/Component/SimpleToastComponent.cpp}
+
+\subsection{TextPill.cpp}
+\lstinputlisting[style=mystyle, language=C++]{src/ui/extra/Component/TextPill.cpp}
+
+% ============================================================================
+% UTILS
+% ============================================================================
+\newpage
+\section{Utilitaires (\texttt{src/utils/})}
+
+\subsection{FontManager.cpp}
+\lstinputlisting[style=mystyle, language=C++]{src/utils/FontManager.cpp}
+
+% ############################################################################
+% CHAPITRE 3 : TESTS UNITAIRES
+% ############################################################################
+\chapter{Tests unitaires}
+
+Cette section présente les tests unitaires validant les composants de l'application. Les tests utilisent le framework de tests intégré à JUCE.
+
+% ============================================================================
+% TEST RUNNER
+% ============================================================================
+\section{Infrastructure de tests}
+
+\subsection{TestRunner.cpp}
+\lstinputlisting[style=mystyle, language=C++]{src/tests/TestRunner.cpp}
+
+% ============================================================================
+% TESTS MODEL
+% ============================================================================
+\newpage
+\section{Tests du modèle de données}
+
+\subsection{ChordTest.cpp}
+\lstinputlisting[style=mystyle, language=C++]{src/tests/ChordTest.cpp}
+
+\subsection{ProgressionTest.cpp}
+\lstinputlisting[style=mystyle, language=C++]{src/tests/ProgressionTest.cpp}
+
+\subsection{ModulationTest.cpp}
+\lstinputlisting[style=mystyle, language=C++]{src/tests/ModulationTest.cpp}
+
+\subsection{SectionTest.cpp}
+\lstinputlisting[style=mystyle, language=C++]{src/tests/SectionTest.cpp}
+
+\subsection{PieceTest.cpp}
+\lstinputlisting[style=mystyle, language=C++]{src/tests/PieceTest.cpp}
+
+% ============================================================================
+% TESTS CONTROLLER
+% ============================================================================
+\newpage
+\section{Tests du contrôleur}
+
+\subsection{AppControllerTest.cpp}
+\lstinputlisting[style=mystyle, language=C++]{src/tests/AppControllerTest.cpp}
+
+% ============================================================================
+% TESTS SERVICES
+% ============================================================================
+\newpage
+\section{Tests du service de génération}
+
+\subsection{GenerationServiceTest.cpp}
+\lstinputlisting[style=mystyle, language=C++]{src/tests/GenerationServiceTest.cpp}
+% ############################################################################
+% CHAPITRE 4 : CONFIGURATION DE BUILD
+% ############################################################################
+\chapter{Fichiers de configuration et de compilation}
+
+% ============================================================================
+% CMAKE
+% ============================================================================
+\section{Fichiers de configuration et de compilation pour DiatonyDAW}
+
+\subsection{CMakeLists.txt}
+\lstinputlisting[style=cmakeStyle]{extra-src/CMakeLists.txt}
+
+\subsection{CMakePresets.json}
+\lstinputlisting[style=jsonStyle]{extra-src/CMakePresets.json}
+
+% ============================================================================
+% DIATONY SOLVER
+% ============================================================================
+\newpage
+\section{Fichiers de compilation pour Diatony}
+
+\subsection{Variables Makefile}
+
+\lstinputlisting[style=mystyle]{extra-src/file_variables.mk}
+
+\subsection{Makefile}
+
+\lstinputlisting[style=makefileStyle]{extra-src/Makefile}
+
+
+
