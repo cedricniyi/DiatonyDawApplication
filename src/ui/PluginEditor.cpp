@@ -1,6 +1,8 @@
 #include "PluginEditor.h"
 #include <juce_gui_basics/juce_gui_basics.h>
-#include "melatonin_inspector/melatonin_inspector.h"
+#if DEBUG
+    #include "melatonin_inspector/melatonin_inspector.h"
+#endif
 #include "utils/FontManager.h"
 #include "ui/animation/AnimationManager.h"
 #include "ui/animation/SlidingPanelAnimator.h"
@@ -37,6 +39,9 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(AudioPluginAudi
     constrainer->setMinimumHeight(500);
     constrainer->setMaximumHeight(500);
     setConstrainer(constrainer.get());
+    
+    // Activer le redimensionnement (nécessaire pour les plugins AU/VST)
+    setResizable(true, true);
     
     setSize(1200, 500);
     

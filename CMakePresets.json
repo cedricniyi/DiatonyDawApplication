@@ -42,7 +42,7 @@
           "ENABLE_ASAN": "OFF",
           "JUCE_BUILD_EXAMPLES": "OFF",
           "JUCE_BUILD_EXTRAS": "OFF",
-          "JUCE_COPY_PLUGIN_AFTER_BUILD": "ON",
+          "JUCE_COPY_PLUGIN_AFTER_BUILD": "OFF",
           "JUCE_ENABLE_MODULE_SOURCE_GROUPS": "OFF",
           "JUCE_INSTALL_DESTINATION": "lib/cmake/JUCE-8.0.3",
           "JUCE_MODULES_ONLY": "OFF",
@@ -81,6 +81,24 @@
         "cacheVariables": {
           "CMAKE_BUILD_TYPE": "Release"
         }
+      },
+      {
+        "name": "debug-intel",
+        "description": "Debug build pour Intel x86_64 (cross-compilation depuis ARM)",
+        "inherits": "debug",
+        "binaryDir": "${sourceDir}/cmake-build-debug-intel",
+        "cacheVariables": {
+          "CMAKE_OSX_ARCHITECTURES": "x86_64"
+        }
+      },
+      {
+        "name": "release-intel",
+        "description": "Release build pour Intel x86_64",
+        "inherits": "debug-intel",
+        "binaryDir": "${sourceDir}/cmake-build-release-intel",
+        "cacheVariables": {
+          "CMAKE_BUILD_TYPE": "Release"
+        }
       }
     ],
     "buildPresets": [
@@ -97,6 +115,16 @@
       {
         "name": "release",
         "configurePreset": "release",
+        "jobs": 6
+      },
+      {
+        "name": "debug-intel",
+        "configurePreset": "debug-intel",
+        "jobs": 6
+      },
+      {
+        "name": "release-intel",
+        "configurePreset": "release-intel",
         "jobs": 6
       }
     ]

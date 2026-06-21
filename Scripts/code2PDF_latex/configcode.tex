@@ -1,0 +1,201 @@
+% ============================================================================
+% COULEURS
+% ============================================================================
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.96,0.96,0.96}
+\definecolor{codeblue}{rgb}{0,0,1}  
+\definecolor{codered}{rgb}{0.9,0.05,0.05}
+\definecolor{codeblack}{rgb}{0,0,0}
+\definecolor{codeorange}{rgb}{0.8,0.4,0}
+
+% ============================================================================
+% CARACTÈRES ACCENTUÉS (réutilisable)
+% ============================================================================
+\newcommand{\accentuatedchars}{
+      {á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1
+      {à}{{\`a}}1 {è}{{\`e}}1 {ì}{{\`i}}1 {ò}{{\`o}}1 {ù}{{\`u}}1
+      {â}{{\^a}}1 {ê}{{\^e}}1 {î}{{\^i}}1 {ô}{{\^o}}1 {û}{{\^u}}1
+      {ä}{{\"a}}1 {ë}{{\"e}}1 {ï}{{\"i}}1 {ö}{{\"o}}1 {ü}{{\"u}}1
+      {ç}{{\c{c}}}1
+      {Á}{{\'A}}1 {É}{{\'E}}1 {Í}{{\'I}}1 {Ó}{{\'O}}1 {Ú}{{\'U}}1
+      {À}{{\`A}}1 {È}{{\`E}}1 {Ì}{{\`I}}1 {Ò}{{\`O}}1 {Ù}{{\`U}}1
+      {Â}{{\^A}}1 {Ê}{{\^E}}1 {Î}{{\^I}}1 {Ô}{{\^O}}1 {Û}{{\^U}}1
+      {Ä}{{\"A}}1 {Ë}{{\"E}}1 {Ï}{{\"I}}1 {Ö}{{\"O}}1 {Ü}{{\"U}}1
+      {Ç}{{\c{C}}}1
+      {→}{{$\rightarrow$}}2
+}
+
+% ============================================================================
+% STYLE PRINCIPAL (C++)
+% ============================================================================
+\lstdefinestyle{myStyle}{
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegray},
+    keywordstyle=\color{codeblue},
+    numberstyle=\tiny\color{codeblack},
+    stringstyle=\color{codered},
+    basicstyle=\ttfamily\scriptsize,
+    breakatwhitespace=false,
+    breaklines=true,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2,
+    frame=single,
+    literate=
+      {á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1
+      {à}{{\`a}}1 {è}{{\`e}}1 {ì}{{\`i}}1 {ò}{{\`o}}1 {ù}{{\`u}}1
+      {â}{{\^a}}1 {ê}{{\^e}}1 {î}{{\^i}}1 {ô}{{\^o}}1 {û}{{\^u}}1
+      {ä}{{\"a}}1 {ë}{{\"e}}1 {ï}{{\"i}}1 {ö}{{\"o}}1 {ü}{{\"u}}1
+      {ç}{{\c{c}}}1
+      {Á}{{\'A}}1 {É}{{\'E}}1 {Í}{{\'I}}1 {Ó}{{\'O}}1 {Ú}{{\'U}}1
+      {À}{{\`A}}1 {È}{{\`E}}1 {Ì}{{\`I}}1 {Ò}{{\`O}}1 {Ù}{{\`U}}1
+      {Â}{{\^A}}1 {Ê}{{\^E}}1 {Î}{{\^I}}1 {Ô}{{\^O}}1 {Û}{{\^U}}1
+      {Ä}{{\"A}}1 {Ë}{{\"E}}1 {Ï}{{\"I}}1 {Ö}{{\"O}}1 {Ü}{{\"U}}1
+      {Ç}{{\c{C}}}1
+      {→}{{$\rightarrow$}}2
+}
+
+% ============================================================================
+% LANGAGE CMAKE
+% ============================================================================
+\lstdefinelanguage{CMake}{
+    morekeywords=[1]{
+        cmake_minimum_required, project, add_executable, add_library,
+        target_link_libraries, target_include_directories, target_sources,
+        target_compile_definitions, target_compile_options,
+        set, option, if, else, elseif, endif, foreach, endforeach,
+        function, endfunction, macro, endmacro, return,
+        find_package, find_library, find_path, find_program,
+        include, include_directories, add_subdirectory,
+        message, file, get_filename_component, list,
+        add_custom_command, add_custom_target, add_dependencies,
+        set_target_properties, get_target_property,
+        install, configure_file, execute_process,
+        FetchContent_Declare, FetchContent_MakeAvailable
+    },
+    morekeywords=[2]{
+        PRIVATE, PUBLIC, INTERFACE, REQUIRED, QUIET, COMPONENTS,
+        PATHS, HINTS, NO_DEFAULT_PATH, CACHE, INTERNAL, BOOL, STRING,
+        STATUS, WARNING, FATAL_ERROR, SEND_ERROR,
+        VERSION, LANGUAGES, CXX, C,
+        SOURCES, HEADER_NAME, NAMESPACE,
+        TARGET, POST_BUILD, PRE_BUILD, COMMAND, COMMENT, DEPENDS,
+        OUTPUT, WORKING_DIRECTORY,
+        TRUE, FALSE, ON, OFF, YES, NO,
+        AND, OR, NOT, MATCHES, STREQUAL, EQUAL, LESS, GREATER,
+        BUILD_WITH_INSTALL_RPATH, INSTALL_RPATH, LINK_FLAGS,
+        GIT_REPOSITORY, GIT_TAG, SOURCE_DIR
+    },
+    morekeywords=[3]{
+        CMAKE_SOURCE_DIR, CMAKE_BINARY_DIR, CMAKE_CURRENT_SOURCE_DIR,
+        CMAKE_CURRENT_BINARY_DIR, CMAKE_BUILD_TYPE, CMAKE_CXX_COMPILER,
+        CMAKE_C_COMPILER, CMAKE_OSX_ARCHITECTURES, CMAKE_OSX_DEPLOYMENT_TARGET,
+        CMAKE_INSTALL_PREFIX, CMAKE_CXX_FLAGS, CMAKE_C_FLAGS,
+        CMAKE_MAKE_PROGRAM, CMAKE_EXPORT_COMPILE_COMMANDS
+    },
+    sensitive=false,
+    morecomment=[l]{\#},
+    morestring=[b]",
+    morestring=[b]',
+}
+
+\lstdefinestyle{cmakeStyle}{
+    language=CMake,
+    backgroundcolor=\color{backcolour},
+    basicstyle=\ttfamily\scriptsize,
+    keywordstyle=[1]\color{codeblue}\bfseries,      % Commandes CMake
+    keywordstyle=[2]\color{codepurple},              % Options/constantes
+    keywordstyle=[3]\color{codeorange},              % Variables CMAKE_*
+    commentstyle=\color{codegray}\itshape,
+    stringstyle=\color{codegreen},
+    numberstyle=\tiny\color{codeblack},
+    numbers=left,
+    numbersep=5pt,
+    breaklines=true,
+    frame=single,
+    tabsize=2,
+    showstringspaces=false,
+    literate=
+      {á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1
+      {à}{{\`a}}1 {è}{{\`e}}1 {ì}{{\`i}}1 {ò}{{\`o}}1 {ù}{{\`u}}1
+      {â}{{\^a}}1 {ê}{{\^e}}1 {î}{{\^i}}1 {ô}{{\^o}}1 {û}{{\^u}}1
+      {ç}{{\c{c}}}1
+      {→}{{$\rightarrow$}}2
+}
+
+% ============================================================================
+% LANGAGE JSON (amélioré)
+% ============================================================================
+\lstdefinelanguage{JSON}{
+    morestring=[b]",
+    morecomment=[l]{//},
+    morekeywords={true, false, null},
+    sensitive=true,
+}
+
+\lstdefinestyle{jsonStyle}{
+    language=JSON,
+    backgroundcolor=\color{backcolour},
+    basicstyle=\ttfamily\scriptsize,
+    keywordstyle=\color{codeorange},           % true, false, null
+    commentstyle=\color{codegray}\itshape,
+    stringstyle=\color{codegreen},             % Chaînes en vert
+    numberstyle=\tiny\color{codeblack},
+    numbers=left,
+    numbersep=5pt,
+    breaklines=true,
+    frame=single,
+    tabsize=2,
+    showstringspaces=false,
+    literate=
+     *{0}{{{\color{codered}0}}}{1}
+      {1}{{{\color{codered}1}}}{1}
+      {2}{{{\color{codered}2}}}{1}
+      {3}{{{\color{codered}3}}}{1}
+      {4}{{{\color{codered}4}}}{1}
+      {5}{{{\color{codered}5}}}{1}
+      {6}{{{\color{codered}6}}}{1}
+      {7}{{{\color{codered}7}}}{1}
+      {8}{{{\color{codered}8}}}{1}
+      {9}{{{\color{codered}9}}}{1}
+      {:}{{{\color{codepurple}{:}}}}{1}
+      {,}{{{\color{codegray}{,}}}}{1}
+      {\{}{{{\color{codeblue}{\{}}}}{1}
+      {\}}{{{\color{codeblue}{\}}}}}{1}
+      {[}{{{\color{codeblue}{[}}}}{1}
+      {]}{{{\color{codeblue}{]}}}}{1}
+      {á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1
+      {à}{{\`a}}1 {è}{{\`e}}1 {ì}{{\`i}}1 {ò}{{\`o}}1 {ù}{{\`u}}1
+      {ç}{{\c{c}}}1
+      {→}{{$\rightarrow$}}2
+}
+
+% ============================================================================
+% STYLE MAKEFILE
+% ============================================================================
+\lstdefinestyle{makefileStyle}{
+    language=make,
+    backgroundcolor=\color{backcolour},
+    basicstyle=\ttfamily\scriptsize,
+    keywordstyle=\color{codeblue}\bfseries,
+    commentstyle=\color{codegray}\itshape,
+    stringstyle=\color{codegreen},
+    numberstyle=\tiny\color{codeblack},
+    numbers=left,
+    numbersep=5pt,
+    breaklines=true,
+    frame=single,
+    tabsize=2,
+    showstringspaces=false,
+    literate=
+      {á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1
+      {à}{{\`a}}1 {è}{{\`e}}1 {ì}{{\`i}}1 {ò}{{\`o}}1 {ù}{{\`u}}1
+      {ç}{{\c{c}}}1
+      {→}{{$\rightarrow$}}2
+}
